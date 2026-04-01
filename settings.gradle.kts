@@ -1,1 +1,1 @@
-rootProject.name = "kotlin-TypeMapper"
+rootProject.name = "kotlin-type-mapper"

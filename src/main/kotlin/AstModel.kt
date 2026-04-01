@@ -41,7 +41,7 @@ data class FileAst(
 @Serializable
 data class TypedAst(
     val schemaVersion: String = "1.1",
-    val generatedBy: String = "kotlin-TypeMapper",
+    val generatedBy: String = "kotlin-type-mapper",
     val sourceRoot: String,
     val files: List<FileAst>,
 )
