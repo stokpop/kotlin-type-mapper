@@ -1,0 +1,255 @@
+import org.jetbrains.kotlin.psi.KtCatchClause
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+
+/** Extracts all typed declarations from a single [KtFile] via [BindingContext]. */
+fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<DeclarationAst> {
+    val declarations = mutableListOf<DeclarationAst>()
+    val doc = ktFile.viewProvider.document
+
+    fun lineOf(offset: Int) = (doc?.getLineNumber(offset) ?: 0) + 1
+    fun colOf(offset: Int): Int {
+        val line = doc?.getLineNumber(offset) ?: return 1
+        return offset - (doc.getLineStartOffset(line)) + 1
+    }
+
+    ktFile.accept(object : KtTreeVisitorVoid() {
+
+        override fun visitEnumEntry(enumEntry: KtEnumEntry) {
+            super.visitEnumEntry(enumEntry)
+            val descriptor = bindingContext[BindingContext.CLASS, enumEntry] ?: return
+            val offset = enumEntry.textRange.startOffset
+            declarations.add(
+                DeclarationAst(
+                    kind = "enum_entry",
+                    name = enumEntry.name ?: "<anonymous>",
+                    fqName = descriptor.fqNameSafe.asString(),
+                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    type = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    line = lineOf(offset),
+                    column = colOf(offset),
+                )
+            )
+        }
+
+        override fun visitClass(klass: KtClass) {
+            super.visitClass(klass)
+            if (klass is KtEnumEntry) return   // handled by visitEnumEntry
+            val descriptor = bindingContext[BindingContext.CLASS, klass] ?: return
+            val offset = klass.textRange.startOffset
+            val kind = when {
+                klass.isEnum()       -> "enum"
+                klass.isInterface()  -> "interface"
+                klass.isAnnotation() -> "annotation"
+                klass.isData()       -> "data_class"
+                klass.isSealed()     -> "sealed_class"
+                else                 -> "class"
+            }
+            declarations.add(
+                DeclarationAst(
+                    kind = kind,
+                    name = klass.name ?: "<anonymous>",
+                    fqName = descriptor.fqNameSafe.asString(),
+                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    line = lineOf(offset),
+                    column = colOf(offset),
+                )
+            )
+        }
+
+        override fun visitObjectDeclaration(declaration: KtObjectDeclaration) {
+            super.visitObjectDeclaration(declaration)
+            val descriptor = bindingContext[BindingContext.CLASS, declaration] ?: return
+            val offset = declaration.textRange.startOffset
+            declarations.add(
+                DeclarationAst(
+                    kind = if (declaration.isCompanion()) "companion_object" else "object",
+                    name = declaration.name ?: "<anonymous>",
+                    fqName = descriptor.fqNameSafe.asString(),
+                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    line = lineOf(offset),
+                    column = colOf(offset),
+                )
+            )
+        }
+
+        // Primary constructor val/var parameters become class properties;
+        // lambda { x: Foo -> ... } explicitly typed parameters also captured here.
+        override fun visitParameter(parameter: KtParameter) {
+            super.visitParameter(parameter)
+            val offset = parameter.textRange.startOffset
+            when {
+                parameter.hasValOrVar() -> {
+                    val descriptor = bindingContext[BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, parameter] ?: return
+                    declarations.add(DeclarationAst(
+                        kind = "property",
+                        name = parameter.name ?: "<anonymous>",
+                        fqName = descriptor.fqNameSafe.asString(),
+                        containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
+                        type = descriptor.type.toFqString(),
+                        line = lineOf(offset), column = colOf(offset),
+                    ))
+                }
+                parameter.typeReference != null && parameter.parent?.parent is KtFunctionLiteral -> {
+                    val descriptor = bindingContext[BindingContext.VALUE_PARAMETER, parameter] ?: return
+                    declarations.add(DeclarationAst(
+                        kind = "lambda_parameter",
+                        name = parameter.name ?: "<anonymous>",
+                        fqName = descriptor.fqNameSafe.asString(),
+                        containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
+                        type = descriptor.type.toFqString(),
+                        line = lineOf(offset), column = colOf(offset),
+                    ))
+                }
+                // for-loop and catch params handled by visitForExpression / visitCatchSection;
+                // named function params already included in the function's parameters list.
+            }
+        }
+
+        override fun visitForExpression(expression: KtForExpression) {
+            super.visitForExpression(expression)
+            val param = expression.loopParameter ?: return
+            val descriptor = bindingContext[BindingContext.VALUE_PARAMETER, param] ?: return
+            val offset = param.textRange.startOffset
+            declarations.add(
+                DeclarationAst(
+                    kind = "for_loop_variable",
+                    name = param.name ?: "<anonymous>",
+                    fqName = descriptor.fqNameSafe.asString(),
+                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    type = descriptor.type.toFqString(),
+                    line = lineOf(offset),
+                    column = colOf(offset),
+                )
+            )
+        }
+
+        // catch (e: IOException) — exception variable
+        override fun visitCatchSection(catchClause: KtCatchClause) {
+            super.visitCatchSection(catchClause)
+            val param = catchClause.catchParameter ?: return
+            val descriptor = bindingContext[BindingContext.VALUE_PARAMETER, param] ?: return
+            val offset = param.textRange.startOffset
+            declarations.add(
+                DeclarationAst(
+                    kind = "catch_variable",
+                    name = param.name ?: "<anonymous>",
+                    fqName = descriptor.fqNameSafe.asString(),
+                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    type = descriptor.type.toFqString(),
+                    line = lineOf(offset),
+                    column = colOf(offset),
+                )
+            )
+        }
+
+        // val (a, b) = pair — destructuring entries
+        override fun visitDestructuringDeclarationEntry(entry: KtDestructuringDeclarationEntry) {
+            super.visitDestructuringDeclarationEntry(entry)
+            val descriptor = bindingContext[BindingContext.VARIABLE, entry] ?: return
+            val offset = entry.textRange.startOffset
+            declarations.add(
+                DeclarationAst(
+                    kind = "destructured_variable",
+                    name = entry.name ?: "<anonymous>",
+                    fqName = descriptor.fqNameSafe.asString(),
+                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    type = descriptor.type.toFqString(),
+                    line = lineOf(offset),
+                    column = colOf(offset),
+                )
+            )
+        }
+
+        // typealias Foo = Bar<Baz>
+        override fun visitTypeAlias(typeAlias: KtTypeAlias) {
+            super.visitTypeAlias(typeAlias)
+            val descriptor = bindingContext[BindingContext.TYPE_ALIAS, typeAlias] ?: return
+            val offset = typeAlias.textRange.startOffset
+            declarations.add(
+                DeclarationAst(
+                    kind = "typealias",
+                    name = typeAlias.name ?: "<anonymous>",
+                    fqName = descriptor.fqNameSafe.asString(),
+                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    type = descriptor.expandedType.toFqString(),
+                    line = lineOf(offset),
+                    column = colOf(offset),
+                )
+            )
+        }
+
+        // secondary constructor(x: Foo, y: Bar)
+        override fun visitSecondaryConstructor(constructor: KtSecondaryConstructor) {
+            super.visitSecondaryConstructor(constructor)
+            val descriptor = bindingContext[BindingContext.CONSTRUCTOR, constructor] ?: return
+            val offset = constructor.textRange.startOffset
+            declarations.add(
+                DeclarationAst(
+                    kind = "constructor",
+                    name = constructor.name ?: "<anonymous>",
+                    fqName = descriptor.fqNameSafe.asString(),
+                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    returnType = descriptor.returnType.toFqString(),
+                    parameters = descriptor.valueParameters.map { p ->
+                        ParameterAst(name = p.name.asString(), type = p.type.toFqString())
+                    },
+                    line = lineOf(offset),
+                    column = colOf(offset),
+                )
+            )
+        }
+
+        override fun visitNamedFunction(function: KtNamedFunction) {
+            super.visitNamedFunction(function)
+            val descriptor = bindingContext[BindingContext.FUNCTION, function] ?: return
+            val offset = function.textRange.startOffset
+            declarations.add(
+                DeclarationAst(
+                    kind = "function",
+                    name = function.name ?: "<anonymous>",
+                    fqName = descriptor.fqNameSafe.asString(),
+                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    returnType = descriptor.returnType?.toFqString() ?: "?",
+                    parameters = descriptor.valueParameters.map { p ->
+                        ParameterAst(name = p.name.asString(), type = p.type.toFqString())
+                    },
+                    line = lineOf(offset),
+                    column = colOf(offset),
+                )
+            )
+        }
+
+        override fun visitProperty(property: KtProperty) {
+            super.visitProperty(property)
+            val descriptor = bindingContext[BindingContext.VARIABLE, property] ?: return
+            val offset = property.textRange.startOffset
+            declarations.add(
+                DeclarationAst(
+                    kind = "property",
+                    name = property.name ?: "<anonymous>",
+                    fqName = descriptor.fqNameSafe.asString(),
+                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    type = descriptor.type.toFqString(),
+                    line = lineOf(offset),
+                    column = colOf(offset),
+                )
+            )
+        }
+    })
+
+    return declarations
+}
