@@ -17,4 +17,4 @@ build/
 Thumbs.db
 
 # Exclude test-projects directory
-test-projects
+test-projectstypemapper-output.json
