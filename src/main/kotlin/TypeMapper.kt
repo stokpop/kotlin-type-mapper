@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.types.KotlinType
 
@@ -40,6 +42,17 @@ import org.jetbrains.kotlin.types.KotlinType
 data class ParameterAst(
     val name: String,
     val type: String,
+)
+
+@Serializable
+data class CallSiteAst(
+    val calleeFqName: String,
+    val dispatchReceiverType: String? = null,    // non-null for regular method calls
+    val extensionReceiverType: String? = null,   // non-null for extension function calls
+    val returnType: String,
+    val argumentTypes: List<String> = emptyList(),
+    val line: Int,
+    val column: Int,
 )
 
 @Serializable
@@ -60,11 +73,12 @@ data class FileAst(
     val relativePath: String,
     val packageFqName: String,
     val declarations: List<DeclarationAst>,
+    val calls: List<CallSiteAst> = emptyList(),
 )
 
 @Serializable
 data class TypedAst(
-    val schemaVersion: String = "1.0",
+    val schemaVersion: String = "1.1",
     val generatedBy: String = "kotlin-TypeMapper",
     val sourceRoot: String,
     val files: List<FileAst>,
@@ -323,6 +337,41 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
     return declarations
 }
 
+// ── Call-site extraction ──────────────────────────────────────────────────────
+
+fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallSiteAst> {
+    val calls = mutableListOf<CallSiteAst>()
+    val doc = ktFile.viewProvider.document
+
+    fun lineOf(offset: Int) = (doc?.getLineNumber(offset) ?: 0) + 1
+    fun colOf(offset: Int): Int {
+        val line = doc?.getLineNumber(offset) ?: return 1
+        return offset - (doc.getLineStartOffset(line)) + 1
+    }
+
+    ktFile.accept(object : KtTreeVisitorVoid() {
+        override fun visitCallExpression(expression: KtCallExpression) {
+            super.visitCallExpression(expression)
+            val resolvedCall = expression.getResolvedCall(bindingContext) ?: return
+            val descriptor = resolvedCall.resultingDescriptor
+            val offset = expression.textRange.startOffset
+            calls.add(
+                CallSiteAst(
+                    calleeFqName = descriptor.fqNameSafe.asString(),
+                    dispatchReceiverType = resolvedCall.dispatchReceiver?.type?.toFqString(),
+                    extensionReceiverType = resolvedCall.extensionReceiver?.type?.toFqString(),
+                    returnType = descriptor.returnType?.toFqString() ?: "kotlin.Unit",
+                    argumentTypes = descriptor.valueParameters.map { it.type.toFqString() },
+                    line = lineOf(offset),
+                    column = colOf(offset),
+                )
+            )
+        }
+    })
+
+    return calls
+}
+
 // ── Classpath resolution ──────────────────────────────────────────────────────
 
 fun resolveProjectClasspath(projectRoot: File): List<File> = when {
@@ -427,6 +476,7 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
                 relativePath = file.relativeTo(sourceRoot).path,
                 packageFqName = ktFile.packageFqName.asString(),
                 declarations = extractDeclarations(ktFile, bindingContext),
+                calls = extractCallSites(ktFile, bindingContext),
             )
         }
 
@@ -466,5 +516,6 @@ fun main(args: Array<String>) {
     outputFile.writeText(json.encodeToString(ast))
 
     val totalDeclarations = ast.files.sumOf { it.declarations.size }
-    println("Written $totalDeclarations declarations across ${ast.files.size} files → ${outputFile.absolutePath}")
+    val totalCalls = ast.files.sumOf { it.calls.size }
+    println("Written $totalDeclarations declarations, $totalCalls call sites across ${ast.files.size} files → ${outputFile.absolutePath}")
 }
