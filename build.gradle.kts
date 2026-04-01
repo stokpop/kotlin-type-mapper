@@ -1,7 +1,10 @@
+import java.time.Year
+
 plugins {
     kotlin("jvm") version "2.2.21"
     kotlin("plugin.serialization") version "2.2.21"
     application
+    id("com.github.hierynomus.license") version "0.16.1"
 }
 
 group = "nl.stokpop.typemapper"
@@ -28,6 +31,13 @@ tasks.test {
 
 application {
     mainClass.set("TypeMapperKt")
+}
+
+license {
+    header = rootProject.file("HEADER")
+    ext.set("year", Year.now().value)
+    ext.set("name", "Peter Paul Bakker, Stokpop Software Solutions")
+    skipExistingHeaders = true
 }
 
 tasks.register("cloneMemoryCheck") {
