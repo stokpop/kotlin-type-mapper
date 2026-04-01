@@ -29,3 +29,21 @@ tasks.test {
 application {
     mainClass.set("TypeMapperKt")
 }
+
+tasks.register("cloneMemoryCheck") {
+    description = "Clones the memory-check test project if it does not exist yet."
+    val targetDir = file("test-projects/memory-check")
+    onlyIf { !targetDir.exists() }
+    doLast {
+        targetDir.parentFile.mkdirs()
+        val process = ProcessBuilder("git", "clone", "https://github.com/stokpop/memory-check.git", targetDir.absolutePath)
+            .inheritIO()
+            .start()
+        val exitCode = process.waitFor()
+        if (exitCode != 0) throw GradleException("git clone failed with exit code $exitCode")
+    }
+}
+
+tasks.named("run") {
+    dependsOn("cloneMemoryCheck")
+}
