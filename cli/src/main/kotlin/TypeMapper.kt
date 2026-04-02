@@ -134,7 +134,7 @@ class CallsCommand : CliktCommand("calls") {
 
     val ast by requireObject<TypedAst>()
     val sig by argument("SIG", help = "Signature pattern, e.g. 'kotlin.String#trim()'")
-    override fun run() = ast.callsMatching(sig).forEach { echo(it.format()) }
+    override fun run() = ast.callsMatchingLocated(sig).forEach { (path, call) -> echo(call.format(path)) }
 }
 
 class CallsPolymorphicCommand : CliktCommand("calls-polymorphic") {
@@ -143,7 +143,7 @@ class CallsPolymorphicCommand : CliktCommand("calls-polymorphic") {
 
     val ast by requireObject<TypedAst>()
     val sig by argument("SIG")
-    override fun run() = ast.callsMatchingPolymorphic(sig).forEach { echo(it.format()) }
+    override fun run() = ast.callsMatchingPolymorphicLocated(sig).forEach { (path, call) -> echo(call.format(path)) }
 }
 
 class ImplementorsCommand : CliktCommand("implementors") {
@@ -165,13 +165,15 @@ class AnnotatedWithCommand : CliktCommand("annotated-with") {
 
 // ---- formatting helpers -----------------------------------------------------
 
-fun CallSiteAst.format(): String {
+fun CallSiteAst.format(filePath: String = ""): String {
     val receiver = dispatchReceiverType ?: extensionReceiverType ?: "<no-receiver>"
     val params = argumentTypes.joinToString(", ")
-    return "$receiver → $calleeFqName($params): $returnType  [$line:$column]"
+    val loc = if (filePath.isNotEmpty()) "$filePath:$line:$column" else "$line:$column"
+    return "$loc  $receiver → $calleeFqName($params): $returnType"
 }
 
-fun DeclarationAst.format(): String {
+fun DeclarationAst.format(filePath: String = ""): String {
     val typeInfo = returnType ?: type ?: kind
-    return "$kind  $fqName  [$typeInfo]  [$line:$column]"
+    val loc = if (filePath.isNotEmpty()) "$filePath:$line:$column" else "$line:$column"
+    return "$loc  $kind  $fqName  [$typeInfo]"
 }

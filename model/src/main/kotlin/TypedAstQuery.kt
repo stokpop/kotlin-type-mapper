@@ -98,6 +98,16 @@ fun TypedAst.callsMatchingPolymorphic(sig: String): List<CallSiteAst> {
     }
 }
 
+/** Returns call sites matching [sig] paired with their source file's relative path. */
+fun TypedAst.callsMatchingLocated(sig: String): List<Pair<String, CallSiteAst>> =
+    files.flatMap { f -> f.calls.filter { it.matchesSig(sig) }.map { f.relativePath to it } }
+
+/** Polymorphic version of [callsMatchingLocated]. */
+fun TypedAst.callsMatchingPolymorphicLocated(sig: String): List<Pair<String, CallSiteAst>> {
+    val matchingCalls = callsMatchingPolymorphic(sig).toHashSet()
+    return files.flatMap { f -> f.calls.filter { it in matchingCalls }.map { f.relativePath to it } }
+}
+
 // ---- Internal helpers ----
 
 /**
