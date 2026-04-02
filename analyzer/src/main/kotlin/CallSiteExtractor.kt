@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
@@ -44,6 +46,33 @@ fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallS
                     extensionReceiverType = resolvedCall.extensionReceiver?.type?.toFqString(),
                     returnType = descriptor.returnType?.toFqString() ?: "kotlin.Unit",
                     argumentTypes = descriptor.valueParameters.map { it.type.toFqString() },
+                    line = lineOf(offset),
+                    column = colOf(offset),
+                )
+            )
+        }
+
+        // Property reads: list.size, map.keys, string.length, etc.
+        // Captured as call sites with empty argumentTypes so signatures like
+        // "kotlin.collections.Collection#size()" and "_#size()" match them.
+        override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+            super.visitSimpleNameExpression(expression)
+            // Skip names that are the callee of a call expression (already captured above).
+            if (expression.parent is KtCallExpression) return
+            val resolvedCall = expression.getResolvedCall(bindingContext) ?: return
+            val descriptor = resolvedCall.resultingDescriptor as? PropertyDescriptor ?: return
+            // Only record reads with a dispatch or extension receiver (i.e. qualified access).
+            val dispatch   = resolvedCall.dispatchReceiver?.type?.toFqString()
+            val extension  = resolvedCall.extensionReceiver?.type?.toFqString()
+            if (dispatch == null && extension == null) return
+            val offset = expression.textRange.startOffset
+            calls.add(
+                CallSiteAst(
+                    calleeFqName = descriptor.fqNameSafe.asString(),
+                    dispatchReceiverType = dispatch,
+                    extensionReceiverType = extension,
+                    returnType = descriptor.type.toFqString(),
+                    argumentTypes = emptyList(),
                     line = lineOf(offset),
                     column = colOf(offset),
                 )

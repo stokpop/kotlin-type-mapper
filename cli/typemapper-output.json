@@ -292,6 +292,24 @@
             ],
             "calls": [
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowthTrend.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowthTrend",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "argumentTypes": [],
+                    "line": 26,
+                    "column": 48
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.values",
+                    "dispatchReceiverType": "kotlin.collections.Map<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Collection<nl.stokpop.memory.domain.ClassGrowth>",
+                    "argumentTypes": [],
+                    "line": 26,
+                    "column": 53
+                },
+                {
                     "calleeFqName": "kotlin.collections.Collection.stream",
                     "dispatchReceiverType": "kotlin.collections.Collection<nl.stokpop.memory.domain.ClassGrowth>",
                     "extensionReceiverType": null,
@@ -299,6 +317,42 @@
                     "argumentTypes": [],
                     "line": 26,
                     "column": 60
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.histoLines",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "argumentTypes": [],
+                    "line": 26,
+                    "column": 81
+                },
+                {
+                    "calleeFqName": "kotlin.collections.List.size",
+                    "dispatchReceiverType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 26,
+                    "column": 92
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowthTrend.timestamps",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowthTrend",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<kotlin.Long>",
+                    "argumentTypes": [],
+                    "line": 26,
+                    "column": 100
+                },
+                {
+                    "calleeFqName": "kotlin.collections.List.size",
+                    "dispatchReceiverType": "kotlin.collections.List<kotlin.Long>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 26,
+                    "column": 111
                 },
                 {
                     "calleeFqName": "java.util.stream.Stream.filter",
@@ -310,6 +364,24 @@
                     ],
                     "line": 26,
                     "column": 69
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.classInfo",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassInfo",
+                    "argumentTypes": [],
+                    "line": 26,
+                    "column": 127
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassInfo.name",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassInfo",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 26,
+                    "column": 137
                 },
                 {
                     "calleeFqName": "java.util.stream.Stream.map",
@@ -341,6 +413,24 @@
                     "column": 46
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowthTrend.timestamps",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowthTrend",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<kotlin.Long>",
+                    "argumentTypes": [],
+                    "line": 28,
+                    "column": 97
+                },
+                {
+                    "calleeFqName": "kotlin.collections.List.size",
+                    "dispatchReceiverType": "kotlin.collections.List<kotlin.Long>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 28,
+                    "column": 108
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.MemoryCheckException.<init>",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -350,6 +440,33 @@
                     ],
                     "line": 28,
                     "column": 19
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowthTrend.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowthTrend",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "argumentTypes": [],
+                    "line": 34,
+                    "column": 9
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.values",
+                    "dispatchReceiverType": "kotlin.collections.Map<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Collection<nl.stokpop.memory.domain.ClassGrowth>",
+                    "argumentTypes": [],
+                    "line": 34,
+                    "column": 14
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.analysisResult",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 35,
+                    "column": 26
                 },
                 {
                     "calleeFqName": "kotlin.collections.filter",
@@ -363,6 +480,33 @@
                     "column": 14
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.classInfo",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassInfo",
+                    "argumentTypes": [],
+                    "line": 37,
+                    "column": 26
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassInfo.isOnWatchList",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassInfo",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 37,
+                    "column": 36
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.histoLines",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "argumentTypes": [],
+                    "line": 37,
+                    "column": 56
+                },
+                {
                     "calleeFqName": "kotlin.collections.last",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
@@ -370,6 +514,15 @@
                     "argumentTypes": [],
                     "line": 37,
                     "column": 67
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDumpLine.bytes",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDumpLine",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long?",
+                    "argumentTypes": [],
+                    "line": 37,
+                    "column": 74
                 },
                 {
                     "calleeFqName": "kotlin.collections.filter",
@@ -390,6 +543,33 @@
                     "argumentTypes": [],
                     "line": 38,
                     "column": 14
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowthTrend.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowthTrend",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "argumentTypes": [],
+                    "line": 42,
+                    "column": 9
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.values",
+                    "dispatchReceiverType": "kotlin.collections.Map<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Collection<nl.stokpop.memory.domain.ClassGrowth>",
+                    "argumentTypes": [],
+                    "line": 42,
+                    "column": 14
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.analysisResult",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 42,
+                    "column": 33
                 },
                 {
                     "calleeFqName": "kotlin.collections.filter",
@@ -515,6 +695,15 @@
                     "column": 42
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassInfo.isOnWatchList",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassInfo",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 25,
+                    "column": 27
+                },
+                {
                     "calleeFqName": "java.lang.StringBuilder.append",
                     "dispatchReceiverType": "java.lang.StringBuilder",
                     "extensionReceiverType": null,
@@ -524,6 +713,15 @@
                     ],
                     "line": 25,
                     "column": 55
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassInfo.isOnSafeList",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassInfo",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 26,
+                    "column": 27
                 },
                 {
                     "calleeFqName": "java.lang.StringBuilder.append",
@@ -658,6 +856,15 @@
             ],
             "calls": [
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassPatternSet.regexps",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassPatternSet",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Set<java.util.regex.Pattern>",
+                    "argumentTypes": [],
+                    "line": 26,
+                    "column": 9
+                },
+                {
                     "calleeFqName": "kotlin.collections.asSequence",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.collections.Set<kotlin.String>",
@@ -768,6 +975,15 @@
                     "column": 14
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassPatternSet.classPatterns",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassPatternSet",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Set<kotlin.String>",
+                    "argumentTypes": [],
+                    "line": 34,
+                    "column": 9
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.domain.ClassPatternSet.isWildcard",
                     "dispatchReceiverType": "nl.stokpop.memory.domain.ClassPatternSet",
                     "extensionReceiverType": null,
@@ -811,6 +1027,15 @@
                     "column": 45
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassPatternSet.classPatterns",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassPatternSet",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Set<kotlin.String>",
+                    "argumentTypes": [],
+                    "line": 42,
+                    "column": 16
+                },
+                {
                     "calleeFqName": "kotlin.collections.Set.contains",
                     "dispatchReceiverType": "kotlin.collections.Set<kotlin.String>",
                     "extensionReceiverType": null,
@@ -820,6 +1045,15 @@
                     ],
                     "line": 42,
                     "column": 30
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassPatternSet.regexps",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassPatternSet",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Set<java.util.regex.Pattern>",
+                    "argumentTypes": [],
+                    "line": 42,
+                    "column": 48
                 },
                 {
                     "calleeFqName": "java.util.regex.Pattern.matcher",
@@ -1023,6 +1257,15 @@
                     "column": 31
                 },
                 {
+                    "calleeFqName": "kotlin.String.length",
+                    "dispatchReceiverType": "kotlin.String",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 29,
+                    "column": 52
+                },
+                {
                     "calleeFqName": "kotlin.text.substring",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.String",
@@ -1054,6 +1297,24 @@
                     ],
                     "line": 29,
                     "column": 60
+                },
+                {
+                    "calleeFqName": "kotlin.String.length",
+                    "dispatchReceiverType": "kotlin.String",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 30,
+                    "column": 49
+                },
+                {
+                    "calleeFqName": "kotlin.String.length",
+                    "dispatchReceiverType": "kotlin.String",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 30,
+                    "column": 69
                 },
                 {
                     "calleeFqName": "kotlin.text.substring",
@@ -1284,6 +1545,15 @@
             ],
             "calls": [
                 {
+                    "calleeFqName": "kotlin.Array.size",
+                    "dispatchReceiverType": "kotlin.Array<kotlin.String>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 20,
+                    "column": 18
+                },
+                {
                     "calleeFqName": "kotlin.require",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -1416,6 +1686,24 @@
                 }
             ],
             "calls": [
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDump.histogram",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDump",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "argumentTypes": [],
+                    "line": 30,
+                    "column": 16
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDumpLine.classInfo",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDumpLine",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassInfo",
+                    "argumentTypes": [],
+                    "line": 30,
+                    "column": 35
+                },
                 {
                     "calleeFqName": "kotlin.collections.map",
                     "dispatchReceiverType": null,
@@ -1559,6 +1847,15 @@
                     ],
                     "line": 28,
                     "column": 48
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDumpLine.lineNumber",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDumpLine",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long?",
+                    "argumentTypes": [],
+                    "line": 32,
+                    "column": 16
                 }
             ],
             "contentHash": "1a4b01006b4a2c8d743e1436da9516c60b9564576f31142aa40be03e1fecc93a"
@@ -2290,6 +2587,15 @@
                     "column": 67
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDump.timestamp",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDump",
+                    "extensionReceiverType": null,
+                    "returnType": "java.time.LocalDateTime",
+                    "argumentTypes": [],
+                    "line": 30,
+                    "column": 41
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.MemoryCheck.Companion.useZoneOffset",
                     "dispatchReceiverType": "nl.stokpop.memory.MemoryCheck.Companion",
                     "extensionReceiverType": null,
@@ -2381,6 +2687,15 @@
                     "column": 18
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.histoLines",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "argumentTypes": [],
+                    "line": 35,
+                    "column": 49
+                },
+                {
                     "calleeFqName": "kotlin.collections.last",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
@@ -2388,6 +2703,15 @@
                     "argumentTypes": [],
                     "line": 35,
                     "column": 60
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDumpLine.bytes",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDumpLine",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long?",
+                    "argumentTypes": [],
+                    "line": 35,
+                    "column": 67
                 },
                 {
                     "calleeFqName": "kotlin.collections.sortedBy",
@@ -2429,6 +2753,24 @@
                     ],
                     "line": 38,
                     "column": 16
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDump.histogram",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDump",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "argumentTypes": [],
+                    "line": 43,
+                    "column": 33
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDumpLine.classInfo",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDumpLine",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassInfo",
+                    "argumentTypes": [],
+                    "line": 43,
+                    "column": 68
                 },
                 {
                     "calleeFqName": "kotlin.collections.firstOrNull",
@@ -2473,6 +2815,60 @@
                     "column": 14
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassInfo.isOnSafeList",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassInfo",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 48,
+                    "column": 18
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.reportLimits",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.report.ReportLimits",
+                    "argumentTypes": [],
+                    "line": 49,
+                    "column": 20
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.maxGrowthPercentage",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Double",
+                    "argumentTypes": [],
+                    "line": 49,
+                    "column": 33
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.reportLimits",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.report.ReportLimits",
+                    "argumentTypes": [],
+                    "line": 50,
+                    "column": 20
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.minGrowthPointsPercentage",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Double",
+                    "argumentTypes": [],
+                    "line": 50,
+                    "column": 33
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDumpLine.bytes",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDumpLine",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long?",
+                    "argumentTypes": [],
+                    "line": 51,
+                    "column": 16
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.HistoAnalyser.analyseGrowth",
                     "dispatchReceiverType": "nl.stokpop.memory.HistoAnalyser",
                     "extensionReceiverType": null,
@@ -2501,6 +2897,15 @@
                     "column": 16
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDumpLine.bytes",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDumpLine",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long?",
+                    "argumentTypes": [],
+                    "line": 61,
+                    "column": 63
+                },
+                {
                     "calleeFqName": "kotlin.collections.List.isEmpty",
                     "dispatchReceiverType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
                     "extensionReceiverType": null,
@@ -2508,6 +2913,15 @@
                     "argumentTypes": [],
                     "line": 63,
                     "column": 24
+                },
+                {
+                    "calleeFqName": "kotlin.collections.List.size",
+                    "dispatchReceiverType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 67,
+                    "column": 36
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDumpLine.isGhost",
@@ -3013,6 +3427,15 @@
                     "column": 14
                 },
                 {
+                    "calleeFqName": "name",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File",
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 56,
+                    "column": 33
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.HistoReader.extractDate",
                     "dispatchReceiverType": "nl.stokpop.memory.HistoReader",
                     "extensionReceiverType": null,
@@ -3035,6 +3458,15 @@
                     "column": 42
                 },
                 {
+                    "calleeFqName": "name",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File",
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 60,
+                    "column": 66
+                },
+                {
                     "calleeFqName": "kotlin.io.println",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -3053,6 +3485,15 @@
                     "argumentTypes": [],
                     "line": 63,
                     "column": 47
+                },
+                {
+                    "calleeFqName": "kotlin.jvm.java",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "kotlin.reflect.KClass<java.nio.file.attribute.BasicFileAttributes>",
+                    "returnType": "java.lang.Class<java.nio.file.attribute.BasicFileAttributes>",
+                    "argumentTypes": [],
+                    "line": 63,
+                    "column": 84
                 },
                 {
                     "calleeFqName": "java.nio.file.Files.readAttributes",
@@ -3237,6 +3678,15 @@
                     "column": 21
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.HistoReader.spacesRegex",
+                    "dispatchReceiverType": "nl.stokpop.memory.HistoReader",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.text.Regex",
+                    "argumentTypes": [],
+                    "line": 82,
+                    "column": 32
+                },
+                {
                     "calleeFqName": "kotlin.text.split",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.String",
@@ -3247,6 +3697,33 @@
                     ],
                     "line": 82,
                     "column": 26
+                },
+                {
+                    "calleeFqName": "kotlin.collections.List.size",
+                    "dispatchReceiverType": "kotlin.collections.List<kotlin.String>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 86,
+                    "column": 21
+                },
+                {
+                    "calleeFqName": "kotlin.collections.List.size",
+                    "dispatchReceiverType": "kotlin.collections.List<kotlin.String>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 86,
+                    "column": 40
+                },
+                {
+                    "calleeFqName": "kotlin.collections.List.size",
+                    "dispatchReceiverType": "kotlin.collections.List<kotlin.String>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 87,
+                    "column": 78
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.InvalidHistoLineException.<init>",
@@ -3347,6 +3824,15 @@
                     "column": 16
                 },
                 {
+                    "calleeFqName": "kotlin.String.length",
+                    "dispatchReceiverType": "kotlin.String",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 101,
+                    "column": 65
+                },
+                {
                     "calleeFqName": "kotlin.text.substring",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.String",
@@ -3357,6 +3843,15 @@
                     ],
                     "line": 101,
                     "column": 50
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.HistoReader.dateRegex",
+                    "dispatchReceiverType": "nl.stokpop.memory.HistoReader",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.text.Regex",
+                    "argumentTypes": [],
+                    "line": 104,
+                    "column": 13
                 },
                 {
                     "calleeFqName": "kotlin.text.Regex.containsMatchIn",
@@ -3370,6 +3865,15 @@
                     "column": 23
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.HistoReader.dateRegex",
+                    "dispatchReceiverType": "nl.stokpop.memory.HistoReader",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.text.Regex",
+                    "argumentTypes": [],
+                    "line": 106,
+                    "column": 30
+                },
+                {
                     "calleeFqName": "kotlin.text.Regex.find",
                     "dispatchReceiverType": "kotlin.text.Regex",
                     "extensionReceiverType": null,
@@ -3380,6 +3884,15 @@
                     ],
                     "line": 106,
                     "column": 40
+                },
+                {
+                    "calleeFqName": "kotlin.text.MatchResult.value",
+                    "dispatchReceiverType": "kotlin.text.MatchResult",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 106,
+                    "column": 50
                 },
                 {
                     "calleeFqName": "kotlin.text.toRegex",
@@ -3401,6 +3914,15 @@
                     ],
                     "line": 107,
                     "column": 48
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.HistoReader.datePattern",
+                    "dispatchReceiverType": "nl.stokpop.memory.HistoReader",
+                    "extensionReceiverType": null,
+                    "returnType": "java.time.format.DateTimeFormatter",
+                    "argumentTypes": [],
+                    "line": 108,
+                    "column": 59
                 },
                 {
                     "calleeFqName": "java.time.LocalDateTime.parse",
@@ -4174,6 +4696,51 @@
             ],
             "calls": [
                 {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.identifier",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 145,
+                    "column": 34
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.heapHistogramDumpDetails",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.json.HeapHistogramDumpDetails",
+                    "argumentTypes": [],
+                    "line": 146,
+                    "column": 31
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpDetails.timestamps",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<kotlin.Long?>",
+                    "argumentTypes": [],
+                    "line": 146,
+                    "column": 56
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.CHART_HTML_TEMPLATE",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.HtmlGraphCreator",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 148,
+                    "column": 24
+                },
+                {
+                    "calleeFqName": "kotlin.collections.List.size",
+                    "dispatchReceiverType": "kotlin.collections.List<kotlin.Long?>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 149,
+                    "column": 31
+                },
+                {
                     "calleeFqName": "kotlin.text.format",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.String.Companion",
@@ -4220,6 +4787,24 @@
                     ],
                     "line": 155,
                     "column": 33
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.heapHistogramDumpDetails",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.json.HeapHistogramDumpDetails",
+                    "argumentTypes": [],
+                    "line": 157,
+                    "column": 32
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpDetails.classHistogramDetails",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.json.ClassHistogramDetails>",
+                    "argumentTypes": [],
+                    "line": 157,
+                    "column": 57
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.createBytesTable",
@@ -4278,6 +4863,15 @@
                     "column": 24
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.usedFiles",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.json.UsedFilesReport?",
+                    "argumentTypes": [],
+                    "line": 163,
+                    "column": 66
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.report.listOfUsedFiles",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -4311,6 +4905,15 @@
                     ],
                     "line": 163,
                     "column": 33
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.reportDirectory",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 165,
+                    "column": 38
                 },
                 {
                     "calleeFqName": "java.io.File.<init>",
@@ -4348,6 +4951,15 @@
                     "column": 20
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.reportLimits",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.report.ReportLimits",
+                    "argumentTypes": [],
+                    "line": 172,
+                    "column": 33
+                },
+                {
                     "calleeFqName": "java.lang.StringBuilder.append",
                     "dispatchReceiverType": "java.lang.StringBuilder",
                     "extensionReceiverType": null,
@@ -4368,6 +4980,15 @@
                     ],
                     "line": 175,
                     "column": 14
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.identifier",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 176,
+                    "column": 68
                 },
                 {
                     "calleeFqName": "java.lang.StringBuilder.append",
@@ -4392,6 +5013,15 @@
                     "column": 96
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.reportDateTime",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 178,
+                    "column": 68
+                },
+                {
                     "calleeFqName": "java.lang.StringBuilder.append",
                     "dispatchReceiverType": "java.lang.StringBuilder",
                     "extensionReceiverType": null,
@@ -4414,6 +5044,15 @@
                     "column": 100
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.leakResult",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 179,
+                    "column": 72
+                },
+                {
                     "calleeFqName": "java.lang.StringBuilder.append",
                     "dispatchReceiverType": "java.lang.StringBuilder",
                     "extensionReceiverType": null,
@@ -4434,6 +5073,15 @@
                     ],
                     "line": 179,
                     "column": 100
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.settings",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Set<nl.stokpop.memory.domain.AnalysisResult>",
+                    "argumentTypes": [],
+                    "line": 180,
+                    "column": 72
                 },
                 {
                     "calleeFqName": "java.lang.StringBuilder.append",
@@ -4458,6 +5106,15 @@
                     "column": 98
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.classLimit",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 181,
+                    "column": 75
+                },
+                {
                     "calleeFqName": "java.lang.StringBuilder.append",
                     "dispatchReceiverType": "java.lang.StringBuilder",
                     "extensionReceiverType": null,
@@ -4478,6 +5135,15 @@
                     ],
                     "line": 181,
                     "column": 103
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.byteLimit",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long",
+                    "argumentTypes": [],
+                    "line": 182,
+                    "column": 114
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.util.ConversionUtils.humanReadableMemorySize",
@@ -4513,6 +5179,15 @@
                     "column": 142
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.maxGrowthPercentage",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Double",
+                    "argumentTypes": [],
+                    "line": 183,
+                    "column": 90
+                },
+                {
                     "calleeFqName": "java.lang.StringBuilder.append",
                     "dispatchReceiverType": "java.lang.StringBuilder",
                     "extensionReceiverType": null,
@@ -4533,6 +5208,15 @@
                     ],
                     "line": 183,
                     "column": 129
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.minGrowthPointsPercentage",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Double",
+                    "argumentTypes": [],
+                    "line": 184,
+                    "column": 89
                 },
                 {
                     "calleeFqName": "java.lang.StringBuilder.append",
@@ -4557,6 +5241,15 @@
                     "column": 134
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.safeList",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Set<kotlin.String>",
+                    "argumentTypes": [],
+                    "line": 185,
+                    "column": 66
+                },
+                {
                     "calleeFqName": "java.lang.StringBuilder.append",
                     "dispatchReceiverType": "java.lang.StringBuilder",
                     "extensionReceiverType": null,
@@ -4577,6 +5270,15 @@
                     ],
                     "line": 185,
                     "column": 92
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.watchList",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Set<kotlin.String>",
+                    "argumentTypes": [],
+                    "line": 186,
+                    "column": 67
                 },
                 {
                     "calleeFqName": "java.lang.StringBuilder.append",
@@ -4645,6 +5347,51 @@
                     "column": 14
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.heapHistogramDumpSummary",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "argumentTypes": [],
+                    "line": 191,
+                    "column": 26
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 191,
+                    "column": 51
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.key",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 192,
+                    "column": 27
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 192,
+                    "column": 45
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.key",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 192,
+                    "column": 83
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.mapToUnicodeArrow",
                     "dispatchReceiverType": "nl.stokpop.memory.report.HtmlGraphCreator",
                     "extensionReceiverType": null,
@@ -4654,6 +5401,24 @@
                     ],
                     "line": 192,
                     "column": 62
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.key",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 192,
+                    "column": 102
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.AnalysisResult.description",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 192,
+                    "column": 106
                 },
                 {
                     "calleeFqName": "kotlin.collections.map",
@@ -4725,6 +5490,15 @@
                     "column": 21
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.analysis",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 208,
+                    "column": 61
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.mapToUnicodeArrow",
                     "dispatchReceiverType": "nl.stokpop.memory.report.HtmlGraphCreator",
                     "extensionReceiverType": null,
@@ -4736,6 +5510,24 @@
                     "column": 40
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.nonBreakSpace",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.HtmlGraphCreator",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Char",
+                    "argumentTypes": [],
+                    "line": 208,
+                    "column": 72
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.classInfo",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassInfo",
+                    "argumentTypes": [],
+                    "line": 208,
+                    "column": 127
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.domain.ClassInfo.Companion.prefixWatchListAndSafeList",
                     "dispatchReceiverType": "nl.stokpop.memory.domain.ClassInfo.Companion",
                     "extensionReceiverType": null,
@@ -4745,6 +5537,24 @@
                     ],
                     "line": 208,
                     "column": 97
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.classInfo",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassInfo",
+                    "argumentTypes": [],
+                    "line": 208,
+                    "column": 143
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassInfo.name",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassInfo",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 208,
+                    "column": 153
                 },
                 {
                     "calleeFqName": "kotlin.collections.map",
@@ -5013,6 +5823,15 @@
                     "column": 43
                 },
                 {
+                    "calleeFqName": "java.lang.StringBuilder.length",
+                    "dispatchReceiverType": "java.lang.StringBuilder",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 234,
+                    "column": 34
+                },
+                {
                     "calleeFqName": "java.lang.StringBuilder.deleteCharAt",
                     "dispatchReceiverType": "java.lang.StringBuilder",
                     "extensionReceiverType": null,
@@ -5033,6 +5852,69 @@
                     "column": 22
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.arrowUpCritical",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.HtmlGraphCreator",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Char",
+                    "argumentTypes": [],
+                    "line": 240,
+                    "column": 45
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.arrowUpMinor",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.HtmlGraphCreator",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Char",
+                    "argumentTypes": [],
+                    "line": 241,
+                    "column": 42
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.arrowUpSafe",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.HtmlGraphCreator",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Char",
+                    "argumentTypes": [],
+                    "line": 242,
+                    "column": 41
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.arrowGrowHickUps",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.HtmlGraphCreator",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Char",
+                    "argumentTypes": [],
+                    "line": 243,
+                    "column": 45
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.arrowUpDown",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.HtmlGraphCreator",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Char",
+                    "argumentTypes": [],
+                    "line": 244,
+                    "column": 47
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.arrowDown",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.HtmlGraphCreator",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Char",
+                    "argumentTypes": [],
+                    "line": 245,
+                    "column": 38
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.arrowFlat",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.HtmlGraphCreator",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Char",
+                    "argumentTypes": [],
+                    "line": 246,
+                    "column": 38
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.mapToUnicodeArrow",
                     "dispatchReceiverType": "nl.stokpop.memory.report.HtmlGraphCreator",
                     "extensionReceiverType": null,
@@ -5042,6 +5924,15 @@
                     ],
                     "line": 264,
                     "column": 45
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.bytes",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<kotlin.Long?>",
+                    "argumentTypes": [],
+                    "line": 275,
+                    "column": 74
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.createChartDataTable",
@@ -5135,6 +6026,15 @@
                     "column": 35
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.bytesDiff",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<kotlin.Long?>",
+                    "argumentTypes": [],
+                    "line": 290,
+                    "column": 74
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.createChartDataTable",
                     "dispatchReceiverType": "nl.stokpop.memory.report.HtmlGraphCreator",
                     "extensionReceiverType": null,
@@ -5226,6 +6126,15 @@
                     "column": 35
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.instances",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<kotlin.Long?>",
+                    "argumentTypes": [],
+                    "line": 305,
+                    "column": 74
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.createChartDataTable",
                     "dispatchReceiverType": "nl.stokpop.memory.report.HtmlGraphCreator",
                     "extensionReceiverType": null,
@@ -5315,6 +6224,15 @@
                     ],
                     "line": 313,
                     "column": 35
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.instancesDiff",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<kotlin.Long?>",
+                    "argumentTypes": [],
+                    "line": 320,
+                    "column": 74
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.report.HtmlGraphCreator.createChartDataTable",
@@ -5441,6 +6359,15 @@
                     "column": 10
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.UsedFilesReport.histogramFiles",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.UsedFilesReport",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<kotlin.String>",
+                    "argumentTypes": [],
+                    "line": 340,
+                    "column": 21
+                },
+                {
                     "calleeFqName": "java.io.File.<init>",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -5450,6 +6377,15 @@
                     ],
                     "line": 341,
                     "column": 20
+                },
+                {
+                    "calleeFqName": "name",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File",
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 341,
+                    "column": 28
                 },
                 {
                     "calleeFqName": "java.lang.StringBuilder.append",
@@ -5496,6 +6432,15 @@
                     "column": 36
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.UsedFilesReport.safeListFile",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.UsedFilesReport",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String?",
+                    "argumentTypes": [],
+                    "line": 345,
+                    "column": 21
+                },
+                {
                     "calleeFqName": "java.io.File.<init>",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -5505,6 +6450,15 @@
                     ],
                     "line": 346,
                     "column": 20
+                },
+                {
+                    "calleeFqName": "name",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File",
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 346,
+                    "column": 28
                 },
                 {
                     "calleeFqName": "java.lang.StringBuilder.append",
@@ -5551,6 +6505,15 @@
                     "column": 35
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.UsedFilesReport.watchListFile",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.UsedFilesReport",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String?",
+                    "argumentTypes": [],
+                    "line": 350,
+                    "column": 21
+                },
+                {
                     "calleeFqName": "java.io.File.<init>",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -5560,6 +6523,15 @@
                     ],
                     "line": 351,
                     "column": 20
+                },
+                {
+                    "calleeFqName": "name",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File",
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 351,
+                    "column": 28
                 },
                 {
                     "calleeFqName": "java.lang.StringBuilder.append",
@@ -5808,6 +6780,24 @@
                     "column": 34
                 },
                 {
+                    "calleeFqName": "kotlin.jvm.java",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "kotlin.reflect.KClass<kotlin.Array<kotlin.String>>",
+                    "returnType": "java.lang.Class<kotlin.Array<kotlin.String>>",
+                    "argumentTypes": [],
+                    "line": 31,
+                    "column": 66
+                },
+                {
+                    "calleeFqName": "name",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.lang.Class<kotlin.Array<kotlin.String>>",
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 31,
+                    "column": 71
+                },
+                {
                     "calleeFqName": "kotlin.arrayOf",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -5830,6 +6820,15 @@
                     "column": 19
                 },
                 {
+                    "calleeFqName": "nl.stokpop.jmx.JmxHisto.jmxConnector",
+                    "dispatchReceiverType": "nl.stokpop.jmx.JmxHisto",
+                    "extensionReceiverType": null,
+                    "returnType": "javax.management.remote.JMXConnector",
+                    "argumentTypes": [],
+                    "line": 35,
+                    "column": 9
+                },
+                {
                     "calleeFqName": "javax.management.remote.JMXConnectorFactory.connect",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -5840,6 +6839,69 @@
                     ],
                     "line": 35,
                     "column": 44
+                },
+                {
+                    "calleeFqName": "nl.stokpop.jmx.JmxHisto.connection",
+                    "dispatchReceiverType": "nl.stokpop.jmx.JmxHisto",
+                    "extensionReceiverType": null,
+                    "returnType": "javax.management.MBeanServerConnection",
+                    "argumentTypes": [],
+                    "line": 36,
+                    "column": 9
+                },
+                {
+                    "calleeFqName": "nl.stokpop.jmx.JmxHisto.jmxConnector",
+                    "dispatchReceiverType": "nl.stokpop.jmx.JmxHisto",
+                    "extensionReceiverType": null,
+                    "returnType": "javax.management.remote.JMXConnector",
+                    "argumentTypes": [],
+                    "line": 36,
+                    "column": 22
+                },
+                {
+                    "calleeFqName": "mBeanServerConnection",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "javax.management.remote.JMXConnector",
+                    "returnType": "javax.management.MBeanServerConnection",
+                    "argumentTypes": [],
+                    "line": 36,
+                    "column": 35
+                },
+                {
+                    "calleeFqName": "nl.stokpop.jmx.JmxHisto.connection",
+                    "dispatchReceiverType": "nl.stokpop.jmx.JmxHisto",
+                    "extensionReceiverType": null,
+                    "returnType": "javax.management.MBeanServerConnection",
+                    "argumentTypes": [],
+                    "line": 40,
+                    "column": 21
+                },
+                {
+                    "calleeFqName": "nl.stokpop.jmx.JmxHisto.diagnosticCommandBean",
+                    "dispatchReceiverType": "nl.stokpop.jmx.JmxHisto",
+                    "extensionReceiverType": null,
+                    "returnType": "javax.management.ObjectName",
+                    "argumentTypes": [],
+                    "line": 40,
+                    "column": 39
+                },
+                {
+                    "calleeFqName": "nl.stokpop.jmx.JmxHisto.gcClassHistogramParams",
+                    "dispatchReceiverType": "nl.stokpop.jmx.JmxHisto",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Array<kotlin.Any>",
+                    "argumentTypes": [],
+                    "line": 40,
+                    "column": 82
+                },
+                {
+                    "calleeFqName": "nl.stokpop.jmx.JmxHisto.gcClassHistogramSignature",
+                    "dispatchReceiverType": "nl.stokpop.jmx.JmxHisto",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Array<kotlin.String>",
+                    "argumentTypes": [],
+                    "line": 40,
+                    "column": 106
                 },
                 {
                     "calleeFqName": "javax.management.MBeanServerConnection.invoke",
@@ -5854,6 +6916,15 @@
                     ],
                     "line": 40,
                     "column": 32
+                },
+                {
+                    "calleeFqName": "nl.stokpop.jmx.JmxHisto.jmxConnector",
+                    "dispatchReceiverType": "nl.stokpop.jmx.JmxHisto",
+                    "extensionReceiverType": null,
+                    "returnType": "javax.management.remote.JMXConnector",
+                    "argumentTypes": [],
+                    "line": 45,
+                    "column": 9
                 },
                 {
                     "calleeFqName": "javax.management.remote.JMXConnector.close",
@@ -5941,6 +7012,24 @@
                     ],
                     "line": 25,
                     "column": 31
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.reportDirectory",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 26,
+                    "column": 38
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.identifier",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 26,
+                    "column": 95
                 },
                 {
                     "calleeFqName": "java.io.File.<init>",
@@ -7092,6 +8181,15 @@
                     "column": 37
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.identifier",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 75,
+                    "column": 62
+                },
+                {
                     "calleeFqName": "kotlin.text.Regex.containsMatchIn",
                     "dispatchReceiverType": "kotlin.text.Regex",
                     "extensionReceiverType": null,
@@ -7101,6 +8199,15 @@
                     ],
                     "line": 75,
                     "column": 46
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.identifier",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 75,
+                    "column": 98
                 },
                 {
                     "calleeFqName": "kotlin.text.Regex.replace",
@@ -7113,6 +8220,24 @@
                     ],
                     "line": 75,
                     "column": 90
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.identifier",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 75,
+                    "column": 131
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.categories",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 77,
+                    "column": 34
                 },
                 {
                     "calleeFqName": "kotlin.text.lowercase",
@@ -7140,6 +8265,15 @@
                     "argumentTypes": [],
                     "line": 77,
                     "column": 91
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.categories",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 78,
+                    "column": 18
                 },
                 {
                     "calleeFqName": "kotlin.text.split",
@@ -7206,6 +8340,15 @@
                     "column": 18
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.safeList",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 83,
+                    "column": 33
+                },
+                {
                     "calleeFqName": "kotlin.text.split",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.String",
@@ -7246,6 +8389,15 @@
                     "argumentTypes": [],
                     "line": 83,
                     "column": 80
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.watchList",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 84,
+                    "column": 38
                 },
                 {
                     "calleeFqName": "kotlin.text.split",
@@ -7301,6 +8453,15 @@
                     "column": 30
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.safeListFile",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "java.io.File?",
+                    "argumentTypes": [],
+                    "line": 86,
+                    "column": 52
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.filterClassnamesFile",
                     "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
                     "extensionReceiverType": null,
@@ -7310,6 +8471,15 @@
                     ],
                     "line": 86,
                     "column": 31
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.watchListFile",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "java.io.File?",
+                    "argumentTypes": [],
+                    "line": 87,
+                    "column": 49
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.filterClassnamesFile",
@@ -7323,6 +8493,24 @@
                     "column": 28
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.classLimit",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 93,
+                    "column": 26
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.bytesLimit",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 94,
+                    "column": 69
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.util.ConversionUtils.convertHumanReadableToBytes",
                     "dispatchReceiverType": "nl.stokpop.memory.util.ConversionUtils",
                     "extensionReceiverType": null,
@@ -7331,6 +8519,24 @@
                         "kotlin.String"
                     ],
                     "line": 94,
+                    "column": 41
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.maxGrowthPercentage",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Double",
+                    "argumentTypes": [],
+                    "line": 95,
+                    "column": 35
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.minGrowthPointsPercentage",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Double",
+                    "argumentTypes": [],
+                    "line": 96,
                     "column": 41
                 },
                 {
@@ -7435,6 +8641,78 @@
                     "column": 28
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.directory",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 110,
+                    "column": 35
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.reportDirectory",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 111,
+                    "column": 35
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.extension",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 112,
+                    "column": 29
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.reportUsedFiles",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 116,
+                    "column": 35
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.safeListFile",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "java.io.File?",
+                    "argumentTypes": [],
+                    "line": 117,
+                    "column": 36
+                },
+                {
+                    "calleeFqName": "absolutePath",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File?",
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 117,
+                    "column": 50
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.MemoryCheckCli.watchListFile",
+                    "dispatchReceiverType": "nl.stokpop.memory.MemoryCheckCli",
+                    "extensionReceiverType": null,
+                    "returnType": "java.io.File?",
+                    "argumentTypes": [],
+                    "line": 118,
+                    "column": 37
+                },
+                {
+                    "calleeFqName": "absolutePath",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File?",
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 118,
+                    "column": 52
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.report.ReportConfig.<init>",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -7473,6 +8751,15 @@
                     ],
                     "line": 122,
                     "column": 27
+                },
+                {
+                    "calleeFqName": "java.lang.Exception.message",
+                    "dispatchReceiverType": "java.lang.Exception",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String?",
+                    "argumentTypes": [],
+                    "line": 124,
+                    "column": 33
                 },
                 {
                     "calleeFqName": "kotlin.io.println",
@@ -7618,6 +8905,15 @@
                     "column": 27
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.histosDirectory",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 158,
+                    "column": 37
+                },
+                {
                     "calleeFqName": "java.io.File.<init>",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -7629,6 +8925,24 @@
                     "column": 19
                 },
                 {
+                    "calleeFqName": "isDirectory",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File",
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 159,
+                    "column": 18
+                },
+                {
+                    "calleeFqName": "absoluteFile",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File",
+                    "returnType": "java.io.File",
+                    "argumentTypes": [],
+                    "line": 160,
+                    "column": 72
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.MemoryCheckException.<init>",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -7638,6 +8952,15 @@
                     ],
                     "line": 160,
                     "column": 19
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.reportDirectory",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 162,
+                    "column": 43
                 },
                 {
                     "calleeFqName": "java.io.File.<init>",
@@ -7658,6 +8981,15 @@
                     "argumentTypes": [],
                     "line": 163,
                     "column": 24
+                },
+                {
+                    "calleeFqName": "absoluteFile",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File",
+                    "returnType": "java.io.File",
+                    "argumentTypes": [],
+                    "line": 164,
+                    "column": 80
                 },
                 {
                     "calleeFqName": "kotlin.io.println",
@@ -7687,6 +9019,15 @@
                     "argumentTypes": [],
                     "line": 167,
                     "column": 24
+                },
+                {
+                    "calleeFqName": "absoluteFile",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File",
+                    "returnType": "java.io.File",
+                    "argumentTypes": [],
+                    "line": 168,
+                    "column": 87
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.MemoryCheckException.<init>",
@@ -7725,6 +9066,24 @@
                     "argumentTypes": [],
                     "line": 171,
                     "column": 55
+                },
+                {
+                    "calleeFqName": "kotlin.io.extension",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File",
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 172,
+                    "column": 40
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.extension",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 172,
+                    "column": 66
                 },
                 {
                     "calleeFqName": "kotlin.collections.filter",
@@ -7789,6 +9148,24 @@
                     "column": 15
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.reportLimits",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.report.ReportLimits",
+                    "argumentTypes": [],
+                    "line": 179,
+                    "column": 41
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.safeList",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Set<kotlin.String>",
+                    "argumentTypes": [],
+                    "line": 180,
+                    "column": 78
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.domain.SafeList.<init>",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -7798,6 +9175,15 @@
                     ],
                     "line": 180,
                     "column": 56
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.watchList",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Set<kotlin.String>",
+                    "argumentTypes": [],
+                    "line": 180,
+                    "column": 112
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.domain.WatchList.<init>",
@@ -7836,6 +9222,24 @@
                     "column": 38
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.reportUsedFiles",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 184,
+                    "column": 42
+                },
+                {
+                    "calleeFqName": "absolutePath",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File",
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 185,
+                    "column": 45
+                },
+                {
                     "calleeFqName": "kotlin.collections.map",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.collections.List<java.io.File>",
@@ -7845,6 +9249,24 @@
                     ],
                     "line": 185,
                     "column": 36
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.safeListFilePath",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String?",
+                    "argumentTypes": [],
+                    "line": 186,
+                    "column": 41
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.watchListFilePath",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String?",
+                    "argumentTypes": [],
+                    "line": 187,
+                    "column": 42
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.domain.json.UsedFilesReport.<init>",
@@ -7910,6 +9332,15 @@
                     "column": 47
                 },
                 {
+                    "calleeFqName": "absoluteFile",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File",
+                    "returnType": "java.io.File",
+                    "argumentTypes": [],
+                    "line": 194,
+                    "column": 48
+                },
+                {
                     "calleeFqName": "kotlin.io.println",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -7919,6 +9350,15 @@
                     ],
                     "line": 194,
                     "column": 9
+                },
+                {
+                    "calleeFqName": "absoluteFile",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File",
+                    "returnType": "java.io.File",
+                    "argumentTypes": [],
+                    "line": 195,
+                    "column": 48
                 },
                 {
                     "calleeFqName": "kotlin.io.println",
@@ -8266,6 +9706,15 @@
                     "column": 61
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.byteLimit",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long",
+                    "argumentTypes": [],
+                    "line": 30,
+                    "column": 76
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.domain.ClassGrowthTrend.statusCount",
                     "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowthTrend",
                     "extensionReceiverType": null,
@@ -8307,6 +9756,321 @@
                     ],
                     "line": 33,
                     "column": 40
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 36,
+                    "column": 39
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 37,
+                    "column": 39
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 38,
+                    "column": 39
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 39,
+                    "column": 39
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 40,
+                    "column": 39
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 41,
+                    "column": 39
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 42,
+                    "column": 39
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportGrowCritical",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 47,
+                    "column": 27
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 47,
+                    "column": 54
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.analysisResult",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 47,
+                    "column": 60
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportGrowMinor",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 48,
+                    "column": 38
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 48,
+                    "column": 62
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.analysisResult",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 48,
+                    "column": 68
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportGrowSafe",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 49,
+                    "column": 38
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 49,
+                    "column": 61
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.analysisResult",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 49,
+                    "column": 67
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportGrowHickUps",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 50,
+                    "column": 38
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 50,
+                    "column": 64
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.analysisResult",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 50,
+                    "column": 70
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportShrinkAndGrow",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 51,
+                    "column": 38
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 51,
+                    "column": 66
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.analysisResult",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 51,
+                    "column": 72
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportShrinks",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 52,
+                    "column": 38
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 52,
+                    "column": 60
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.analysisResult",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 52,
+                    "column": 66
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportStable",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 53,
+                    "column": 38
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 53,
+                    "column": 59
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.analysisResult",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 53,
+                    "column": 65
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportShrinkAndGrow",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 54,
+                    "column": 38
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 54,
+                    "column": 66
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.analysisResult",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 54,
+                    "column": 72
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowthTrend.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowthTrend",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "argumentTypes": [],
+                    "line": 59,
+                    "column": 65
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.entries",
+                    "dispatchReceiverType": "kotlin.collections.Map<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Set<kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>>",
+                    "argumentTypes": [],
+                    "line": 59,
+                    "column": 70
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.key",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassInfo",
+                    "argumentTypes": [],
+                    "line": 59,
+                    "column": 91
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassInfo.isOnWatchList",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassInfo",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 59,
+                    "column": 95
                 },
                 {
                     "calleeFqName": "kotlin.collections.groupBy",
@@ -8382,6 +10146,24 @@
                     "column": 18
                 },
                 {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 66,
+                    "column": 59
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.byteLimit",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long",
+                    "argumentTypes": [],
+                    "line": 66,
+                    "column": 79
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.report.ReportAnalyser.isLargerThanBytesInLastHisto",
                     "dispatchReceiverType": "nl.stokpop.memory.report.ReportAnalyser",
                     "extensionReceiverType": null,
@@ -8405,6 +10187,15 @@
                     "column": 18
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.classLimit",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 67,
+                    "column": 36
+                },
+                {
                     "calleeFqName": "kotlin.sequences.take",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.sequences.Sequence<kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>>",
@@ -8414,6 +10205,51 @@
                     ],
                     "line": 67,
                     "column": 18
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.key",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassInfo",
+                    "argumentTypes": [],
+                    "line": 69,
+                    "column": 40
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 70,
+                    "column": 39
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.analysisResult",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 70,
+                    "column": 45
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 71,
+                    "column": 52
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.histoLines",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "argumentTypes": [],
+                    "line": 71,
+                    "column": 58
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.report.ReportAnalyser.createBytesList",
@@ -8427,6 +10263,24 @@
                     "column": 33
                 },
                 {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 72,
+                    "column": 60
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.histoLines",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "argumentTypes": [],
+                    "line": 72,
+                    "column": 66
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.report.ReportAnalyser.createBytesDiffList",
                     "dispatchReceiverType": "nl.stokpop.memory.report.ReportAnalyser",
                     "extensionReceiverType": null,
@@ -8438,6 +10292,24 @@
                     "column": 37
                 },
                 {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 73,
+                    "column": 60
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.histoLines",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "argumentTypes": [],
+                    "line": 73,
+                    "column": 66
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.report.ReportAnalyser.createInstancesList",
                     "dispatchReceiverType": "nl.stokpop.memory.report.ReportAnalyser",
                     "extensionReceiverType": null,
@@ -8447,6 +10319,24 @@
                     ],
                     "line": 73,
                     "column": 37
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 74,
+                    "column": 68
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.histoLines",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "argumentTypes": [],
+                    "line": 74,
+                    "column": 74
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.report.ReportAnalyser.createInstancesDiffList",
@@ -8516,6 +10406,51 @@
                     "column": 18
                 },
                 {
+                    "calleeFqName": "kotlin.collections.Map.Entry.key",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassInfo",
+                    "argumentTypes": [],
+                    "line": 81,
+                    "column": 40
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 82,
+                    "column": 39
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.analysisResult",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 82,
+                    "column": 45
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 83,
+                    "column": 52
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.histoLines",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "argumentTypes": [],
+                    "line": 83,
+                    "column": 58
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.report.ReportAnalyser.createBytesList",
                     "dispatchReceiverType": "nl.stokpop.memory.report.ReportAnalyser",
                     "extensionReceiverType": null,
@@ -8525,6 +10460,24 @@
                     ],
                     "line": 83,
                     "column": 33
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 84,
+                    "column": 60
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.histoLines",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "argumentTypes": [],
+                    "line": 84,
+                    "column": 66
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.report.ReportAnalyser.createBytesDiffList",
@@ -8538,6 +10491,24 @@
                     "column": 37
                 },
                 {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 85,
+                    "column": 60
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.histoLines",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "argumentTypes": [],
+                    "line": 85,
+                    "column": 66
+                },
+                {
                     "calleeFqName": "nl.stokpop.memory.report.ReportAnalyser.createInstancesList",
                     "dispatchReceiverType": "nl.stokpop.memory.report.ReportAnalyser",
                     "extensionReceiverType": null,
@@ -8547,6 +10518,24 @@
                     ],
                     "line": 85,
                     "column": 37
+                },
+                {
+                    "calleeFqName": "kotlin.collections.Map.Entry.value",
+                    "dispatchReceiverType": "kotlin.collections.Map.Entry<nl.stokpop.memory.domain.ClassInfo, nl.stokpop.memory.domain.ClassGrowth>",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "argumentTypes": [],
+                    "line": 86,
+                    "column": 68
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.histoLines",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "argumentTypes": [],
+                    "line": 86,
+                    "column": 74
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.report.ReportAnalyser.createInstancesDiffList",
@@ -8596,6 +10585,15 @@
                     "column": 18
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.bytes",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<kotlin.Long?>",
+                    "argumentTypes": [],
+                    "line": 90,
+                    "column": 137
+                },
+                {
                     "calleeFqName": "kotlin.collections.last",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.collections.List<kotlin.Long?>",
@@ -8614,6 +10612,15 @@
                     ],
                     "line": 90,
                     "column": 113
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowthTrend.timestamps",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowthTrend",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<kotlin.Long>",
+                    "argumentTypes": [],
+                    "line": 92,
+                    "column": 104
                 },
                 {
                     "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpDetails.<init>",
@@ -8643,6 +10650,15 @@
                     "column": 16
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassGrowth.histoLines",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassGrowth",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
+                    "argumentTypes": [],
+                    "line": 103,
+                    "column": 24
+                },
+                {
                     "calleeFqName": "kotlin.collections.last",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
@@ -8652,6 +10668,15 @@
                     "column": 35
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDumpLine.bytes",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDumpLine",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long?",
+                    "argumentTypes": [],
+                    "line": 103,
+                    "column": 42
+                },
+                {
                     "calleeFqName": "kotlin.collections.asSequence",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.collections.List<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
@@ -8659,6 +10684,15 @@
                     "argumentTypes": [],
                     "line": 108,
                     "column": 27
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDumpLine.instances",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDumpLine",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long?",
+                    "argumentTypes": [],
+                    "line": 108,
+                    "column": 49
                 },
                 {
                     "calleeFqName": "kotlin.sequences.map",
@@ -8699,6 +10733,15 @@
                     "argumentTypes": [],
                     "line": 112,
                     "column": 40
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDumpLine.instances",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDumpLine",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long?",
+                    "argumentTypes": [],
+                    "line": 112,
+                    "column": 62
                 },
                 {
                     "calleeFqName": "kotlin.sequences.map",
@@ -8772,6 +10815,15 @@
                     "column": 40
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDumpLine.bytes",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDumpLine",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long?",
+                    "argumentTypes": [],
+                    "line": 116,
+                    "column": 62
+                },
+                {
                     "calleeFqName": "kotlin.sequences.map",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.sequences.Sequence<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
@@ -8832,6 +10884,15 @@
                     "column": 27
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDumpLine.bytes",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDumpLine",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long?",
+                    "argumentTypes": [],
+                    "line": 120,
+                    "column": 49
+                },
+                {
                     "calleeFqName": "kotlin.sequences.map",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.sequences.Sequence<nl.stokpop.memory.domain.HeapHistogramDumpLine>",
@@ -8850,6 +10911,42 @@
                     "argumentTypes": [],
                     "line": 120,
                     "column": 57
+                },
+                {
+                    "calleeFqName": "kotlin.Pair.first",
+                    "dispatchReceiverType": "kotlin.Pair<kotlin.Long?, kotlin.Long?>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long?",
+                    "argumentTypes": [],
+                    "line": 124,
+                    "column": 20
+                },
+                {
+                    "calleeFqName": "kotlin.Pair.second",
+                    "dispatchReceiverType": "kotlin.Pair<kotlin.Long?, kotlin.Long?>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long?",
+                    "argumentTypes": [],
+                    "line": 124,
+                    "column": 40
+                },
+                {
+                    "calleeFqName": "kotlin.Pair.second",
+                    "dispatchReceiverType": "kotlin.Pair<kotlin.Long?, kotlin.Long?>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long?",
+                    "argumentTypes": [],
+                    "line": 124,
+                    "column": 69
+                },
+                {
+                    "calleeFqName": "kotlin.Pair.first",
+                    "dispatchReceiverType": "kotlin.Pair<kotlin.Long?, kotlin.Long?>",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long?",
+                    "argumentTypes": [],
+                    "line": 124,
+                    "column": 83
                 }
             ],
             "contentHash": "2037a0ff07f762a84df5df7838e5c33657ae0aaaa707254f08eb36c803612b49"
@@ -9378,6 +11475,33 @@
             ],
             "calls": [
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.reportLimits",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.report.ReportLimits",
+                    "argumentTypes": [],
+                    "line": 30,
+                    "column": 35
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.byteLimit",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Long",
+                    "argumentTypes": [],
+                    "line": 30,
+                    "column": 48
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportConfig.reportDateTime",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportConfig",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 32,
+                    "column": 57
+                },
+                {
                     "calleeFqName": "kotlin.sequences.generateSequence",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -9387,6 +11511,15 @@
                     ],
                     "line": 33,
                     "column": 22
+                },
+                {
+                    "calleeFqName": "kotlin.String.length",
+                    "dispatchReceiverType": "kotlin.String",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Int",
+                    "argumentTypes": [],
+                    "line": 33,
+                    "column": 59
                 },
                 {
                     "calleeFqName": "kotlin.sequences.take",
@@ -9458,6 +11591,33 @@
                     "column": 9
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDump.histoFile",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDump",
+                    "extensionReceiverType": null,
+                    "returnType": "java.io.File",
+                    "argumentTypes": [],
+                    "line": 40,
+                    "column": 47
+                },
+                {
+                    "calleeFqName": "name",
+                    "dispatchReceiverType": null,
+                    "extensionReceiverType": "java.io.File",
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 40,
+                    "column": 57
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.HeapHistogramDump.timestamp",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.HeapHistogramDump",
+                    "extensionReceiverType": null,
+                    "returnType": "java.time.LocalDateTime",
+                    "argumentTypes": [],
+                    "line": 40,
+                    "column": 79
+                },
+                {
                     "calleeFqName": "java.time.LocalDateTime.format",
                     "dispatchReceiverType": "java.time.LocalDateTime",
                     "extensionReceiverType": null,
@@ -9513,6 +11673,24 @@
                     "column": 9
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.heapHistogramDumpSummary",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "argumentTypes": [],
+                    "line": 45,
+                    "column": 51
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 45,
+                    "column": 76
+                },
+                {
                     "calleeFqName": "kotlin.io.println",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -9522,6 +11700,24 @@
                     ],
                     "line": 45,
                     "column": 9
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.heapHistogramDumpSummary",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "argumentTypes": [],
+                    "line": 46,
+                    "column": 46
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 46,
+                    "column": 71
                 },
                 {
                     "calleeFqName": "kotlin.io.println",
@@ -9535,6 +11731,24 @@
                     "column": 9
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.heapHistogramDumpSummary",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "argumentTypes": [],
+                    "line": 47,
+                    "column": 45
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 47,
+                    "column": 70
+                },
+                {
                     "calleeFqName": "kotlin.io.println",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -9544,6 +11758,24 @@
                     ],
                     "line": 47,
                     "column": 9
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.heapHistogramDumpSummary",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "argumentTypes": [],
+                    "line": 48,
+                    "column": 49
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 48,
+                    "column": 74
                 },
                 {
                     "calleeFqName": "kotlin.io.println",
@@ -9557,6 +11789,24 @@
                     "column": 9
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.heapHistogramDumpSummary",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "argumentTypes": [],
+                    "line": 49,
+                    "column": 51
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 49,
+                    "column": 76
+                },
+                {
                     "calleeFqName": "kotlin.io.println",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -9566,6 +11816,24 @@
                     ],
                     "line": 49,
                     "column": 9
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.heapHistogramDumpSummary",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "argumentTypes": [],
+                    "line": 50,
+                    "column": 42
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 50,
+                    "column": 67
                 },
                 {
                     "calleeFqName": "kotlin.io.println",
@@ -9579,6 +11847,24 @@
                     "column": 9
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.heapHistogramDumpSummary",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "argumentTypes": [],
+                    "line": 51,
+                    "column": 42
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 51,
+                    "column": 67
+                },
+                {
                     "calleeFqName": "kotlin.io.println",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -9588,6 +11874,24 @@
                     ],
                     "line": 51,
                     "column": 9
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.heapHistogramDumpSummary",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "argumentTypes": [],
+                    "line": 52,
+                    "column": 42
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 52,
+                    "column": 67
                 },
                 {
                     "calleeFqName": "kotlin.io.println",
@@ -9601,6 +11905,24 @@
                     "column": 9
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.heapHistogramDumpSummary",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "argumentTypes": [],
+                    "line": 53,
+                    "column": 43
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary.data",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpSummary",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.Map<nl.stokpop.memory.domain.AnalysisResult, kotlin.Int>",
+                    "argumentTypes": [],
+                    "line": 53,
+                    "column": 68
+                },
+                {
                     "calleeFqName": "kotlin.io.println",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -9612,6 +11934,24 @@
                     "column": 9
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.heapHistogramDumpDetails",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.json.HeapHistogramDumpDetails",
+                    "argumentTypes": [],
+                    "line": 55,
+                    "column": 28
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpDetails.classHistogramDetails",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<nl.stokpop.memory.domain.json.ClassHistogramDetails>",
+                    "argumentTypes": [],
+                    "line": 55,
+                    "column": 53
+                },
+                {
                     "calleeFqName": "kotlin.collections.asSequence",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.collections.List<nl.stokpop.memory.domain.json.ClassHistogramDetails>",
@@ -9619,6 +11959,24 @@
                     "argumentTypes": [],
                     "line": 55,
                     "column": 75
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.reportLimits",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.report.ReportLimits",
+                    "argumentTypes": [],
+                    "line": 57,
+                    "column": 18
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportGrowCritical",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 57,
+                    "column": 31
                 },
                 {
                     "calleeFqName": "kotlin.io.println",
@@ -9630,6 +11988,15 @@
                     ],
                     "line": 58,
                     "column": 13
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.analysis",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 59,
+                    "column": 33
                 },
                 {
                     "calleeFqName": "kotlin.sequences.filter",
@@ -9665,6 +12032,24 @@
                     "column": 22
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.reportLimits",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.report.ReportLimits",
+                    "argumentTypes": [],
+                    "line": 63,
+                    "column": 18
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportGrowMinor",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 63,
+                    "column": 31
+                },
+                {
                     "calleeFqName": "kotlin.io.println",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -9674,6 +12059,15 @@
                     ],
                     "line": 64,
                     "column": 13
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.analysis",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 65,
+                    "column": 33
                 },
                 {
                     "calleeFqName": "kotlin.sequences.filter",
@@ -9709,6 +12103,24 @@
                     "column": 18
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.reportLimits",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.report.ReportLimits",
+                    "argumentTypes": [],
+                    "line": 69,
+                    "column": 18
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportGrowSafe",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 69,
+                    "column": 31
+                },
+                {
                     "calleeFqName": "kotlin.io.println",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -9718,6 +12130,15 @@
                     ],
                     "line": 70,
                     "column": 13
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.analysis",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 71,
+                    "column": 33
                 },
                 {
                     "calleeFqName": "kotlin.sequences.filter",
@@ -9753,6 +12174,24 @@
                     "column": 18
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.reportLimits",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.report.ReportLimits",
+                    "argumentTypes": [],
+                    "line": 75,
+                    "column": 18
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportGrowHickUps",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 75,
+                    "column": 31
+                },
+                {
                     "calleeFqName": "kotlin.io.println",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -9762,6 +12201,15 @@
                     ],
                     "line": 76,
                     "column": 13
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.analysis",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 77,
+                    "column": 33
                 },
                 {
                     "calleeFqName": "kotlin.sequences.filter",
@@ -9797,6 +12245,24 @@
                     "column": 18
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.reportLimits",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.report.ReportLimits",
+                    "argumentTypes": [],
+                    "line": 81,
+                    "column": 18
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportShrinkAndGrow",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 81,
+                    "column": 31
+                },
+                {
                     "calleeFqName": "kotlin.io.println",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -9806,6 +12272,15 @@
                     ],
                     "line": 82,
                     "column": 13
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.analysis",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 83,
+                    "column": 33
                 },
                 {
                     "calleeFqName": "kotlin.sequences.filter",
@@ -9841,6 +12316,24 @@
                     "column": 18
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.reportLimits",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.report.ReportLimits",
+                    "argumentTypes": [],
+                    "line": 87,
+                    "column": 18
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportShrinks",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 87,
+                    "column": 31
+                },
+                {
                     "calleeFqName": "kotlin.io.println",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -9850,6 +12343,15 @@
                     ],
                     "line": 88,
                     "column": 13
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.analysis",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 89,
+                    "column": 33
                 },
                 {
                     "calleeFqName": "kotlin.sequences.filter",
@@ -9885,6 +12387,24 @@
                     "column": 22
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.reportLimits",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.report.ReportLimits",
+                    "argumentTypes": [],
+                    "line": 93,
+                    "column": 18
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportStable",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 93,
+                    "column": 31
+                },
+                {
                     "calleeFqName": "kotlin.io.println",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -9894,6 +12414,15 @@
                     ],
                     "line": 94,
                     "column": 13
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.analysis",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 95,
+                    "column": 33
                 },
                 {
                     "calleeFqName": "kotlin.sequences.filter",
@@ -9929,6 +12458,24 @@
                     "column": 22
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport.reportLimits",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.HeapHistogramDumpReport",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.report.ReportLimits",
+                    "argumentTypes": [],
+                    "line": 99,
+                    "column": 18
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.report.ReportLimits.doReportSingle",
+                    "dispatchReceiverType": "nl.stokpop.memory.report.ReportLimits",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.Boolean",
+                    "argumentTypes": [],
+                    "line": 99,
+                    "column": 31
+                },
+                {
                     "calleeFqName": "kotlin.io.println",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": null,
@@ -9938,6 +12485,15 @@
                     ],
                     "line": 100,
                     "column": 13
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.analysis",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.AnalysisResult",
+                    "argumentTypes": [],
+                    "line": 101,
+                    "column": 33
                 },
                 {
                     "calleeFqName": "kotlin.sequences.filter",
@@ -9984,6 +12540,24 @@
                     "column": 9
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.classInfo",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "nl.stokpop.memory.domain.ClassInfo",
+                    "argumentTypes": [],
+                    "line": 109,
+                    "column": 33
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.bytes",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<kotlin.Long?>",
+                    "argumentTypes": [],
+                    "line": 110,
+                    "column": 37
+                },
+                {
                     "calleeFqName": "kotlin.collections.lastOrNull",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.collections.List<kotlin.Long?>",
@@ -10015,6 +12589,15 @@
                     "column": 57
                 },
                 {
+                    "calleeFqName": "nl.stokpop.memory.domain.json.ClassHistogramDetails.instances",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.json.ClassHistogramDetails",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.collections.List<kotlin.Long?>",
+                    "argumentTypes": [],
+                    "line": 111,
+                    "column": 41
+                },
+                {
                     "calleeFqName": "kotlin.collections.lastOrNull",
                     "dispatchReceiverType": null,
                     "extensionReceiverType": "kotlin.collections.List<kotlin.Long?>",
@@ -10042,6 +12625,15 @@
                     ],
                     "line": 112,
                     "column": 37
+                },
+                {
+                    "calleeFqName": "nl.stokpop.memory.domain.ClassInfo.name",
+                    "dispatchReceiverType": "nl.stokpop.memory.domain.ClassInfo",
+                    "extensionReceiverType": null,
+                    "returnType": "kotlin.String",
+                    "argumentTypes": [],
+                    "line": 112,
+                    "column": 87
                 },
                 {
                     "calleeFqName": "kotlin.text.format",
@@ -10073,13 +12665,13 @@
         "kotlin.collections.Collection": [
             "kotlin.collections.Iterable"
         ],
+        "kotlin.collections.List": [
+            "java.util.SequencedCollection"
+        ],
         "java.util.stream.Stream": [
             "java.util.stream.BaseStream"
         ],
         "kotlin.collections.MutableList": [
-            "java.util.SequencedCollection"
-        ],
-        "kotlin.collections.List": [
             "java.util.SequencedCollection"
         ],
         "java.lang.StringBuilder": [
@@ -10136,6 +12728,11 @@
             "kotlin.io.Serializable",
             "kotlin.Comparable"
         ],
+        "kotlin.reflect.KClass": [
+            "kotlin.reflect.KDeclarationContainer",
+            "kotlin.reflect.KAnnotatedElement",
+            "kotlin.reflect.KClassifier"
+        ],
         "java.nio.file.attribute.FileTime": [
             "kotlin.Any",
             "kotlin.Comparable"
@@ -10149,6 +12746,15 @@
             "kotlin.Any",
             "kotlin.io.Serializable"
         ],
+        "java.lang.Class": [
+            "kotlin.Any",
+            "kotlin.io.Serializable",
+            "java.lang.reflect.GenericDeclaration",
+            "java.lang.reflect.Type",
+            "java.lang.reflect.AnnotatedElement",
+            "java.lang.invoke.TypeDescriptor.OfField",
+            "java.lang.constant.Constable"
+        ],
         "javax.management.remote.JMXConnector": [
             "java.io.Closeable"
         ],
@@ -10158,11 +12764,15 @@
         "java.lang.Exception": [
             "kotlin.Throwable"
         ],
-        "java.util.stream.BaseStream": [
-            "java.lang.AutoCloseable"
+        "kotlin.Pair": [
+            "kotlin.Any",
+            "kotlin.io.Serializable"
         ],
         "java.util.SequencedCollection": [
             "kotlin.collections.Collection"
+        ],
+        "java.util.stream.BaseStream": [
+            "java.lang.AutoCloseable"
         ],
         "java.lang.AbstractStringBuilder": [
             "kotlin.Any",
@@ -10186,6 +12796,9 @@
         ],
         "java.io.Closeable": [
             "java.lang.AutoCloseable"
+        ],
+        "java.lang.reflect.GenericDeclaration": [
+            "java.lang.reflect.AnnotatedElement"
         ],
         "com.github.ajalt.clikt.parameters.options.OptionDelegate": [
             "com.github.ajalt.clikt.core.GroupableOption",
