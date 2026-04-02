@@ -75,7 +75,24 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
             )
         }
 
-        return TypedAst(sourceRoot = sourceRoot.absolutePath, files = fileAsts)
+        // Collect every type FQN that appears as a receiver or a declaration class/interface,
+        // then build the type hierarchy via reflection so queries can walk supertypes.
+        val seedTypes = mutableSetOf<String>()
+        for (fileAst in fileAsts) {
+            for (call in fileAst.calls) {
+                call.dispatchReceiverType?.substringBefore('<')?.let { seedTypes.add(it) }
+                call.extensionReceiverType?.substringBefore('<')?.let { seedTypes.add(it) }
+            }
+            for (decl in fileAst.declarations) {
+                if (decl.kind in CLASS_KINDS) seedTypes.add(decl.fqName.substringBefore('<'))
+            }
+        }
+        val classLoader = buildClassLoader(
+            listOfNotNull(stdlibJar) + extraClasspath
+        )
+        val typeHierarchy = buildTypeHierarchy(seedTypes, classLoader)
+
+        return TypedAst(sourceRoot = sourceRoot.absolutePath, files = fileAsts, typeHierarchy = typeHierarchy)
     } finally {
         Disposer.dispose(disposable)
     }

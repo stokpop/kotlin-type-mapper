@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
@@ -29,6 +30,15 @@ import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+
+private fun Annotations.toAstList(): List<AnnotationAst> =
+    mapNotNull { ann ->
+        val fqn = ann.fqName?.asString() ?: return@mapNotNull null
+        AnnotationAst(
+            fqName = fqn,
+            arguments = ann.allValueArguments.values.map { it.toString() },
+        )
+    }
 
 /** Extracts all typed declarations from a single [KtFile] via [BindingContext]. */
 fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<DeclarationAst> {
@@ -54,6 +64,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                     type = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    annotations = descriptor.annotations.toAstList(),
                     line = lineOf(offset),
                     column = colOf(offset),
                 )
@@ -79,6 +90,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     name = klass.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    annotations = descriptor.annotations.toAstList(),
                     line = lineOf(offset),
                     column = colOf(offset),
                 )
@@ -95,6 +107,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     name = declaration.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    annotations = descriptor.annotations.toAstList(),
                     line = lineOf(offset),
                     column = colOf(offset),
                 )
@@ -222,6 +235,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     parameters = descriptor.valueParameters.map { p ->
                         ParameterAst(name = p.name.asString(), type = p.type.toFqString())
                     },
+                    annotations = descriptor.annotations.toAstList(),
                     line = lineOf(offset),
                     column = colOf(offset),
                 )
@@ -242,6 +256,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     parameters = descriptor.valueParameters.map { p ->
                         ParameterAst(name = p.name.asString(), type = p.type.toFqString())
                     },
+                    annotations = descriptor.annotations.toAstList(),
                     line = lineOf(offset),
                     column = colOf(offset),
                 )

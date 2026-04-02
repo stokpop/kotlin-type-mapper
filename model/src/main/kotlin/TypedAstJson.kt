@@ -25,6 +25,7 @@ object TypedAstJson {
     private val json = Json {
         prettyPrint = true
         ignoreUnknownKeys = true
+        encodeDefaults = true
     }
 
     fun load(file: File): TypedAst = fromString(file.readText())

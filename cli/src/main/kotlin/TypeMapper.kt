@@ -46,7 +46,7 @@ fun main(args: Array<String>) {
     println("Analysing...")
     val ast = analyzeKotlinProject(kotlinFiles, targetDir, extraClasspath)
 
-    val json = Json { prettyPrint = true }
+    val json = Json { prettyPrint = true; encodeDefaults = true }
     outputFile.writeText(json.encodeToString(ast))
 
     val totalDeclarations = ast.files.sumOf { it.declarations.size }

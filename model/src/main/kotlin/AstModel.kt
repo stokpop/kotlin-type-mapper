@@ -15,6 +15,15 @@
  */
 import kotlinx.serialization.Serializable
 
+/** Declaration kinds that represent class-like types (have a type hierarchy entry). */
+val CLASS_KINDS = setOf("class", "data_class", "sealed_class", "enum", "interface", "annotation", "object", "companion_object")
+
+@Serializable
+data class AnnotationAst(
+    val fqName: String,
+    val arguments: List<String> = emptyList(),
+)
+
 @Serializable
 data class ParameterAst(
     val name: String,
@@ -41,6 +50,7 @@ data class DeclarationAst(
     val returnType: String? = null,            // function only
     val type: String? = null,                  // property / variable only
     val parameters: List<ParameterAst> = emptyList(),
+    val annotations: List<AnnotationAst> = emptyList(),
     val line: Int,
     val column: Int,
 )
@@ -56,8 +66,12 @@ data class FileAst(
 
 @Serializable
 data class TypedAst(
-    val schemaVersion: String = "1.2",
+    val schemaVersion: String = "1.3",
     val generatedBy: String = "kotlin-type-mapper",
     val sourceRoot: String,
     val files: List<FileAst>,
+    /** Direct supertypes per type FQN, built via reflection at analysis time.
+     *  Key: raw type FQN (no generics). Value: list of direct supertype FQNs.
+     *  Kotlin-mapped names are used (e.g. kotlin.Any, kotlin.collections.List). */
+    val typeHierarchy: Map<String, List<String>> = emptyMap(),
 )
