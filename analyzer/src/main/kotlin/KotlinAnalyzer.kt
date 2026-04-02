@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import java.io.File
+import java.security.MessageDigest
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.CliBindingTrace
@@ -70,6 +71,7 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
                 packageFqName = ktFile.packageFqName.asString(),
                 declarations = extractDeclarations(ktFile, bindingContext),
                 calls = extractCallSites(ktFile, bindingContext),
+                contentHash = sha256(file),
             )
         }
 
@@ -77,4 +79,9 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
     } finally {
         Disposer.dispose(disposable)
     }
+}
+
+private fun sha256(file: File): String {
+    val bytes = MessageDigest.getInstance("SHA-256").digest(file.readBytes())
+    return bytes.joinToString("") { "%02x".format(it) }
 }

@@ -19,7 +19,12 @@ import kotlinx.serialization.json.Json
 
 fun main(args: Array<String>) {
     val targetDir = if (args.isNotEmpty()) File(args[0])
-                    else File("test-projects/memory-check/src/main/kotlin")
+                    else File(System.getProperty("user.dir")).let { cwd ->
+                        // Gradle sets working dir to subproject dir; walk up to find root
+                        val candidate = cwd.resolve("test-projects/memory-check/src/main/kotlin")
+                        if (candidate.exists()) candidate
+                        else cwd.parentFile?.resolve("test-projects/memory-check/src/main/kotlin") ?: candidate
+                    }
 
     val outputFile = if (args.size > 1) File(args[1])
                      else File("typemapper-output.json")

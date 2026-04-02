@@ -1,5 +1,5 @@
 {
-    "sourceRoot": "/home/openclaw/.openclaw/workspace/kotlin-TypeMapper/test-projects/memory-check/src/main/kotlin",
+    "sourceRoot": "/home/openclaw/.openclaw/workspace/kotlin-type-mapper/test-projects/memory-check/src/main/kotlin",
     "files": [
         {
             "relativePath": "nl/stokpop/memory/domain/AnalysisResult.kt",
@@ -103,7 +103,8 @@
                     "line": 18,
                     "column": 1
                 }
-            ]
+            ],
+            "contentHash": "2394da012b929eed922a073f74886286b767b94bca72fd02661a0b3696217a9c"
         },
         {
             "relativePath": "nl/stokpop/memory/domain/ClassGrowth.kt",
@@ -144,7 +145,8 @@
                     "line": 18,
                     "column": 1
                 }
-            ]
+            ],
+            "contentHash": "32f8e967303c87f01a91c261641925db8781726a7eab63429964915f9d97cfbf"
         },
         {
             "relativePath": "nl/stokpop/memory/domain/ClassGrowthTrend.kt",
@@ -315,7 +317,8 @@
                     "line": 42,
                     "column": 21
                 }
-            ]
+            ],
+            "contentHash": "3f3036654e5634c87a2849e141c6b26d49d36eac53b62162b0c77412cada6252"
         },
         {
             "relativePath": "nl/stokpop/memory/domain/ClassInfo.kt",
@@ -430,7 +433,8 @@
                     "line": 27,
                     "column": 69
                 }
-            ]
+            ],
+            "contentHash": "eeb21d65c422c04b5816c8603872aab051f2da4bddf7f6d272cdefcacde6d543"
         },
         {
             "relativePath": "nl/stokpop/memory/domain/ClassPatternSet.kt",
@@ -682,7 +686,8 @@
                     "line": 42,
                     "column": 56
                 }
-            ]
+            ],
+            "contentHash": "86c57b0819283a40df48ffd1165529b7b209db462728172d7601f8adff15563b"
         },
         {
             "relativePath": "nl/stokpop/memory/util/ConversionUtils.kt",
@@ -990,7 +995,8 @@
                     "line": 55,
                     "column": 23
                 }
-            ]
+            ],
+            "contentHash": "57675aef5b491056dcf3d75d22b56743f4eec8cd3785bd476b932255aa4b30d3"
         },
         {
             "relativePath": "nl/stokpop/jmx/FetchHistogram.kt",
@@ -1084,7 +1090,8 @@
                     "line": 25,
                     "column": 26
                 }
-            ]
+            ],
+            "contentHash": "f0dfa3dff4c511c52d52cc24040fbbd33fae81c85db1cd96ae2dad13986e3928"
         },
         {
             "relativePath": "nl/stokpop/memory/domain/HeapHistogramDump.kt",
@@ -1153,7 +1160,8 @@
                     "line": 30,
                     "column": 47
                 }
-            ]
+            ],
+            "contentHash": "4245de31810c282228e332507e7cccecb2846c4ec2443ad8a5d75568280c99d5"
         },
         {
             "relativePath": "nl/stokpop/memory/domain/HeapHistogramDumpLine.kt",
@@ -1249,7 +1257,8 @@
                     "line": 28,
                     "column": 48
                 }
-            ]
+            ],
+            "contentHash": "1a4b01006b4a2c8d743e1436da9516c60b9564576f31142aa40be03e1fecc93a"
         },
         {
             "relativePath": "nl/stokpop/memory/domain/json/HeapHistogramDumpReport.kt",
@@ -1448,7 +1457,8 @@
                     "line": 53,
                     "column": 1
                 }
-            ]
+            ],
+            "contentHash": "0649d18926efdda1cb453d14ef41a0a10144495aff3e729fa2cee30c0cbccc52"
         },
         {
             "relativePath": "nl/stokpop/memory/HistoAnalyser.kt",
@@ -2005,7 +2015,8 @@
                     "line": 114,
                     "column": 68
                 }
-            ]
+            ],
+            "contentHash": "afafde726cb93d3b3df07f6fdb40484ee1798bc49008d40fea2a840e9d84b6da"
         },
         {
             "relativePath": "nl/stokpop/memory/HistoReader.kt",
@@ -2732,7 +2743,8 @@
                     "line": 108,
                     "column": 34
                 }
-            ]
+            ],
+            "contentHash": "dfd5bf9bede9e59a61a6b3d6f383dd73ba1e31839dfb23c92429a6505e44a7d6"
         },
         {
             "relativePath": "nl/stokpop/memory/report/HtmlGraphCreator.kt",
@@ -4651,7 +4663,8 @@
                     "line": 355,
                     "column": 17
                 }
-            ]
+            ],
+            "contentHash": "189eed9b9f0a1eb2106e7de4c7bed60a236353c01917eee0cce23b914a85cdd5"
         },
         {
             "relativePath": "nl/stokpop/memory/InvalidHistoLineException.kt",
@@ -4665,7 +4678,8 @@
                     "line": 18,
                     "column": 1
                 }
-            ]
+            ],
+            "contentHash": "173beac66e40cabf697ffe7ff14f8d043d14f311fcad4bfb2108ccc0abfefe22"
         },
         {
             "relativePath": "nl/stokpop/jmx/JmxHisto.kt",
@@ -4837,7 +4851,8 @@
                     "line": 45,
                     "column": 22
                 }
-            ]
+            ],
+            "contentHash": "34b0c5c74d782b7ef42b7c9bae4b15d2930a06cd2bd4487c70a2f8f5a6f72a2e"
         },
         {
             "relativePath": "nl/stokpop/memory/report/JsonReport.kt",
@@ -4922,7 +4937,8 @@
                     "line": 27,
                     "column": 14
                 }
-            ]
+            ],
+            "contentHash": "62acc94a8a08f183a1a067f6a50797766f46a2f4cd5a587ec01513857523c231"
         },
         {
             "relativePath": "nl/stokpop/memory/MemoryCheck.kt",
@@ -6580,7 +6596,8 @@
                     "line": 195,
                     "column": 9
                 }
-            ]
+            ],
+            "contentHash": "a4a32f324a7aeb9bf7df935e7957f053ed89cb2f982481c752842c4945f58dba"
         },
         {
             "relativePath": "nl/stokpop/memory/MemoryCheckException.kt",
@@ -6594,7 +6611,8 @@
                     "line": 18,
                     "column": 1
                 }
-            ]
+            ],
+            "contentHash": "2aec3b4b041d7b789ab050d92a089bf66b7a4987858d26bf5485a4344858b2df"
         },
         {
             "relativePath": "nl/stokpop/memory/report/ReportAnalyser.kt",
@@ -7351,7 +7369,8 @@
                     "line": 120,
                     "column": 57
                 }
-            ]
+            ],
+            "contentHash": "2037a0ff07f762a84df5df7838e5c33657ae0aaaa707254f08eb36c803612b49"
         },
         {
             "relativePath": "nl/stokpop/memory/report/ReportConfig.kt",
@@ -7463,7 +7482,8 @@
                     "line": 24,
                     "column": 41
                 }
-            ]
+            ],
+            "contentHash": "5ffd60bd76f5963613222f9f3a8047b66bb8fbf2203ccb60eded0dc3b32e00c2"
         },
         {
             "relativePath": "nl/stokpop/memory/report/ReportLimits.kt",
@@ -7617,7 +7637,8 @@
                     "line": 27,
                     "column": 34
                 }
-            ]
+            ],
+            "contentHash": "3eb8a3fb4554c082fa3724d1af0f12feaccd8cc074f971ac21e9fb67ced748d2"
         },
         {
             "relativePath": "nl/stokpop/memory/report/TextReport.kt",
@@ -8337,7 +8358,8 @@
                     "line": 113,
                     "column": 9
                 }
-            ]
+            ],
+            "contentHash": "25e3ce57a993cd0d72289acf6ab15f3f64e09aed4127acce5d9203833779548f"
         }
     ]
 }

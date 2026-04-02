@@ -51,11 +51,12 @@ data class FileAst(
     val packageFqName: String,
     val declarations: List<DeclarationAst>,
     val calls: List<CallSiteAst> = emptyList(),
+    val contentHash: String = "",              // SHA-256 of source file content
 )
 
 @Serializable
 data class TypedAst(
-    val schemaVersion: String = "1.1",
+    val schemaVersion: String = "1.2",
     val generatedBy: String = "kotlin-type-mapper",
     val sourceRoot: String,
     val files: List<FileAst>,
