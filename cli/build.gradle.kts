@@ -11,6 +11,7 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(project(":analyzer"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    implementation("com.github.ajalt.clikt:clikt:5.0.3")
 }
 
 tasks.test {
@@ -40,6 +41,9 @@ tasks.register("cloneMemoryCheck") {
     }
 }
 
-tasks.named("run") {
+tasks.named<JavaExec>("run") {
     dependsOn("cloneMemoryCheck")
+    // Default: analyze memory-check and write to typemapper-output.json
+    val memoryCheck = rootProject.file("test-projects/memory-check/src/main/kotlin")
+    args = listOf("analyze", "--output", "typemapper-output.json", memoryCheck.absolutePath)
 }
