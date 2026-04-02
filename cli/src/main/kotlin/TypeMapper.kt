@@ -23,6 +23,7 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.int
 import java.io.File
 
 fun main(args: Array<String>) {
@@ -134,7 +135,11 @@ class CallsCommand : CliktCommand("calls") {
 
     val ast by requireObject<TypedAst>()
     val sig by argument("SIG", help = "Signature pattern, e.g. 'kotlin.String#trim()'")
-    override fun run() = ast.callsMatchingLocated(sig).forEach { (path, call) -> echo(call.format(path)) }
+    val ctx by option("--context", "-C", help = "Source lines of context (default: 3, 0 = off)").int()
+    override fun run() = ast.callsMatchingLocated(sig).forEach { (path, call) ->
+        echo(call.format(path))
+        echoContext(ast.sourceRoot, path, call.line, ctx ?: 3)
+    }
 }
 
 class CallsPolymorphicCommand : CliktCommand("calls-polymorphic") {
@@ -143,7 +148,11 @@ class CallsPolymorphicCommand : CliktCommand("calls-polymorphic") {
 
     val ast by requireObject<TypedAst>()
     val sig by argument("SIG")
-    override fun run() = ast.callsMatchingPolymorphicLocated(sig).forEach { (path, call) -> echo(call.format(path)) }
+    val ctx by option("--context", "-C", help = "Source lines of context (default: 3, 0 = off)").int()
+    override fun run() = ast.callsMatchingPolymorphicLocated(sig).forEach { (path, call) ->
+        echo(call.format(path))
+        echoContext(ast.sourceRoot, path, call.line, ctx ?: 3)
+    }
 }
 
 class ImplementorsCommand : CliktCommand("implementors") {
@@ -152,7 +161,12 @@ class ImplementorsCommand : CliktCommand("implementors") {
 
     val ast by requireObject<TypedAst>()
     val fqn by argument("INTERFACE_FQN")
-    override fun run() = ast.implementorsOf(fqn).forEach { echo(it.format()) }
+    val ctx by option("--context", "-C", help = "Source lines of context (default: 3, 0 = off)").int()
+    override fun run() = ast.implementorsOf(fqn).forEach { decl ->
+        val path = ast.files.firstOrNull { f -> f.declarations.any { it.fqName == decl.fqName } }?.relativePath ?: ""
+        echo(decl.format(path))
+        echoContext(ast.sourceRoot, path, decl.line, ctx ?: 3)
+    }
 }
 
 class AnnotatedWithCommand : CliktCommand("annotated-with") {
@@ -160,7 +174,12 @@ class AnnotatedWithCommand : CliktCommand("annotated-with") {
 
     val ast by requireObject<TypedAst>()
     val fqn by argument("ANNOTATION_FQN")
-    override fun run() = ast.declarationsAnnotatedWith(fqn).forEach { echo(it.format()) }
+    val ctx by option("--context", "-C", help = "Source lines of context (default: 3, 0 = off)").int()
+    override fun run() = ast.declarationsAnnotatedWith(fqn).forEach { decl ->
+        val path = ast.files.firstOrNull { f -> f.declarations.any { it.fqName == decl.fqName } }?.relativePath ?: ""
+        echo(decl.format(path))
+        echoContext(ast.sourceRoot, path, decl.line, ctx ?: 3)
+    }
 }
 
 // ---- formatting helpers -----------------------------------------------------
@@ -176,4 +195,23 @@ fun DeclarationAst.format(filePath: String = ""): String {
     val typeInfo = returnType ?: type ?: kind
     val loc = if (filePath.isNotEmpty()) "$filePath:$line:$column" else "$line:$column"
     return "$loc  $kind  $fqName  [$typeInfo]"
+}
+
+/**
+ * Prints [contextLines] lines before and after [targetLine] (1-based) from the source file
+ * at [sourceRoot]/[relativePath]. The matching line is prefixed with ">". No-op if the
+ * file cannot be read or [contextLines] is 0.
+ */
+fun CliktCommand.echoContext(sourceRoot: String, relativePath: String, targetLine: Int, contextLines: Int) {
+    if (contextLines <= 0 || relativePath.isEmpty()) return
+    val file = java.io.File(sourceRoot).resolve(relativePath)
+    if (!file.isFile) return
+    val lines = file.readLines()
+    val first = (targetLine - 1 - contextLines).coerceAtLeast(0)
+    val last  = (targetLine - 1 + contextLines).coerceAtMost(lines.size - 1)
+    for (i in first..last) {
+        val marker = if (i == targetLine - 1) ">" else " "
+        echo("  $marker ${"%4d".format(i + 1)}: ${lines[i]}")
+    }
+    echo("")
 }
