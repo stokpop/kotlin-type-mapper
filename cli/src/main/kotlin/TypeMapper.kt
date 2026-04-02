@@ -57,7 +57,7 @@ class AnalyzeCommand : CliktCommand("analyze") {
     val sourceDir by argument("SOURCE_DIR", help = "Root directory of Kotlin sources")
     val output    by option("--output", "-o", help = "Write JSON to FILE (default: stdout)")
     val classpath by option("--classpath", "-cp",
-        help = "Extra classpath jar (repeatable; default: auto-resolved via Gradle/Maven)").multiple()
+        help = "Extra classpath entry: jar file or class directory (repeatable; default: auto-resolved via Gradle/Maven)").multiple()
 
     override fun run() {
         val dir = File(sourceDir)
@@ -70,14 +70,16 @@ class AnalyzeCommand : CliktCommand("analyze") {
 
         echo("Analyzing ${ktFiles.size} Kotlin file(s) in ${dir.absolutePath}", err = true)
 
-        val extraJars: List<File> = if (classpath.isNotEmpty()) {
+        val extraClasspath: List<File> = if (classpath.isNotEmpty()) {
             classpath.map { File(it) }
         } else {
             val root = findProjectRoot(dir)
             if (root != null) {
                 echo("Resolving classpath from: $root", err = true)
                 resolveProjectClasspath(root).also {
-                    echo("Classpath: ${it.size} jar(s)", err = true)
+                    val jars = it.count { f -> f.isFile }
+                    val dirs = it.count { f -> f.isDirectory }
+                    echo("Classpath: $jars jar(s), $dirs dir(s)", err = true)
                 }
             } else {
                 echo("No build file found; skipping dependency classpath", err = true)
@@ -85,7 +87,7 @@ class AnalyzeCommand : CliktCommand("analyze") {
             }
         }
 
-        val ast = analyzeKotlinProject(ktFiles, dir, extraJars)
+        val ast = analyzeKotlinProject(ktFiles, dir, extraClasspath)
         val json = TypedAstJson.toJsonString(ast)
 
         if (output != null) {

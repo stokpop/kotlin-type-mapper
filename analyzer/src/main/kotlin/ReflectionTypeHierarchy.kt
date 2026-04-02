@@ -131,6 +131,6 @@ fun buildTypeHierarchy(seedTypes: Set<String>, classLoader: ClassLoader): Map<St
     return result
 }
 
-/** Creates a [URLClassLoader] over the given classpath jars, with the current JVM as parent. */
-fun buildClassLoader(classpathJars: List<File>): URLClassLoader =
-    URLClassLoader(classpathJars.map { it.toURI().toURL() }.toTypedArray(), ClassLoader.getSystemClassLoader())
+/** Creates a [URLClassLoader] over the given classpath entries (jars or directories), with the current JVM as parent. */
+fun buildClassLoader(classpath: List<File>): URLClassLoader =
+    URLClassLoader(classpath.map { it.toURI().toURL() }.toTypedArray(), ClassLoader.getSystemClassLoader())

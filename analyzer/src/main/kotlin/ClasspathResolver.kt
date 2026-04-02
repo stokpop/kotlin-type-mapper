@@ -15,12 +15,13 @@
  */
 import java.io.File
 
-/** Resolves the runtime classpath for a Gradle or Maven project rooted at [projectRoot]. */
+/** Resolves the runtime classpath for a Gradle or Maven project rooted at [projectRoot].
+ *  Returns both dependency jars and the project's own compiled class directories. */
 fun resolveProjectClasspath(projectRoot: File): List<File> = when {
     File(projectRoot, "build.gradle.kts").exists() || File(projectRoot, "build.gradle").exists() ->
-        resolveGradleClasspath(projectRoot)
+        resolveGradleClasspath(projectRoot) + resolveGradleClassDirs(projectRoot)
     File(projectRoot, "pom.xml").exists() ->
-        resolveMavenClasspath(projectRoot)
+        resolveMavenClasspath(projectRoot) + resolveMavenClassDirs(projectRoot)
     else -> emptyList()
 }
 
@@ -86,3 +87,14 @@ fun findProjectRoot(sourceDir: File): File? {
     }
     return null
 }
+
+/** Returns existing Gradle compiled class directories under [projectRoot]/build/classes. */
+private fun resolveGradleClassDirs(projectRoot: File): List<File> =
+    listOf("kotlin/main", "java/main", "groovy/main")
+        .map { File(projectRoot, "build/classes/$it") }
+        .filter { it.isDirectory }
+
+/** Returns existing Maven compiled class directories under [projectRoot]/target/classes. */
+private fun resolveMavenClassDirs(projectRoot: File): List<File> =
+    listOf(File(projectRoot, "target/classes"))
+        .filter { it.isDirectory }
