@@ -97,12 +97,9 @@ implementation("nl.stokpop.typemapper:kotlin-type-mapper-analyzer:0.1.0")
 import nl.stokpop.typemapper.analyzer.analyzeKotlinProject
 import nl.stokpop.typemapper.model.*
 
-// Run analysis
-val sourceRoot = File("/path/to/src/main/kotlin")
-val ktFiles = sourceRoot.walkTopDown().filter { it.extension == "kt" }.toList()
+// Run analysis (simple: discovers all .kt files under sourceRoot automatically)
 val ast: TypedAst = analyzeKotlinProject(
-    files = ktFiles,
-    sourceRoot = sourceRoot,
+    sourceRoot = File("/path/to/src/main/kotlin"),
     extraClasspath = listOf(File("mylib.jar"), File("build/classes/kotlin/main"))
 )
 
