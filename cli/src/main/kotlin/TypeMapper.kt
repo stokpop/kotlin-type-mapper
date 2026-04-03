@@ -24,6 +24,7 @@ import com.github.ajalt.clikt.core.obj
 import com.github.ajalt.clikt.core.requireObject
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
@@ -59,7 +60,10 @@ fun main(args: Array<String>) {
 class TypeMapperCli : CliktCommand("typemapper") {
     override fun help(context: Context) =
         "Analyze Kotlin source files and query the extracted AST."
-    override fun run() = Unit
+    val verbose by option("--verbose", "-v", help = "Print extra diagnostic output to stderr").flag()
+    override fun run() {
+        currentContext.obj = verbose
+    }
 }
 
 // ---- analyze ----------------------------------------------------------------
@@ -67,6 +71,7 @@ class TypeMapperCli : CliktCommand("typemapper") {
 class AnalyzeCommand : CliktCommand("analyze") {
     override fun help(context: Context) = "Analyze Kotlin sources and emit a JSON AST."
 
+    val verbose by requireObject<Boolean>()
     val sourceDir by argument("SOURCE_DIR", help = "Root directory of Kotlin sources")
     val output    by option("--output", "-o", help = "Write JSON to FILE (default: stdout)")
     val classpath by option("--classpath", "-cp",
@@ -93,11 +98,19 @@ class AnalyzeCommand : CliktCommand("analyze") {
                     val jars = it.count { f -> f.isFile }
                     val dirs = it.count { f -> f.isDirectory }
                     echo("Classpath: $jars jar(s), $dirs dir(s)", err = true)
+                    if (verbose) {
+                        it.forEach { entry -> echo("  cp: $entry", err = true) }
+                    }
                 }
             } else {
                 echo("No build file found; skipping dependency classpath", err = true)
                 emptyList()
             }
+        }
+
+        if (verbose && classpath.isNotEmpty()) {
+            echo("Classpath (explicit): ${classpath.size} entries", err = true)
+            classpath.forEach { entry -> echo("  cp: $entry", err = true) }
         }
 
         val ast = analyzeKotlinProject(ktFiles, dir, extraClasspath)
