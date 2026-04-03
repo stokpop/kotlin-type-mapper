@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package nl.stokpop.typemapper.analyzer
+
 import java.io.File
 
 /** Resolves the runtime classpath for a Gradle or Maven project rooted at [projectRoot].
