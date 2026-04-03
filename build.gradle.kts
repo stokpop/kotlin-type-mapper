@@ -24,4 +24,23 @@ subprojects {
         ext.set("name", "Peter Paul Bakker, Stokpop Software Solutions")
         skipExistingHeaders = true
     }
+
+    // Ensure consistent Java toolchain and Kotlin JVM target
+    plugins.withType<org.jetbrains.kotlin.gradle.plugin.KotlinBasePlugin> {
+        extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension>("kotlin") {
+            jvmToolchain(21)
+        }
+        tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().configureEach {
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+            }
+        }
+    }
+    plugins.withType<JavaPlugin> {
+        extensions.configure<JavaPluginExtension>("java") {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(21))
+            }
+        }
+    }
 }

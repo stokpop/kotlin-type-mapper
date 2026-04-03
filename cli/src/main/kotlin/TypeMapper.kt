@@ -15,7 +15,10 @@
  */
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
-import com.github.ajalt.clikt.core.context
+// ...existing code...
+import nl.stokpop.typemapper.analyzer.findProjectRoot
+import nl.stokpop.typemapper.analyzer.resolveProjectClasspath
+import nl.stokpop.typemapper.analyzer.analyzeKotlinProject
 import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.obj
 import com.github.ajalt.clikt.core.requireObject
@@ -24,6 +27,16 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
+import nl.stokpop.typemapper.model.CallSiteAst
+import nl.stokpop.typemapper.model.DeclarationAst
+import nl.stokpop.typemapper.model.TypedAst
+import nl.stokpop.typemapper.model.TypedAstJson
+import nl.stokpop.typemapper.model.calls
+import nl.stokpop.typemapper.model.callsMatchingLocated
+import nl.stokpop.typemapper.model.callsMatchingPolymorphicLocated
+import nl.stokpop.typemapper.model.declarations
+import nl.stokpop.typemapper.model.declarationsAnnotatedWith
+import nl.stokpop.typemapper.model.implementorsOf
 import java.io.File
 
 fun main(args: Array<String>) {
@@ -206,7 +219,7 @@ fun DeclarationAst.format(filePath: String = ""): String {
  */
 fun CliktCommand.echoContext(sourceRoot: String, relativePath: String, targetLine: Int, contextLines: Int) {
     if (contextLines <= 0 || relativePath.isEmpty()) return
-    val file = java.io.File(sourceRoot).resolve(relativePath)
+    val file = File(sourceRoot).resolve(relativePath)
     if (!file.isFile) return
     val lines = file.readLines()
     val first = (targetLine - 1 - contextLines).coerceAtLeast(0)

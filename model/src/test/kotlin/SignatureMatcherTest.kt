@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import nl.stokpop.typemapper.model.CallSiteAst
+import nl.stokpop.typemapper.model.matchesSig
+import nl.stokpop.typemapper.model.parseSig
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
