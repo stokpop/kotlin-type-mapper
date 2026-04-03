@@ -21,7 +21,8 @@ import java.nio.file.Files
 /** Resolves the runtime classpath for a Gradle or Maven project rooted at [projectRoot].
  *  Returns both dependency jars and the project's own compiled class directories. */
 fun resolveProjectClasspath(projectRoot: File): List<File> = when {
-    File(projectRoot, "build.gradle.kts").exists() || File(projectRoot, "build.gradle").exists() ->
+    File(projectRoot, "settings.gradle.kts").exists() || File(projectRoot, "settings.gradle").exists()
+        || File(projectRoot, "build.gradle.kts").exists() || File(projectRoot, "build.gradle").exists() ->
         resolveGradleClasspath(projectRoot) + resolveGradleClassDirs(projectRoot)
     File(projectRoot, "pom.xml").exists() ->
         resolveMavenClasspath(projectRoot) + resolveMavenClassDirs(projectRoot)
@@ -48,7 +49,8 @@ private fun resolveGradleClasspath(projectRoot: File): List<File> {
     val gradlew = if (File(projectRoot, "gradlew").exists()) "./gradlew" else "gradle"
     val output = runCommand(projectRoot, gradlew, "-q", "typeMapperPrintClasspath",
         "--init-script", initScript.absolutePath)
-    return parseClasspathOutput(output, "TYPEMAPPER_CP:")
+    // Collect ALL TYPEMAPPER_CP: lines — allprojects emits one per subproject.
+    return parseAllClasspathOutput(output, "TYPEMAPPER_CP:")
 }
 
 private fun resolveMavenClasspath(projectRoot: File): List<File> {
@@ -81,34 +83,54 @@ private fun parseClasspathOutput(output: String, marker: String): List<File> =
         ?.filter { it.exists() }
         ?: emptyList()
 
+/** Like [parseClasspathOutput] but collects ALL matching lines (for multi-module Gradle). */
+private fun parseAllClasspathOutput(output: String, marker: String): List<File> =
+    output.lines()
+        .filter { it.startsWith(marker) }
+        .flatMap { it.removePrefix(marker).split(File.pathSeparator).map(::File) }
+        .filter { it.exists() }
+        .distinct()
+
 /**
  * Walks up the directory tree from [sourceDir] to find the **root** project.
  *
- * For Gradle, returns the first (innermost) directory containing a build file.
+ * For Gradle, keeps walking up as long as parent directories also contain a build file
+ * or settings file, landing at the root where `gradlew` and `settings.gradle[.kts]` live.
  * For Maven, keeps walking up as long as parent directories also contain a `pom.xml`,
- * so that multi-module projects are always resolved from the aggregate root rather
- * than a submodule — ensuring all module dependencies are included in the classpath.
+ * so that multi-module projects are always resolved from the aggregate root.
  */
 fun findProjectRoot(sourceDir: File): File? {
     var dir: File? = sourceDir
+    var gradleRoot: File? = null
     var mavenRoot: File? = null
     while (dir != null) {
         when {
-            File(dir, "build.gradle.kts").exists() || File(dir, "build.gradle").exists() ->
-                return dir   // Gradle: stop at the first (innermost) build file
+            File(dir, "settings.gradle.kts").exists() || File(dir, "settings.gradle").exists()
+                || File(dir, "build.gradle.kts").exists() || File(dir, "build.gradle").exists() ->
+                gradleRoot = dir   // Gradle: keep going up to find the outermost settings/build file
             File(dir, "pom.xml").exists() ->
-                mavenRoot = dir   // Maven: keep going up to find the true aggregate root
+                mavenRoot = dir    // Maven: keep going up to find the true aggregate root
         }
         dir = dir.parentFile
     }
-    return mavenRoot
+    return gradleRoot ?: mavenRoot
 }
 
-/** Returns existing Gradle compiled class directories under [projectRoot]/build/classes. */
+/**
+ * Returns existing Gradle compiled class directories across all modules under [projectRoot].
+ * Matches paths of the form: <anything>/build/classes/{kotlin,java,groovy}/main
+ */
 private fun resolveGradleClassDirs(projectRoot: File): List<File> =
-    listOf("kotlin/main", "java/main", "groovy/main")
-        .map { File(projectRoot, "build/classes/$it") }
-        .filter { it.isDirectory }
+    projectRoot.walkTopDown()
+        .onEnter { it.name != ".gradle" && it.name != "src" }
+        .filter { dir ->
+            dir.isDirectory
+                && dir.name == "main"
+                && dir.parentFile?.name in setOf("kotlin", "java", "groovy")
+                && dir.parentFile?.parentFile?.name == "classes"
+                && dir.parentFile?.parentFile?.parentFile?.name == "build"
+        }
+        .toList()
 
 /**
  * Returns existing Maven compiled class directories for all modules under [projectRoot].
