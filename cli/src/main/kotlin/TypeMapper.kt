@@ -15,11 +15,11 @@
  */
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
-// ...existing code...
+
 import nl.stokpop.typemapper.analyzer.findProjectRoot
 import nl.stokpop.typemapper.analyzer.resolveProjectClasspath
-import nl.stokpop.typemapper.analyzer.analyzeKotlinProject
 import nl.stokpop.typemapper.analyzer.KotlinTypeMapper
+
 import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.obj
 import com.github.ajalt.clikt.core.requireObject
@@ -29,6 +29,7 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
+
 import nl.stokpop.typemapper.model.CallSiteAst
 import nl.stokpop.typemapper.model.DeclarationAst
 import nl.stokpop.typemapper.model.TypedAst
@@ -39,6 +40,7 @@ import nl.stokpop.typemapper.model.callsMatchingPolymorphicLocated
 import nl.stokpop.typemapper.model.declarations
 import nl.stokpop.typemapper.model.declarationsAnnotatedWith
 import nl.stokpop.typemapper.model.implementorsOf
+
 import java.io.File
 
 fun main(args: Array<String>) {
@@ -93,12 +95,13 @@ class AnalyzeCommand : CliktCommand("analyze") {
                 echo("Classpath (explicit): ${classpath.size} entries", err = true)
                 classpath.forEach { entry -> echo("  cp: $entry", err = true) }
             }
-            classpath.map { File(it) }
+            classpath.map { File(it) }.filter { it.isDirectory || it.extension == "jar" }
         } else {
-            if (projectRoot != null) {
-                echo("Resolving classpath from: $projectRoot", err = true)
-                resolveProjectClasspath(projectRoot).also {
-                    val jars = it.count { f -> f.isFile }
+            val root = findProjectRoot(dir)
+            if (root != null) {
+                echo("Resolving classpath from: $root", err = true)
+                resolveProjectClasspath(root).filter { it.isDirectory || it.extension == "jar" }.also {
+                    val jars = it.count { f -> f.isFile && f.extension == "jar" }
                     val dirs = it.count { f -> f.isDirectory }
                     echo("Classpath: $jars jar(s), $dirs dir(s)", err = true)
                     if (verbose) {
@@ -120,6 +123,7 @@ class AnalyzeCommand : CliktCommand("analyze") {
         } else emptyList()
 
         val allSourceDirs = (listOf(dir) + extraSources.map { File(it) } + generatedDirs)
+            .map { it.absoluteFile }
             .filter { it.isDirectory }
             .distinct()
 
