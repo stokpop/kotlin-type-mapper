@@ -25,22 +25,19 @@ subprojects {
         skipExistingHeaders = true
     }
 
-    // Ensure consistent Java toolchain and Kotlin JVM target
+    // Compile targeting Java 17 bytecode so the artifact runs on Java 17+
+    // (use compiler flags rather than toolchain to avoid requiring a JDK 17 installation)
     plugins.withType<org.jetbrains.kotlin.gradle.plugin.KotlinBasePlugin> {
-        extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension>("kotlin") {
-            jvmToolchain(21)
-        }
         tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().configureEach {
             compilerOptions {
-                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
             }
         }
     }
     plugins.withType<JavaPlugin> {
         extensions.configure<JavaPluginExtension>("java") {
-            toolchain {
-                languageVersion.set(JavaLanguageVersion.of(21))
-            }
+            sourceCompatibility = JavaVersion.VERSION_17
+            targetCompatibility = JavaVersion.VERSION_17
         }
     }
 }
