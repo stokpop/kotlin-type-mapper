@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package nl.stokpop.typemapper.model
+
 /**
  * PMD-style Kotlin signature matching for call sites.
  *
@@ -150,12 +152,17 @@ fun CallSiteAst.matchesSig(sig: String): Boolean {
     // Match receiver: check dispatch (member calls), extension, and constructor class.
     // For constructors (callee ends with .<init>), the "receiver" is the class being
     // constructed — read from the callee FQN since no dispatch/extension receiver is set.
+    // For static Java method calls (dispatch=null, extension=null), the class is the
+    // package-qualified prefix of calleeFqName (everything before the last dot).
     if (parsed.receiverType != null) {
         val constructorClass = if (calleeFqName.endsWith(".<init>"))
             calleeFqName.removeSuffix(".<init>") else null
+        val calleeClass = if (dispatchReceiverType == null && extensionReceiverType == null && constructorClass == null)
+            calleeFqName.substringBeforeLast('.') else null
         val matches = typeMatches(parsed.receiverType, dispatchReceiverType)
                    || typeMatches(parsed.receiverType, extensionReceiverType)
                    || (constructorClass != null && typeMatches(parsed.receiverType, constructorClass))
+                   || (calleeClass != null && typeMatches(parsed.receiverType, calleeClass))
         if (!matches) return false
     }
 
@@ -172,3 +179,59 @@ fun CallSiteAst.matchesSig(sig: String): Boolean {
 
 /** Convenience: filter a list of call sites to those matching the given signature. */
 fun List<CallSiteAst>.matchesSig(sig: String): List<CallSiteAst> = filter { it.matchesSig(sig) }
+
+/**
+ * Like [typeMatches] but also accepts Java↔Kotlin equivalent names via [typeNamesEquivalent].
+ *
+ * e.g. `typeMatchesEquivalent("java.lang.String", "kotlin.String")` → true
+ * e.g. `typeMatchesEquivalent("java.util.List",   "kotlin.collections.List<String>")` → true (erasure)
+ */
+fun typeMatchesEquivalent(expected: String, actual: String?): Boolean {
+    if (actual == null) return false
+    if (typeMatches(expected, actual)) return true
+    val rawExpected = expected.substringBefore('<')
+    val rawActual   = actual.substringBefore('<')
+    return typeNamesEquivalent(rawExpected, rawActual)
+}
+
+/**
+ * Like [matchesSig] but uses [typeMatchesEquivalent] for receiver and parameter matching,
+ * so Java FQCNs and Kotlin FQNs are treated as equivalent.
+ *
+ * Example: `matchesSigEquivalent("java.util.regex.Pattern#matches(java.lang.String,java.lang.CharSequence)")`
+ * matches a Kotlin call site whose receiver is `java.util.regex.Pattern` and whose argument
+ * types are `kotlin.String` and `kotlin.CharSequence`.
+ */
+fun CallSiteAst.matchesSigEquivalent(sig: String): Boolean {
+    val parsed = parseSig(sig)
+
+    if (parsed.methodName != "_") {
+        val calleeName = calleeFqName.substringAfterLast('.')
+        if (calleeName != parsed.methodName) return false
+    }
+
+    if (parsed.receiverType != null) {
+        val constructorClass = if (calleeFqName.endsWith(".<init>"))
+            calleeFqName.removeSuffix(".<init>") else null
+        val calleeClass = if (dispatchReceiverType == null && extensionReceiverType == null && constructorClass == null)
+            calleeFqName.substringBeforeLast('.') else null
+        val matches = typeMatchesEquivalent(parsed.receiverType, dispatchReceiverType)
+                   || typeMatchesEquivalent(parsed.receiverType, extensionReceiverType)
+                   || (constructorClass != null && typeMatchesEquivalent(parsed.receiverType, constructorClass))
+                   || (calleeClass != null && typeMatchesEquivalent(parsed.receiverType, calleeClass))
+        if (!matches) return false
+    }
+
+    if (parsed.paramTypes != null) {
+        if (parsed.paramTypes.size != argumentTypes.size) return false
+        for ((expected, actual) in parsed.paramTypes.zip(argumentTypes)) {
+            if (!typeMatchesEquivalent(expected, actual)) return false
+        }
+    }
+
+    return true
+}
+
+/** Convenience: filter a list of call sites using [matchesSigEquivalent]. */
+fun List<CallSiteAst>.matchesSigEquivalent(sig: String): List<CallSiteAst> =
+    filter { it.matchesSigEquivalent(sig) }

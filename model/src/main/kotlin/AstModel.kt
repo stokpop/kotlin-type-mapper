@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package nl.stokpop.typemapper.model
+
 import kotlinx.serialization.Serializable
 
 /** Declaration kinds that represent class-like types (have a type hierarchy entry). */

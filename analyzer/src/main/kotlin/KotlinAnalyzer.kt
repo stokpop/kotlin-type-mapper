@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package nl.stokpop.typemapper.analyzer
+
+import nl.stokpop.typemapper.model.*
+
 import java.io.File
 import java.security.MessageDigest
 import org.jetbrains.kotlin.K1Deprecation
@@ -31,11 +35,23 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 /**
+ * Convenience overload: discovers all `.kt` files under [sourceRoot] and analyses them.
+ * Use the two-parameter overload when you need to analyse a specific subset of files.
+ */
+fun analyzeKotlinProject(sourceRoot: File, extraClasspath: List<File> = emptyList()): TypedAst {
+    val files = sourceRoot.walkTopDown()
+        .filter { it.extension == "kt" }
+        .sortedBy { it.absolutePath }
+        .toList()
+    return analyzeKotlinProject(files, sourceRoot, extraClasspath)
+}
+
+/**
  * Runs semantic analysis on all [files] under [sourceRoot] using the Kotlin K1 compiler
  * pipeline, returning a [TypedAst] with declarations and call sites for every file.
  *
  * All files are analysed in a single pass so that cross-file type references resolve
- * correctly. [extraClasspath] should contain the target project's dependency jars.
+ * correctly. [extraClasspath] may contain dependency jars and/or compiled class directories.
  */
 @OptIn(K1Deprecation::class)
 @Suppress("DEPRECATION")

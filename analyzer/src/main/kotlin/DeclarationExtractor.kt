@@ -13,9 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package nl.stokpop.typemapper.analyzer
+
+import nl.stokpop.typemapper.model.*
+
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -30,6 +36,17 @@ import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+
+/**
+ * Returns the start offset of a declaration, skipping any leading KDoc comment.
+ * KDoc is a child of the PSI node and is included in [textRange], so we use
+ * [KtDeclaration.modifierList] (first annotation/modifier) or the first non-KDoc
+ * child as the start offset instead.
+ */
+private fun KtDeclaration.startOffsetSkippingKdoc(): Int =
+    modifierList?.textRange?.startOffset
+        ?: children.firstOrNull { it !is KDoc }?.textRange?.startOffset
+        ?: textRange.startOffset
 
 private fun Annotations.toAstList(): List<AnnotationAst> =
     mapNotNull { ann ->
@@ -75,7 +92,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             super.visitClass(klass)
             if (klass is KtEnumEntry) return   // handled by visitEnumEntry
             val descriptor = bindingContext[BindingContext.CLASS, klass] ?: return
-            val offset = klass.textRange.startOffset
+            val offset = klass.startOffsetSkippingKdoc()
             val kind = when {
                 klass.isEnum()       -> "enum"
                 klass.isInterface()  -> "interface"
@@ -100,7 +117,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
         override fun visitObjectDeclaration(declaration: KtObjectDeclaration) {
             super.visitObjectDeclaration(declaration)
             val descriptor = bindingContext[BindingContext.CLASS, declaration] ?: return
-            val offset = declaration.textRange.startOffset
+            val offset = declaration.startOffsetSkippingKdoc()
             declarations.add(
                 DeclarationAst(
                     kind = if (declaration.isCompanion()) "companion_object" else "object",
@@ -206,7 +223,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
         override fun visitTypeAlias(typeAlias: KtTypeAlias) {
             super.visitTypeAlias(typeAlias)
             val descriptor = bindingContext[BindingContext.TYPE_ALIAS, typeAlias] ?: return
-            val offset = typeAlias.textRange.startOffset
+            val offset = typeAlias.startOffsetSkippingKdoc()
             declarations.add(
                 DeclarationAst(
                     kind = "typealias",
@@ -224,7 +241,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
         override fun visitSecondaryConstructor(constructor: KtSecondaryConstructor) {
             super.visitSecondaryConstructor(constructor)
             val descriptor = bindingContext[BindingContext.CONSTRUCTOR, constructor] ?: return
-            val offset = constructor.textRange.startOffset
+            val offset = constructor.startOffsetSkippingKdoc()
             declarations.add(
                 DeclarationAst(
                     kind = "constructor",
@@ -245,7 +262,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
         override fun visitNamedFunction(function: KtNamedFunction) {
             super.visitNamedFunction(function)
             val descriptor = bindingContext[BindingContext.FUNCTION, function] ?: return
-            val offset = function.textRange.startOffset
+            val offset = function.startOffsetSkippingKdoc()
             declarations.add(
                 DeclarationAst(
                     kind = "function",
@@ -266,7 +283,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
         override fun visitProperty(property: KtProperty) {
             super.visitProperty(property)
             val descriptor = bindingContext[BindingContext.VARIABLE, property] ?: return
-            val offset = property.textRange.startOffset
+            val offset = property.startOffsetSkippingKdoc()
             declarations.add(
                 DeclarationAst(
                     kind = "property",

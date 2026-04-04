@@ -24,4 +24,20 @@ subprojects {
         ext.set("name", "Peter Paul Bakker, Stokpop Software Solutions")
         skipExistingHeaders = true
     }
+
+    // Compile targeting Java 17 bytecode so the artifact runs on Java 17+
+    // (use compiler flags rather than toolchain to avoid requiring a JDK 17 installation)
+    plugins.withType<org.jetbrains.kotlin.gradle.plugin.KotlinBasePlugin> {
+        tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().configureEach {
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            }
+        }
+    }
+    plugins.withType<JavaPlugin> {
+        extensions.configure<JavaPluginExtension>("java") {
+            sourceCompatibility = JavaVersion.VERSION_17
+            targetCompatibility = JavaVersion.VERSION_17
+        }
+    }
 }

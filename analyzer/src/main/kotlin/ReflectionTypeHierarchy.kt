@@ -13,72 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package nl.stokpop.typemapper.analyzer
+
 import java.io.File
 import java.net.URLClassLoader
-
-/**
- * Maps well-known Java class names to their Kotlin FQN equivalents.
- * Supertypes obtained via reflection are converted through this table so that
- * the [TypedAst.typeHierarchy] uses the same Kotlin FQNs as the rest of the AST.
- */
-private val JAVA_TO_KOTLIN = mapOf(
-    "java.lang.Object"       to "kotlin.Any",
-    "java.lang.String"       to "kotlin.String",
-    "java.lang.Number"       to "kotlin.Number",
-    "java.lang.Comparable"   to "kotlin.Comparable",
-    "java.lang.CharSequence" to "kotlin.CharSequence",
-    "java.lang.Cloneable"    to "kotlin.Cloneable",
-    "java.lang.Enum"         to "kotlin.Enum",
-    "java.lang.Annotation"   to "kotlin.Annotation",
-    "java.lang.Throwable"    to "kotlin.Throwable",
-    "java.io.Serializable"   to "kotlin.io.Serializable",
-    "java.lang.Iterable"     to "kotlin.collections.Iterable",
-    "java.util.Iterator"     to "kotlin.collections.Iterator",
-    "java.util.Collection"   to "kotlin.collections.Collection",
-    "java.util.List"         to "kotlin.collections.List",
-    "java.util.Set"          to "kotlin.collections.Set",
-    "java.util.Map"          to "kotlin.collections.Map",
-    "java.util.Map\$Entry"   to "kotlin.collections.Map.Entry",
-)
-
-/**
- * Maps Kotlin FQNs to the Java binary class name used for [Class.forName] lookups.
- * Mutable variants resolve to the same JVM class as their read-only counterparts.
- */
-private val KOTLIN_TO_JAVA = mapOf(
-    "kotlin.Any"                          to "java.lang.Object",
-    "kotlin.String"                       to "java.lang.String",
-    "kotlin.Number"                       to "java.lang.Number",
-    "kotlin.Comparable"                   to "java.lang.Comparable",
-    "kotlin.CharSequence"                 to "java.lang.CharSequence",
-    "kotlin.Cloneable"                    to "java.lang.Cloneable",
-    "kotlin.Enum"                         to "java.lang.Enum",
-    "kotlin.Annotation"                   to "java.lang.Annotation",
-    "kotlin.Throwable"                    to "java.lang.Throwable",
-    "kotlin.io.Serializable"              to "java.io.Serializable",
-    "kotlin.collections.Iterable"         to "java.lang.Iterable",
-    "kotlin.collections.MutableIterable"  to "java.lang.Iterable",
-    "kotlin.collections.Iterator"         to "java.util.Iterator",
-    "kotlin.collections.MutableIterator"  to "java.util.Iterator",
-    "kotlin.collections.Collection"       to "java.util.Collection",
-    "kotlin.collections.MutableCollection" to "java.util.Collection",
-    "kotlin.collections.List"             to "java.util.List",
-    "kotlin.collections.MutableList"      to "java.util.List",
-    "kotlin.collections.Set"              to "java.util.Set",
-    "kotlin.collections.MutableSet"       to "java.util.Set",
-    "kotlin.collections.Map"              to "java.util.Map",
-    "kotlin.collections.MutableMap"       to "java.util.Map",
-    "kotlin.collections.Map.Entry"        to "java.util.Map\$Entry",
-    "kotlin.collections.MutableMap.MutableEntry" to "java.util.Map\$Entry",
-)
+import nl.stokpop.typemapper.model.javaToKotlinName
+import nl.stokpop.typemapper.model.kotlinToJavaName
 
 /** Converts a Java binary class name (from reflection) to the Kotlin FQN used in the AST. */
 internal fun javaNameToKotlinFqn(javaName: String): String =
-    JAVA_TO_KOTLIN[javaName] ?: javaName.replace('$', '.')
+    javaToKotlinName(javaName).let { if (it == javaName) javaName.replace('$', '.') else it }
 
 /** Resolves the Java binary class name for a (raw, generic-free) Kotlin FQN. */
 internal fun kotlinFqnToJavaName(kotlinFqn: String): String =
-    KOTLIN_TO_JAVA[kotlinFqn] ?: kotlinFqn
+    kotlinToJavaName(kotlinFqn)
 
 /** Attempts to load the class for [kotlinFqn] (raw, no generics) from [classLoader]. */
 internal fun loadClass(kotlinFqn: String, classLoader: ClassLoader): Class<*>? {
@@ -131,6 +79,6 @@ fun buildTypeHierarchy(seedTypes: Set<String>, classLoader: ClassLoader): Map<St
     return result
 }
 
-/** Creates a [URLClassLoader] over the given classpath jars, with the current JVM as parent. */
-fun buildClassLoader(classpathJars: List<File>): URLClassLoader =
-    URLClassLoader(classpathJars.map { it.toURI().toURL() }.toTypedArray(), ClassLoader.getSystemClassLoader())
+/** Creates a [URLClassLoader] over the given classpath entries (jars or directories), with the current JVM as parent. */
+fun buildClassLoader(classpath: List<File>): URLClassLoader =
+    URLClassLoader(classpath.map { it.toURI().toURL() }.toTypedArray(), ClassLoader.getSystemClassLoader())

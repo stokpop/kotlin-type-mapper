@@ -5,6 +5,7 @@ build/
 !gradlew.bat
 !gradle/wrapper/gradle-wrapper.jar
 *.log
+.idea
 
 # Kotlin Specific
 *.class
