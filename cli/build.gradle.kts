@@ -28,6 +28,10 @@ tasks.shadowJar {
     mergeServiceFiles()
 }
 
+tasks.jar {
+    archiveBaseName.set("kotlin-type-mapper-cli")
+}
+
 tasks.register("cloneMemoryCheck") {
     description = "Clones the memory-check test project if it does not exist yet."
     val targetDir = file("${rootProject.projectDir}/test-projects/memory-check")

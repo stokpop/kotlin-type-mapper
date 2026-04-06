@@ -18,6 +18,26 @@ allprojects {
 subprojects {
     apply(plugin = "com.github.hierynomus.license")
 
+    // Maven publishing (publishToMavenLocal)
+    plugins.withType<JavaPlugin> {
+        apply(plugin = "maven-publish")
+    }
+
+    plugins.withId("maven-publish") {
+        extensions.configure<org.gradle.api.publish.PublishingExtension>("publishing") {
+            publications {
+                // analyzer/ and model/ already declare their own publications.
+                // cli/ needs one so it can be published to Maven Local.
+                if (project.name == "cli" && findByName("maven") == null && findByName("mavenJava") == null) {
+                    create<org.gradle.api.publish.maven.MavenPublication>("mavenJava") {
+                        from(components["java"])
+                        artifactId = "kotlin-type-mapper-cli"
+                    }
+                }
+            }
+        }
+    }
+
     configure<nl.javadude.gradle.plugins.license.LicenseExtension> {
         header = rootProject.file("HEADER")
         ext.set("year", Year.now().value)
