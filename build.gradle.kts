@@ -1,8 +1,8 @@
 import java.time.Year
 
 plugins {
-    kotlin("jvm") version "2.2.21" apply false
-    kotlin("plugin.serialization") version "2.2.21" apply false
+    kotlin("jvm") version "2.3.10" apply false
+    kotlin("plugin.serialization") version "2.3.10" apply false
     id("com.github.hierynomus.license") version "0.16.1" apply false
 }
 
