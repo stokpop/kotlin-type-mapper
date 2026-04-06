@@ -235,3 +235,57 @@ fun CallSiteAst.matchesSigEquivalent(sig: String): Boolean {
 /** Convenience: filter a list of call sites using [matchesSigEquivalent]. */
 fun List<CallSiteAst>.matchesSigEquivalent(sig: String): List<CallSiteAst> =
     filter { it.matchesSigEquivalent(sig) }
+
+/**
+ * Like [matchesSigEquivalent] but uses [isSubtype] for receiver-type matching, enabling
+ * polymorphic signatures such as `java.lang.Throwable#printStackTrace(*)` to match calls
+ * whose receiver is a subtype (e.g. `java.lang.Exception`).
+ *
+ * [isSubtype] receives `(expectedType, actualType)` and should return `true` when
+ * `actualType` is the same as, or a (transitive) subtype of, `expectedType`.
+ * Parameter types still use [typeMatchesEquivalent] (exact + java/kotlin equivalence).
+ *
+ * The [java.util.function.BiPredicate] signature makes this callable from Java via
+ * a method reference such as `ctx::isSubtypeOf`.
+ *
+ * Example:
+ * ```java
+ * SignatureMatcherKt.matchesSigPolymorphic(call, "java.lang.Throwable#printStackTrace(*)", ctx::isSubtypeOf);
+ * ```
+ */
+fun CallSiteAst.matchesSigPolymorphic(sig: String, isSubtype: java.util.function.BiPredicate<String, String>): Boolean {
+    // Fast path: exact + java/kotlin equivalence (no hierarchy needed).
+    if (matchesSigEquivalent(sig)) return true
+
+    val parsed = parseSig(sig)
+
+    // Method name
+    if (parsed.methodName != "_") {
+        val calleeName = calleeFqName.substringAfterLast('.')
+        if (calleeName != parsed.methodName) return false
+    }
+
+    // Receiver — polymorphic check
+    if (parsed.receiverType != null) {
+        val constructorClass = if (calleeFqName.endsWith(".<init>"))
+            calleeFqName.removeSuffix(".<init>") else null
+        val calleeClass = if (dispatchReceiverType == null && extensionReceiverType == null && constructorClass == null)
+            calleeFqName.substringBeforeLast('.') else null
+        val recv = parsed.receiverType
+        val matches = (dispatchReceiverType != null   && isSubtype.test(recv, dispatchReceiverType))
+                   || (extensionReceiverType != null  && isSubtype.test(recv, extensionReceiverType))
+                   || (constructorClass != null       && isSubtype.test(recv, constructorClass))
+                   || (calleeClass != null            && isSubtype.test(recv, calleeClass))
+        if (!matches) return false
+    }
+
+    // Parameters — exact + java/kotlin equivalence (same as matchesSigEquivalent)
+    if (parsed.paramTypes != null) {
+        if (parsed.paramTypes.size != argumentTypes.size) return false
+        for ((expected, actual) in parsed.paramTypes.zip(argumentTypes)) {
+            if (!typeMatchesEquivalent(expected, actual)) return false
+        }
+    }
+
+    return true
+}

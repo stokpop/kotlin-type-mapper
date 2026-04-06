@@ -102,7 +102,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                 else                 -> "class"
             }
             val superTypes = descriptor.typeConstructor.supertypes
-                .mapNotNull { it.constructor.declarationDescriptor?.fqNameSafe?.asString() }
+                .map { it.toFqString().substringBefore('?') }
             declarations.add(
                 DeclarationAst(
                     kind = kind,
@@ -122,7 +122,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             val descriptor = bindingContext[BindingContext.CLASS, declaration] ?: return
             val offset = declaration.startOffsetSkippingKdoc()
             val superTypes = descriptor.typeConstructor.supertypes
-                .mapNotNull { it.constructor.declarationDescriptor?.fqNameSafe?.asString() }
+                .map { it.toFqString().substringBefore('?') }
             declarations.add(
                 DeclarationAst(
                     kind = if (declaration.isCompanion()) "companion_object" else "object",
