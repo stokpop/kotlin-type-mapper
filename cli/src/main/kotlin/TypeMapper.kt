@@ -85,7 +85,7 @@ class AnalyzeCommand : CliktCommand("analyze") {
         help = "Auto-detect and include generated Kotlin sources under target/generated-sources and build/generated").flag()
 
     override fun run() {
-        val dir = File(sourceDir)
+        val dir = File(sourceDir).absoluteFile
         require(dir.isDirectory) { "SOURCE_DIR does not exist: $sourceDir" }
 
         val projectRoot = findProjectRoot(dir)

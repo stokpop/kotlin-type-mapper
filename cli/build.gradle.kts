@@ -23,6 +23,7 @@ application {
 }
 
 tasks.shadowJar {
+    archiveBaseName.set("kotlin-type-mapper-cli")
     archiveClassifier.set("all")
     mergeServiceFiles()
 }

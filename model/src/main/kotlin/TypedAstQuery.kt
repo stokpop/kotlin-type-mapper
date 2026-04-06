@@ -49,8 +49,12 @@ fun TypedAst.declarationsAnnotatedWith(fqName: String): List<DeclarationAst> =
  * Example: `implementorsOf("java.io.Closeable")` finds every class that closes resources.
  */
 fun TypedAst.implementorsOf(fqName: String): List<DeclarationAst> {
-    val subtypes = allSubtypesOf(fqName)
-    return classes().filter { it.fqName in subtypes || fqName in (typeHierarchy[it.fqName] ?: emptyList()) }
+    val equivalents = typeEquivalents(fqName)
+    val subtypes = equivalents.flatMap { allSubtypesOf(it) }.toSet()
+    return classes().filter { decl ->
+        decl.fqName in subtypes ||
+        (typeHierarchy[decl.fqName] ?: emptyList()).any { it in equivalents }
+    }
 }
 
 /** Alias for [implementorsOf] — finds class declarations whose type is a subtype of [fqName]. */
@@ -114,6 +118,8 @@ fun TypedAst.callsMatchingPolymorphicLocated(sig: String): List<Pair<String, Cal
 /**
  * Returns the set of all type FQNs that are (transitively) subtypes of [targetFqn]
  * according to [TypedAst.typeHierarchy].
+ * Expands [targetFqn] via Java↔Kotlin equivalence so that e.g. `kotlin.Exception`
+ * and `java.lang.Exception` return the same results.
  */
 private fun TypedAst.allSubtypesOf(targetFqn: String): Set<String> {
     // Invert the hierarchy: for each type, collect all types that have it as a (direct) supertype.
@@ -123,12 +129,17 @@ private fun TypedAst.allSubtypesOf(targetFqn: String): Set<String> {
             children.getOrPut(sup) { mutableSetOf() }.add(type)
         }
     }
-    // BFS from targetFqn downward.
+    // BFS from all equivalent names (e.g. both kotlin.Exception and java.lang.Exception).
+    val seeds = typeEquivalents(targetFqn)
     val result = mutableSetOf<String>()
-    val queue = ArrayDeque(children[targetFqn] ?: emptySet())
+    val queue = ArrayDeque(seeds.flatMap { children[it] ?: emptySet() })
     while (queue.isNotEmpty()) {
         val t = queue.removeFirst()
         if (result.add(t)) queue.addAll(children[t] ?: emptySet())
     }
     return result
 }
+
+/** Returns [fqn] plus its Java↔Kotlin equivalent name(s), if any. */
+private fun typeEquivalents(fqn: String): Set<String> =
+    setOfNotNull(fqn, KOTLIN_TO_JAVA[fqn], JAVA_TO_KOTLIN[fqn])
