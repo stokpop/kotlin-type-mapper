@@ -106,7 +106,20 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
         val classLoader = buildClassLoader(
             listOfNotNull(stdlibJar) + extraClasspath
         )
-        val typeHierarchy = buildTypeHierarchy(seedTypes, classLoader)
+        val reflectionHierarchy = buildTypeHierarchy(seedTypes, classLoader)
+
+        // Build a source-derived hierarchy from K1 analysis (available without compiled classes).
+        // This captures user-defined class supertypes (e.g. "class Foo : Serializable") even when
+        // Foo is not compiled. The reflection hierarchy takes priority where both have an entry.
+        val sourceHierarchy = mutableMapOf<String, List<String>>()
+        for (fileAst in fileAsts) {
+            for (decl in fileAst.declarations) {
+                if (decl.kind in CLASS_KINDS && decl.superTypes.isNotEmpty()) {
+                    sourceHierarchy[decl.fqName.substringBefore('<')] = decl.superTypes
+                }
+            }
+        }
+        val typeHierarchy = sourceHierarchy + reflectionHierarchy   // reflection wins on conflict
 
         return TypedAst(sourceRoot = sourceRoot.absolutePath, files = fileAsts, typeHierarchy = typeHierarchy)
     } finally {

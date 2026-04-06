@@ -101,6 +101,8 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                 klass.isSealed()     -> "sealed_class"
                 else                 -> "class"
             }
+            val superTypes = descriptor.typeConstructor.supertypes
+                .mapNotNull { it.constructor.declarationDescriptor?.fqNameSafe?.asString() }
             declarations.add(
                 DeclarationAst(
                     kind = kind,
@@ -108,6 +110,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                     annotations = descriptor.annotations.toAstList(),
+                    superTypes = superTypes,
                     line = lineOf(offset),
                     column = colOf(offset),
                 )
@@ -118,6 +121,8 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             super.visitObjectDeclaration(declaration)
             val descriptor = bindingContext[BindingContext.CLASS, declaration] ?: return
             val offset = declaration.startOffsetSkippingKdoc()
+            val superTypes = descriptor.typeConstructor.supertypes
+                .mapNotNull { it.constructor.declarationDescriptor?.fqNameSafe?.asString() }
             declarations.add(
                 DeclarationAst(
                     kind = if (declaration.isCompanion()) "companion_object" else "object",
@@ -125,6 +130,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                     annotations = descriptor.annotations.toAstList(),
+                    superTypes = superTypes,
                     line = lineOf(offset),
                     column = colOf(offset),
                 )
