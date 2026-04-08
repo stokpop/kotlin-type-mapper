@@ -108,11 +108,26 @@ val KOTLIN_TO_JAVA: Map<String, String> = mapOf(
  */
 fun javaToKotlinName(javaName: String): String = JAVA_TO_KOTLIN[javaName] ?: javaName
 
+private fun kotlinFqnToJavaBinaryName(kotlinFqn: String): String {
+    val segments = kotlinFqn.split('.')
+    if (segments.size < 2) return kotlinFqn
+
+    val firstClassIndex = segments.indexOfFirst { segment ->
+        segment.isNotEmpty() && segment[0].isUpperCase()
+    }
+    if (firstClassIndex == -1 || firstClassIndex == segments.lastIndex) return kotlinFqn
+
+    val packageName = segments.take(firstClassIndex).joinToString(".")
+    val className = segments.drop(firstClassIndex).joinToString("$")
+    return if (packageName.isEmpty()) className else "$packageName.$className"
+}
+
 /**
  * Converts a raw (no generics) Kotlin FQN to the Java binary name used for reflection.
  * Returns the input unchanged if no mapping exists.
  */
-fun kotlinToJavaName(kotlinFqn: String): String = KOTLIN_TO_JAVA[kotlinFqn] ?: kotlinFqn
+fun kotlinToJavaName(kotlinFqn: String): String =
+    KOTLIN_TO_JAVA[kotlinFqn] ?: kotlinFqnToJavaBinaryName(kotlinFqn)
 
 /**
  * Returns true if two type names refer to the same type after Java↔Kotlin mapping.
