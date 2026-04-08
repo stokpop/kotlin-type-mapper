@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package nl.stokpop.typemapper.model
+
 import kotlinx.serialization.Serializable
 
 /** Declaration kinds that represent class-like types (have a type hierarchy entry). */
@@ -51,6 +53,9 @@ data class DeclarationAst(
     val type: String? = null,                  // property / variable only
     val parameters: List<ParameterAst> = emptyList(),
     val annotations: List<AnnotationAst> = emptyList(),
+    /** Direct supertypes (Kotlin FQNs) for class-kind declarations, extracted from K1 source analysis.
+     *  Empty for non-class kinds. Populated regardless of whether compiled classes are available. */
+    val superTypes: List<String> = emptyList(),
     val line: Int,
     val column: Int,
 )

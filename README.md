@@ -22,12 +22,37 @@ If `test-projects/memory-check/` does not exist it is cloned automatically from 
 
 ## CLI usage
 
-The shadow jar is built to `cli/build/libs/cli-<version>-all.jar`.
+The shadow jar is built to `cli/build/libs/kotlin-type-mapper-cli-<version>-all.jar`,
+or download it from the [GitHub releases page](https://github.com/stokpop/kotlin-type-mapper/releases).
+
+### Set up `ktm` alias
+
+Add an alias so you can type `ktm` instead of the full `java -jar ...` invocation.
+
+**bash / zsh** — add to `~/.bashrc` or `~/.zshrc`:
+
+```bash
+alias ktm='java -jar /path/to/kotlin-type-mapper-cli-<version>-all.jar'
+```
+
+**fish** — add to `~/.config/fish/config.fish`:
+
+```fish
+alias ktm='java -jar /path/to/kotlin-type-mapper-cli-<version>-all.jar'
+```
+
+Replace `/path/to/` with the actual path, e.g.:
+
+```bash
+alias ktm='java -jar ~/tools/kotlin-type-mapper-cli-0.3.0-all.jar'
+```
+
+After adding, reload your shell (`source ~/.bashrc`) or open a new terminal.
 
 ### Analyze a project
 
 ```bash
-java -jar cli-0.1.0-all.jar analyze --output result.json /path/to/src/main/kotlin
+ktm analyze --output result.json /path/to/src/main/kotlin
 ```
 
 Classpath jars are resolved automatically from the nearest Gradle or Maven build.
@@ -35,10 +60,10 @@ Classpath jars are resolved automatically from the nearest Gradle or Maven build
 ### Query from JSON
 
 ```bash
-java -jar cli-0.1.0-all.jar query result.json calls "kotlin.String#trim()"
-java -jar cli-0.1.0-all.jar query result.json calls-polymorphic "kotlin.collections.Collection#size()"
-java -jar cli-0.1.0-all.jar query result.json implementors "java.io.Closeable"
-java -jar cli-0.1.0-all.jar query result.json annotated-with "org.springframework.stereotype.Service"
+ktm query result.json calls "kotlin.String#trim()"
+ktm query result.json calls-polymorphic "kotlin.collections.Collection#size()"
+ktm query result.json implementors "java.io.Closeable"
+ktm query result.json annotated-with "org.springframework.stereotype.Service"
 ```
 
 All query commands accept `--context/-C <N>` (default 3) to show ±N source lines around each match. Pass `0` to suppress context.
@@ -97,10 +122,10 @@ implementation("nl.stokpop.typemapper:kotlin-type-mapper-analyzer:0.1.0")
 import nl.stokpop.typemapper.analyzer.analyzeKotlinProject
 import nl.stokpop.typemapper.model.*
 
-// Run analysis
+// Run analysis (simple: discovers all .kt files under sourceRoot automatically)
 val ast: TypedAst = analyzeKotlinProject(
-    sourceRoot = "/path/to/src/main/kotlin",
-    classpathJars = listOf(File("mylib.jar"))
+    sourceRoot = File("/path/to/src/main/kotlin"),
+    extraClasspath = listOf(File("mylib.jar"), File("build/classes/kotlin/main"))
 )
 
 // Or load from JSON

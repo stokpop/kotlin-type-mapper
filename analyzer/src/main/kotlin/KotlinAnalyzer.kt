@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package nl.stokpop.typemapper.analyzer
+
+import nl.stokpop.typemapper.model.*
+
 import java.io.File
 import java.security.MessageDigest
 import org.jetbrains.kotlin.K1Deprecation
@@ -31,11 +35,23 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 /**
+ * Convenience overload: discovers all `.kt` files under [sourceRoot] and analyses them.
+ * Use the two-parameter overload when you need to analyse a specific subset of files.
+ */
+fun analyzeKotlinProject(sourceRoot: File, extraClasspath: List<File> = emptyList()): TypedAst {
+    val files = sourceRoot.walkTopDown()
+        .filter { it.extension == "kt" }
+        .sortedBy { it.absolutePath }
+        .toList()
+    return analyzeKotlinProject(files, sourceRoot, extraClasspath)
+}
+
+/**
  * Runs semantic analysis on all [files] under [sourceRoot] using the Kotlin K1 compiler
  * pipeline, returning a [TypedAst] with declarations and call sites for every file.
  *
  * All files are analysed in a single pass so that cross-file type references resolve
- * correctly. [extraClasspath] should contain the target project's dependency jars.
+ * correctly. [extraClasspath] may contain dependency jars and/or compiled class directories.
  */
 @OptIn(K1Deprecation::class)
 @Suppress("DEPRECATION")
@@ -90,7 +106,20 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
         val classLoader = buildClassLoader(
             listOfNotNull(stdlibJar) + extraClasspath
         )
-        val typeHierarchy = buildTypeHierarchy(seedTypes, classLoader)
+        val reflectionHierarchy = buildTypeHierarchy(seedTypes, classLoader)
+
+        // Build a source-derived hierarchy from K1 analysis (available without compiled classes).
+        // This captures user-defined class supertypes (e.g. "class Foo : Serializable") even when
+        // Foo is not compiled. The reflection hierarchy takes priority where both have an entry.
+        val sourceHierarchy = mutableMapOf<String, List<String>>()
+        for (fileAst in fileAsts) {
+            for (decl in fileAst.declarations) {
+                if (decl.kind in CLASS_KINDS && decl.superTypes.isNotEmpty()) {
+                    sourceHierarchy[decl.fqName.substringBefore('<')] = decl.superTypes
+                }
+            }
+        }
+        val typeHierarchy = sourceHierarchy + reflectionHierarchy   // reflection wins on conflict
 
         return TypedAst(sourceRoot = sourceRoot.absolutePath, files = fileAsts, typeHierarchy = typeHierarchy)
     } finally {

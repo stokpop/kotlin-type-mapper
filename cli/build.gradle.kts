@@ -19,12 +19,17 @@ tasks.test {
 }
 
 application {
-    mainClass.set("TypeMapperKt")
+    mainClass.set("nl.stokpop.typemapper.cli.TypeMapperKt")
 }
 
 tasks.shadowJar {
+    archiveBaseName.set("kotlin-type-mapper-cli")
     archiveClassifier.set("all")
     mergeServiceFiles()
+}
+
+tasks.jar {
+    archiveBaseName.set("kotlin-type-mapper-cli")
 }
 
 tasks.register("cloneMemoryCheck") {
