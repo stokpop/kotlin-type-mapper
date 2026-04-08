@@ -51,10 +51,14 @@ jobs:
           ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
         run: ./gradlew --info publishToSonatype closeAndReleaseSonatypeStagingRepository
 
+      - name: Build CLI shadow jar
+        if: contains(env.TAG_NAME, 'SNAPSHOT') != true
+        run: ./gradlew :cli:shadowJar
+
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
         if: contains(env.TAG_NAME, 'SNAPSHOT') != true
         with:
-          artifacts: "model/build/libs/*.jar,analyzer/build/libs/*.jar"
+          artifacts: "model/build/libs/*.jar,analyzer/build/libs/*.jar,cli/build/libs/*.jar"
           bodyFile: RELEASE.md
           token: ${{ secrets.GITHUB_TOKEN }}
