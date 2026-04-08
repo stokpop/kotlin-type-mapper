@@ -42,14 +42,16 @@ jobs:
           ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
         run: ./gradlew --info clean publishToSonatype
 
-      - name: Close and release to Maven Central
+      - name: Publish and close staging repository on Sonatype
         if: contains(env.TAG_NAME, 'SNAPSHOT') != true
         env:
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_SIGNING_PASSWORD }}
           ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
-        run: ./gradlew --info publishToSonatype closeAndReleaseSonatypeStagingRepository
+        run: |
+          ./gradlew --info publishToSonatype closeSonatypeStagingRepository
+          echo "Staging repository closed. Log in to https://oss.sonatype.org and release manually."
 
       - name: Build CLI shadow jar
         if: contains(env.TAG_NAME, 'SNAPSHOT') != true
