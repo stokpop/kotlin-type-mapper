@@ -19,7 +19,7 @@ tasks.test {
 }
 
 application {
-    mainClass.set("TypeMapperKt")
+    mainClass.set("nl.stokpop.typemapper.cli.TypeMapperKt")
 }
 
 tasks.shadowJar {
