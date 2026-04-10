@@ -2,7 +2,9 @@
 
 Scans Kotlin source files in a Gradle or Maven project and extracts a semantic AST — all declarations (functions, classes, properties, etc.) and resolved call sites with full type information — serialised to JSON.
 
-Analysis uses the Kotlin K1 compiler (embedded) so types are fully resolved, including generics and nullability. A reflection-based type hierarchy is built at analysis time so polymorphic queries work correctly.
+Analysis uses the Kotlin **K1 analysis API** (embedded compiler internals: `KotlinCoreEnvironment`, `TopDownAnalyzerFacadeForJVM`) so types are fully resolved, including generics and nullability. A reflection-based type hierarchy is built at analysis time so polymorphic queries work correctly.
+
+> **K1 vs K2 note:** The project compiles with Kotlin 2.x (K2 compiler) but the *analysis pipeline* used internally is the K1 API, which is deprecated in 2.x in favour of the [K2 Analysis API](https://kotlin.github.io/analysis-api/) (`KaSession`/`analyze{}`). The K1 API still ships in `kotlin-compiler-embeddable` 2.x and is intentionally kept until a dedicated migration is done.
 
 ## Subprojects
 

@@ -48,13 +48,23 @@ fun analyzeKotlinProject(sourceRoot: File, extraClasspath: List<File> = emptyLis
 
 /**
  * Runs semantic analysis on all [files] under [sourceRoot] using the Kotlin K1 compiler
- * pipeline, returning a [TypedAst] with declarations and call sites for every file.
+ * pipeline (KotlinCoreEnvironment / TopDownAnalyzerFacadeForJVM), returning a [TypedAst]
+ * with declarations and call sites for every file.
+ *
+ * Note: this uses the **K1 analysis API** (programmatic compiler internals), not the
+ * language version. We compile with Kotlin 2.x (K2 compiler) but intentionally use the
+ * K1 analysis pipeline here because the K2 Analysis API (KaSession) is a significantly
+ * different programming model. The K1 API is deprecated but still present in
+ * kotlin-compiler-embeddable 2.x; migration can happen independently.
  *
  * All files are analysed in a single pass so that cross-file type references resolve
  * correctly. [extraClasspath] may contain dependency jars and/or compiled class directories.
  */
-@OptIn(K1Deprecation::class)
-@Suppress("DEPRECATION")
+@OptIn(K1Deprecation::class) // K1 analysis API (KotlinCoreEnvironment, TopDownAnalyzerFacadeForJVM,
+                              // CliBindingTrace) is deprecated in Kotlin 2.x in favour of the K2
+                              // Analysis API, but not yet removed. Intentionally kept until a full
+                              // migration to KaSession / analyze{} blocks is done.
+@Suppress("DEPRECATION") // Suppresses deprecation warnings from the K1 compiler internals used above.
 fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: List<File> = emptyList()): TypedAst {
     val configuration = CompilerConfiguration()
     configuration.put(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
@@ -108,9 +118,9 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
         )
         val reflectionHierarchy = buildTypeHierarchy(seedTypes, classLoader)
 
-        // Build a source-derived hierarchy from K1 analysis (available without compiled classes).
-        // This captures user-defined class supertypes (e.g. "class Foo : Serializable") even when
-        // Foo is not compiled. The reflection hierarchy takes priority where both have an entry.
+        // Build a source-derived hierarchy from K1 analysis results (available without compiled
+        // classes). This captures user-defined class supertypes (e.g. "class Foo : Serializable")
+        // even when Foo is not yet compiled. The reflection hierarchy takes priority on conflict.
         val sourceHierarchy = mutableMapOf<String, List<String>>()
         for (fileAst in fileAsts) {
             for (decl in fileAst.declarations) {
