@@ -15,20 +15,17 @@
  */
 package nl.stokpop.typemapper.cli
 
-import com.github.ajalt.clikt.core.main
-import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.obj
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.option
 
-fun main(args: Array<String>) {
-    TypeMapperCli()
-        .subcommands(
-            AnalyzeCommand(),
-            LoadCommand(),
-            QueryCommand().subcommands(
-                CallsCommand(),
-                CallsPolymorphicCommand(),
-                ImplementorsCommand(),
-                AnnotatedWithCommand(),
-            )
-        )
-        .main(args)
+class TypeMapperCli : CliktCommand("typemapper") {
+    override fun help(context: Context) =
+        "Analyze Kotlin source files and query the extracted AST."
+    val verbose by option("--verbose", "-v", help = "Print extra diagnostic output to stderr").flag()
+    override fun run() {
+        currentContext.obj = verbose
+    }
 }

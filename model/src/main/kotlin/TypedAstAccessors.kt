@@ -13,22 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.stokpop.typemapper.cli
+package nl.stokpop.typemapper.model
 
-import com.github.ajalt.clikt.core.main
-import com.github.ajalt.clikt.core.subcommands
-
-fun main(args: Array<String>) {
-    TypeMapperCli()
-        .subcommands(
-            AnalyzeCommand(),
-            LoadCommand(),
-            QueryCommand().subcommands(
-                CallsCommand(),
-                CallsPolymorphicCommand(),
-                ImplementorsCommand(),
-                AnnotatedWithCommand(),
-            )
-        )
-        .main(args)
-}
+fun TypedAst.declarations(): List<DeclarationAst> = files.flatMap { it.declarations }
+fun TypedAst.calls(): List<CallSiteAst> = files.flatMap { it.calls }
+fun TypedAst.functions(): List<DeclarationAst> = declarations().filter { it.kind == "function" }
+fun TypedAst.classes(): List<DeclarationAst> = declarations().filter { it.kind in CLASS_KINDS }
+fun TypedAst.properties(): List<DeclarationAst> = declarations().filter { it.kind == "property" }
+fun TypedAst.fileByPath(relativePath: String): FileAst? =
+    files.firstOrNull { it.relativePath == relativePath }
