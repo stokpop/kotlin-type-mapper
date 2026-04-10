@@ -1,8 +1,7 @@
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
-    `maven-publish`
-    signing
+    id("com.vanniktech.maven.publish")
 }
 
 dependencies {
@@ -17,55 +16,38 @@ tasks.test {
     useJUnitPlatform()
 }
 
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            artifactId = "kotlin-type-mapper-model"
-            from(components["java"])
-            pom {
-                name.set("kotlin-type-mapper-model")
-                description.set("Model classes for Kotlin Type Mapper: type-name mapping and call-site data structures for PMD Kotlin rule analysis.")
-                url.set("https://github.com/stokpop/kotlin-type-mapper")
-                licenses {
-                    license {
-                        name.set("The Apache License, Version 2.0")
-                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
-                }
-                developers {
-                    developer {
-                        id.set("stokpop")
-                        name.set("Peter Paul Bakker")
-                        url.set("https://github.com/stokpop")
-                    }
-                }
-                scm {
-                    connection.set("scm:git:https://github.com/stokpop/kotlin-type-mapper.git")
-                    developerConnection.set("scm:git:git@github.com:stokpop/kotlin-type-mapper.git")
-                    url.set("https://github.com/stokpop/kotlin-type-mapper")
-                }
+    coordinates(
+        groupId = project.group.toString(),
+        artifactId = "kotlin-type-mapper-model",
+        version = project.version.toString()
+    )
+
+    pom {
+        name.set("kotlin-type-mapper-model")
+        description.set("Model classes for Kotlin Type Mapper: type-name mapping and call-site data structures for PMD Kotlin rule analysis.")
+        url.set("https://github.com/stokpop/kotlin-type-mapper")
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
             }
         }
-    }
-}
-
-val hasSigningKey = project.hasProperty("signingKeyId") || project.hasProperty("signingKey")
-if (hasSigningKey) {
-    signing {
-        isRequired = gradle.taskGraph.hasTask("publish")
-        val signingKeyId = findProperty("signingKeyId") as String?
-        val signingKey = findProperty("signingKey") as String?
-        val signingPassword = findProperty("signingPassword") as String?
-        if (signingKeyId != null) {
-            useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
-        } else if (signingKey != null) {
-            useInMemoryPgpKeys(signingKey, signingPassword)
+        developers {
+            developer {
+                id.set("stokpop")
+                name.set("Peter Paul Bakker")
+                url.set("https://github.com/stokpop")
+            }
         }
-        sign(publishing.publications)
+        scm {
+            url.set("https://github.com/stokpop/kotlin-type-mapper")
+            connection.set("scm:git:git://github.com/stokpop/kotlin-type-mapper.git")
+            developerConnection.set("scm:git:ssh://git@github.com/stokpop/kotlin-type-mapper.git")
+        }
     }
 }
