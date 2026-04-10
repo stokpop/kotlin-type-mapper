@@ -1,10 +1,13 @@
 name: Release to Maven Central
 
 on:
-  push:
-    tags:
-      - '*'
+  release:
+    types: [published]
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 0.3.1 or 1.0.0-SNAPSHOT)'
+        required: true
 
 jobs:
   build:
@@ -14,18 +17,24 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          # release event: check out the exact tag; workflow_dispatch: default branch
+          ref: ${{ github.event.release.tag_name || '' }}
 
-      - name: Set version from gradle.properties
+      - name: Set version
         run: |
-          VERSION=$(grep '^version=' gradle.properties | cut -d'=' -f2)
-          echo "TAG_NAME=$VERSION" >> $GITHUB_ENV
+          if [ -n "${{ github.event.release.tag_name }}" ]; then
+            # Triggered by publishing a GitHub release — use the release tag
+            echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+          else
+            # Manual dispatch — use the provided input version
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          fi
 
-      # if no tag exists, this is expected to fail
-      - name: Switch to git tag for release
-        if: contains(env.TAG_NAME, 'SNAPSHOT') != true
+      - name: Switch to git tag for release (workflow_dispatch only)
+        if: "!contains(env.VERSION, 'SNAPSHOT') && github.event_name == 'workflow_dispatch'"
         run: |
           git fetch --all --tags
-          git checkout tags/${{ env.TAG_NAME }} -b ${{ env.TAG_NAME }}-tmp-branch
+          git checkout tags/${{ env.VERSION }} -b ${{ env.VERSION }}-tmp-branch
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -34,33 +43,57 @@ jobs:
           distribution: 'corretto'
 
       - name: Publish to Maven Central (snapshot)
-        if: contains(env.TAG_NAME, 'SNAPSHOT') == true
+        if: contains(env.VERSION, 'SNAPSHOT')
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_PASSWORD }}
-        run: ./gradlew --info clean publishToMavenCentral
+        run: ./gradlew --info clean publishToMavenCentral -Pversion=${{ env.VERSION }}
 
       - name: Publish to Maven Central (release, manual approval required)
-        if: contains(env.TAG_NAME, 'SNAPSHOT') != true
+        if: "!contains(env.VERSION, 'SNAPSHOT')"
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_PASSWORD }}
         run: |
-          ./gradlew --info publishToMavenCentral
+          ./gradlew --info publishToMavenCentral -Pversion=${{ env.VERSION }}
           echo "Deployment uploaded. Go to https://central.sonatype.com/publishing/deployments and click Publish."
 
       - name: Build CLI shadow jar
-        if: contains(env.TAG_NAME, 'SNAPSHOT') != true
-        run: ./gradlew :cli:shadowJar
+        if: "!contains(env.VERSION, 'SNAPSHOT')"
+        run: ./gradlew :cli:shadowJar -Pversion=${{ env.VERSION }}
 
-      - name: Create GitHub release
+      - name: Update gradle.properties to released version, then bump to next snapshot
+        if: "!contains(env.VERSION, 'SNAPSHOT')"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+
+          # Step 1: record the released version on main for history
+          sed -i "s/^version=.*/version=${{ env.VERSION }}/" gradle.properties
+          git add gradle.properties
+          git diff --cached --quiet || git commit -m "chore: release ${{ env.VERSION }} [skip ci]"
+
+          # Step 2: bump patch and append -SNAPSHOT (e.g. 0.3.0 -> 0.3.1-SNAPSHOT)
+          NEXT=$(echo "${{ env.VERSION }}" | awk -F. '{printf "%s.%s.%s", $1, $2, $3+1}')
+          NEXT_SNAPSHOT="${NEXT}-SNAPSHOT"
+          sed -i "s/^version=.*/version=${NEXT_SNAPSHOT}/" gradle.properties
+          git add gradle.properties
+          git diff --cached --quiet || git commit -m "chore: bump version to ${NEXT_SNAPSHOT} [skip ci]"
+
+          git push origin main
+
+      - name: Upload JARs to GitHub release
         uses: ncipollo/release-action@v1
-        if: contains(env.TAG_NAME, 'SNAPSHOT') != true
+        if: "!contains(env.VERSION, 'SNAPSHOT')"
         with:
+          tag: ${{ env.VERSION }}
           artifacts: "model/build/libs/*.jar,analyzer/build/libs/*.jar,cli/build/libs/*.jar"
           bodyFile: RELEASE.md
+          allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
