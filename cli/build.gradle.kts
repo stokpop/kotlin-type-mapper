@@ -5,6 +5,7 @@ plugins {
     kotlin("plugin.serialization")
     application
     id("com.gradleup.shadow") version "9.4.1"
+    id("com.github.jk1.dependency-license-report") version "3.1.2"
 }
 
 dependencies {
@@ -26,6 +27,9 @@ tasks.shadowJar {
     archiveBaseName.set("kotlin-type-mapper-cli")
     archiveClassifier.set("all")
     mergeServiceFiles()
+    dependsOn("generateLicenseReport")
+    from(layout.buildDirectory.dir("reports/dependency-license")) { into("META-INF/licenses") }
+    from(rootProject.file("LICENSE")) { into("META-INF") }
 }
 
 tasks.jar {

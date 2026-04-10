@@ -66,7 +66,7 @@ jobs:
 
       - name: Build CLI shadow jar
         if: "!contains(env.VERSION, 'SNAPSHOT')"
-        run: ./gradlew :cli:shadowJar -Pversion=${{ env.VERSION }}
+        run: ./gradlew :cli:shadowJar --no-parallel -Pversion=${{ env.VERSION }}
 
       - name: Update gradle.properties to released version, then bump to next snapshot
         if: "!contains(env.VERSION, 'SNAPSHOT')"
