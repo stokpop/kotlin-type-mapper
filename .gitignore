@@ -22,3 +22,4 @@ test-projects/
 
 # Generated output
 typemapper-output.json
+.kotlin/
