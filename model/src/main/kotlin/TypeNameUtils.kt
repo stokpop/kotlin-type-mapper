@@ -19,7 +19,7 @@ package nl.stokpop.typemapper.model
  * Maps well-known Java FQNs to their Kotlin FQN equivalents.
  * e.g. `java.lang.String` → `kotlin.String`, `java.util.List` → `kotlin.collections.List`.
  */
-val JAVA_TO_KOTLIN: Map<String, String> = mapOf(
+internal val JAVA_TO_KOTLIN: Map<String, String> = mapOf(
     "java.lang.Object"       to "kotlin.Any",
     "java.lang.String"       to "kotlin.String",
     "java.lang.Number"       to "kotlin.Number",
@@ -59,7 +59,7 @@ val JAVA_TO_KOTLIN: Map<String, String> = mapOf(
  * Maps well-known Kotlin FQNs to the Java binary class names used for reflection lookups.
  * Mutable collection variants resolve to the same JVM class as their read-only counterparts.
  */
-val KOTLIN_TO_JAVA: Map<String, String> = mapOf(
+internal val KOTLIN_TO_JAVA: Map<String, String> = mapOf(
     "kotlin.Any"                               to "java.lang.Object",
     "kotlin.String"                            to "java.lang.String",
     "kotlin.Number"                            to "java.lang.Number",

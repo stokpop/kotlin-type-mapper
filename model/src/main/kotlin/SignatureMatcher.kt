@@ -100,7 +100,7 @@ fun parseSig(sig: String): KotlinSig {
 }
 
 /** Splits a comma-separated parameter list, respecting angle-bracket nesting for generics. */
-fun splitParams(params: String): List<String> {
+internal fun splitParams(params: String): List<String> {
     val result = mutableListOf<String>()
     var depth = 0
     var start = 0
@@ -126,7 +126,7 @@ fun splitParams(params: String): List<String> {
  * - **Erasure**: if [expected] contains no `<`, it is compared against the raw (erased)
  *   form of [actual] (everything before the first `<`), mirroring PMD Java behaviour.
  */
-fun typeMatches(expected: String, actual: String?): Boolean {
+internal fun typeMatches(expected: String, actual: String?): Boolean {
     if (actual == null) return false
     if (expected == "_") return true
     if (expected == actual) return true

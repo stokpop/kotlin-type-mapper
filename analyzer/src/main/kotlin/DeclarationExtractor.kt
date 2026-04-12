@@ -76,7 +76,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             val offset = enumEntry.textRange.startOffset
             declarations.add(
                 DeclarationAst(
-                    kind = "enum_entry",
+                    kind = DeclarationKind.ENUM_ENTRY,
                     name = enumEntry.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
@@ -94,12 +94,13 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             val descriptor = bindingContext[BindingContext.CLASS, klass] ?: return
             val offset = klass.startOffsetSkippingKdoc()
             val kind = when {
-                klass.isEnum()       -> "enum"
-                klass.isInterface()  -> "interface"
-                klass.isAnnotation() -> "annotation"
-                klass.isData()       -> "data_class"
-                klass.isSealed()     -> "sealed_class"
-                else                 -> "class"
+                klass.isEnum()       -> DeclarationKind.ENUM
+                klass.isInterface()  -> DeclarationKind.INTERFACE
+                klass.isAnnotation() -> DeclarationKind.ANNOTATION
+                klass.isData()       -> DeclarationKind.DATA_CLASS
+                klass.isSealed()     -> DeclarationKind.SEALED_CLASS
+                klass.isValue()      -> DeclarationKind.VALUE_CLASS
+                else                 -> DeclarationKind.CLASS
             }
             val superTypes = descriptor.typeConstructor.supertypes
                 .map { it.toFqString().substringBefore('?') }
@@ -125,7 +126,11 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                 .map { it.toFqString().substringBefore('?') }
             declarations.add(
                 DeclarationAst(
-                    kind = if (declaration.isCompanion()) "companion_object" else "object",
+                    kind = when {
+                        declaration.isCompanion() -> DeclarationKind.COMPANION_OBJECT
+                        declaration.isData()      -> DeclarationKind.DATA_OBJECT
+                        else                      -> DeclarationKind.OBJECT
+                    },
                     name = declaration.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
@@ -146,7 +151,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                 parameter.hasValOrVar() -> {
                     val descriptor = bindingContext[BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, parameter] ?: return
                     declarations.add(DeclarationAst(
-                        kind = "property",
+                        kind = DeclarationKind.PROPERTY,
                         name = parameter.name ?: "<anonymous>",
                         fqName = descriptor.fqNameSafe.asString(),
                         containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
@@ -157,7 +162,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                 parameter.typeReference != null && parameter.parent?.parent is KtFunctionLiteral -> {
                     val descriptor = bindingContext[BindingContext.VALUE_PARAMETER, parameter] ?: return
                     declarations.add(DeclarationAst(
-                        kind = "lambda_parameter",
+                        kind = DeclarationKind.LAMBDA_PARAMETER,
                         name = parameter.name ?: "<anonymous>",
                         fqName = descriptor.fqNameSafe.asString(),
                         containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
@@ -177,7 +182,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             val offset = param.textRange.startOffset
             declarations.add(
                 DeclarationAst(
-                    kind = "for_loop_variable",
+                    kind = DeclarationKind.FOR_LOOP_VARIABLE,
                     name = param.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
@@ -196,7 +201,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             val offset = param.textRange.startOffset
             declarations.add(
                 DeclarationAst(
-                    kind = "catch_variable",
+                    kind = DeclarationKind.CATCH_VARIABLE,
                     name = param.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
@@ -214,7 +219,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             val offset = entry.textRange.startOffset
             declarations.add(
                 DeclarationAst(
-                    kind = "destructured_variable",
+                    kind = DeclarationKind.DESTRUCTURED_VARIABLE,
                     name = entry.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
@@ -232,7 +237,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             val offset = typeAlias.startOffsetSkippingKdoc()
             declarations.add(
                 DeclarationAst(
-                    kind = "typealias",
+                    kind = DeclarationKind.TYPEALIAS,
                     name = typeAlias.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
@@ -250,7 +255,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             val offset = constructor.startOffsetSkippingKdoc()
             declarations.add(
                 DeclarationAst(
-                    kind = "constructor",
+                    kind = DeclarationKind.CONSTRUCTOR,
                     name = constructor.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
@@ -271,7 +276,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             val offset = function.startOffsetSkippingKdoc()
             declarations.add(
                 DeclarationAst(
-                    kind = "function",
+                    kind = DeclarationKind.FUNCTION,
                     name = function.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
@@ -292,7 +297,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             val offset = property.startOffsetSkippingKdoc()
             declarations.add(
                 DeclarationAst(
-                    kind = "property",
+                    kind = DeclarationKind.PROPERTY,
                     name = property.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),

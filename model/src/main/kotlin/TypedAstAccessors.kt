@@ -17,8 +17,8 @@ package nl.stokpop.typemapper.model
 
 fun TypedAst.declarations(): List<DeclarationAst> = files.flatMap { it.declarations }
 fun TypedAst.calls(): List<CallSiteAst> = files.flatMap { it.calls }
-fun TypedAst.functions(): List<DeclarationAst> = declarations().filter { it.kind == "function" }
-fun TypedAst.classes(): List<DeclarationAst> = declarations().filter { it.kind in CLASS_KINDS }
-fun TypedAst.properties(): List<DeclarationAst> = declarations().filter { it.kind == "property" }
+fun TypedAst.functions(): List<DeclarationAst> = declarations().filter { it.kind == DeclarationKind.FUNCTION }
+fun TypedAst.classes(): List<DeclarationAst> = declarations().filter { it.isClassLike() }
+fun TypedAst.properties(): List<DeclarationAst> = declarations().filter { it.kind == DeclarationKind.PROPERTY }
 fun TypedAst.fileByPath(relativePath: String): FileAst? =
     files.firstOrNull { it.relativePath == relativePath }

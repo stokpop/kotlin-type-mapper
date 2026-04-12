@@ -15,10 +15,39 @@
  */
 package nl.stokpop.typemapper.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** Declaration kinds that represent class-like types (have a type hierarchy entry). */
-val CLASS_KINDS = setOf("class", "data_class", "sealed_class", "enum", "interface", "annotation", "object", "companion_object")
+/** All possible kinds of a [DeclarationAst]. */
+@Serializable
+enum class DeclarationKind {
+    @SerialName("function")              FUNCTION,
+    @SerialName("property")              PROPERTY,
+    @SerialName("class")                 CLASS,
+    @SerialName("data_class")            DATA_CLASS,
+    @SerialName("sealed_class")          SEALED_CLASS,
+    @SerialName("enum")                  ENUM,
+    @SerialName("enum_entry")            ENUM_ENTRY,
+    @SerialName("interface")             INTERFACE,
+    @SerialName("annotation")            ANNOTATION,
+    @SerialName("object")                OBJECT,
+    @SerialName("companion_object")      COMPANION_OBJECT,
+    @SerialName("data_object")           DATA_OBJECT,
+    @SerialName("value_class")           VALUE_CLASS,
+    @SerialName("constructor")           CONSTRUCTOR,
+    @SerialName("typealias")             TYPEALIAS,
+    @SerialName("for_loop_variable")     FOR_LOOP_VARIABLE,
+    @SerialName("catch_variable")        CATCH_VARIABLE,
+    @SerialName("lambda_parameter")      LAMBDA_PARAMETER,
+    @SerialName("destructured_variable") DESTRUCTURED_VARIABLE,
+}
+
+internal val CLASS_KINDS = setOf(
+    DeclarationKind.CLASS, DeclarationKind.DATA_CLASS, DeclarationKind.SEALED_CLASS,
+    DeclarationKind.VALUE_CLASS, DeclarationKind.ENUM, DeclarationKind.INTERFACE,
+    DeclarationKind.ANNOTATION, DeclarationKind.OBJECT, DeclarationKind.COMPANION_OBJECT,
+    DeclarationKind.DATA_OBJECT,
+)
 
 @Serializable
 data class AnnotationAst(
@@ -45,7 +74,7 @@ data class CallSiteAst(
 
 @Serializable
 data class DeclarationAst(
-    val kind: String,                          // "function" | "property" | "class" | ...
+    val kind: DeclarationKind,
     val name: String,
     val fqName: String,
     val containingDeclaration: String,
@@ -53,12 +82,16 @@ data class DeclarationAst(
     val type: String? = null,                  // property / variable only
     val parameters: List<ParameterAst> = emptyList(),
     val annotations: List<AnnotationAst> = emptyList(),
-    /** Direct supertypes (Kotlin FQNs) for class-kind declarations, extracted from K1 source analysis.
-     *  Empty for non-class kinds. Populated regardless of whether compiled classes are available. */
+    /** Direct supertypes (Java canonical FQNs, e.g. java.lang.Exception) for class-kind declarations,
+     *  extracted from K1 source analysis. Empty for non-class kinds.
+     *  Populated regardless of whether compiled classes are available. */
     val superTypes: List<String> = emptyList(),
     val line: Int,
     val column: Int,
-)
+) {
+    /** Returns true if this declaration represents a class-like type (class, interface, object, etc.). */
+    fun isClassLike(): Boolean = kind in CLASS_KINDS
+}
 
 @Serializable
 data class FileAst(
