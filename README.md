@@ -20,7 +20,7 @@ Analysis uses the Kotlin **K1 analysis API** (embedded compiler internals: `Kotl
 ./gradlew build
 ```
 
-If `test-projects/memory-check/` does not exist it is cloned automatically from [github.com/stokpop/memory-check](https://github.com/stokpop/memory-check).
+The memory-check demo project is downloaded automatically into `cli/build/memory-check/` from [github.com/stokpop/memory-check](https://github.com/stokpop/memory-check) on first run and cleaned by `./gradlew clean`.
 
 ## CLI usage
 

@@ -37,22 +37,27 @@ tasks.jar {
 }
 
 tasks.register("cloneMemoryCheck") {
-    description = "Clones the memory-check test project if it does not exist yet."
-    val targetDir = file("${rootProject.projectDir}/test-projects/memory-check")
+    description = "Downloads the memory-check test project source if it does not exist yet."
+    val targetDir = file("${layout.buildDirectory.get()}/memory-check")
     onlyIf { !targetDir.exists() }
     doLast {
-        targetDir.parentFile.mkdirs()
-        val process = ProcessBuilder("git", "clone", "https://github.com/stokpop/memory-check.git", targetDir.absolutePath)
+        targetDir.mkdirs()
+        // Download source archive from GitHub — no .git folder created.
+        val process = ProcessBuilder(
+            "bash", "-c",
+            "curl -fsSL https://github.com/stokpop/memory-check/archive/refs/heads/main.tar.gz" +
+            " | tar -xz --strip-components=1 -C ${targetDir.absolutePath}"
+        )
             .inheritIO()
             .start()
         val exitCode = process.waitFor()
-        if (exitCode != 0) throw GradleException("git clone failed with exit code $exitCode")
+        if (exitCode != 0) throw GradleException("Download of memory-check failed with exit code $exitCode")
     }
 }
 
 tasks.named<JavaExec>("run") {
     dependsOn("cloneMemoryCheck")
     // Default: analyze memory-check and write to typemapper-output.json
-    val memoryCheck = rootProject.file("test-projects/memory-check/src/main/kotlin")
+    val memoryCheck = file("${layout.buildDirectory.get()}/memory-check/src/main/kotlin")
     args = listOf("analyze", "--output", "typemapper-output.json", memoryCheck.absolutePath)
 }
