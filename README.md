@@ -164,9 +164,11 @@ ast.declarationsAnnotatedWith("kotlin.Deprecated").forEach { println(it) }
       ],
       "calls": [
         {
-          "callee": "kotlin.String#trim()",
-          "dispatchReceiver": "kotlin.String",
+          "calleeFqName": "kotlin.text.trim",
+          "dispatchReceiverType": "kotlin.String",
+          "extensionReceiverType": null,
           "returnType": "kotlin.String",
+          "argumentTypes": [],
           "line": 8, "column": 12
         }
       ],
@@ -209,4 +211,3 @@ See [RELEASE.md](RELEASE.md) for full release instructions.
 ## License
 
 Apache 2.0 — see [LICENSE](LICENSE).
-
