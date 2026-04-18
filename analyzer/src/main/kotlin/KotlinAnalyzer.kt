@@ -32,7 +32,11 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.resolve.BindingContext
 
 /**
  * Convenience overload: discovers all `.kt` files under [sourceRoot] and analyses them.
@@ -97,6 +101,7 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
                 packageFqName = ktFile.packageFqName.asString(),
                 declarations = extractDeclarations(ktFile, bindingContext),
                 calls = extractCallSites(ktFile, bindingContext),
+                unresolvedReferences = extractUnresolvedReferences(ktFile, bindingContext),
                 contentHash = sha256(file),
             )
         }
@@ -135,6 +140,36 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
     } finally {
         Disposer.dispose(disposable)
     }
+}
+
+/**
+ * Extracts unresolved references from the binding context diagnostics for a single [KtFile].
+ * These are names (types, variables, functions) that the K1 compiler could not resolve,
+ * typically because the dependency is missing from the classpath.
+ */
+fun extractUnresolvedReferences(ktFile: KtFile, bindingContext: BindingContext): List<UnresolvedReferenceAst> {
+    val doc = ktFile.viewProvider.document
+    fun lineOf(offset: Int) = (doc?.getLineNumber(offset) ?: 0) + 1
+    fun colOf(offset: Int): Int {
+        val line = doc?.getLineNumber(offset) ?: return 1
+        return offset - (doc.getLineStartOffset(line)) + 1
+    }
+
+    val result = mutableListOf<UnresolvedReferenceAst>()
+    for (diagnostic in bindingContext.diagnostics) {
+        if (diagnostic.psiFile != ktFile) continue
+        if (diagnostic.factory != Errors.UNRESOLVED_REFERENCE) continue
+        val psiElement = diagnostic.psiElement
+        val offset = psiElement.textRange.startOffset
+        result.add(
+            UnresolvedReferenceAst(
+                name = psiElement.text,
+                line = lineOf(offset),
+                column = colOf(offset),
+            )
+        )
+    }
+    return result
 }
 
 private fun sha256(file: File): String {

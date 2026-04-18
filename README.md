@@ -1,6 +1,6 @@
 # Kotlin TypeMapper
 
-Scans Kotlin source files in a Gradle or Maven project and extracts a semantic AST — all declarations (functions, classes, properties, etc.) and resolved call sites with full type information — serialised to JSON.
+Scans Kotlin source files in a Gradle or Maven project and extracts a semantic AST — all declarations (functions, classes, properties, etc.), resolved call sites with full type information, and unresolved references (names the compiler could not bind, typically due to missing classpath dependencies) — serialised to JSON.
 
 Analysis uses the Kotlin **K1 analysis API** (embedded compiler internals: `KotlinCoreEnvironment`, `TopDownAnalyzerFacadeForJVM`) so types are fully resolved, including generics and nullability. A reflection-based type hierarchy is built at analysis time so polymorphic queries work correctly.
 
@@ -168,6 +168,12 @@ ast.declarationsAnnotatedWith("kotlin.Deprecated").forEach { println(it) }
           "dispatchReceiver": "kotlin.String",
           "returnType": "kotlin.String",
           "line": 8, "column": 12
+        }
+      ],
+      "unresolvedReferences": [
+        {
+          "name": "MissingType",
+          "line": 3, "column": 8
         }
       ]
     }
