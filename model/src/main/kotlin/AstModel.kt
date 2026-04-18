@@ -94,11 +94,19 @@ data class DeclarationAst(
 }
 
 @Serializable
+data class UnresolvedReferenceAst(
+    val name: String,
+    val line: Int,
+    val column: Int,
+)
+
+@Serializable
 data class FileAst(
     val relativePath: String,
     val packageFqName: String,
     val declarations: List<DeclarationAst>,
     val calls: List<CallSiteAst> = emptyList(),
+    val unresolvedReferences: List<UnresolvedReferenceAst> = emptyList(),
     val contentHash: String = "",              // SHA-256 of source file content
 )
 
