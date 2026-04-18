@@ -1,4 +1,5 @@
-import java.time.Year
+import java.net.URI
+import org.gradle.api.file.RelativePath
 
 plugins {
     kotlin("jvm")
@@ -36,27 +37,39 @@ tasks.jar {
     archiveBaseName.set("kotlin-type-mapper-cli")
 }
 
-tasks.register("cloneMemoryCheck") {
+tasks.register("downloadMemoryCheck") {
     description = "Downloads the memory-check test project source if it does not exist yet."
-    val targetDir = file("${layout.buildDirectory.get()}/memory-check")
-    onlyIf { !targetDir.exists() }
+    val targetDir = layout.buildDirectory.dir("memory-check").get().asFile
+    val archiveFile = layout.buildDirectory.file("tmp/memory-check-main.tar.gz").get().asFile
+    onlyIf { !targetDir.resolve("src/main/kotlin").exists() }
     doLast {
         targetDir.mkdirs()
-        // Download source archive from GitHub — no .git folder created.
-        val process = ProcessBuilder(
-            "bash", "-c",
-            "curl -fsSL https://github.com/stokpop/memory-check/archive/refs/heads/main.tar.gz" +
-            " | tar -xz --strip-components=1 -C ${targetDir.absolutePath}"
-        )
-            .inheritIO()
-            .start()
-        val exitCode = process.waitFor()
-        if (exitCode != 0) throw GradleException("Download of memory-check failed with exit code $exitCode")
+        archiveFile.parentFile.mkdirs()
+
+        URI.create("https://github.com/stokpop/memory-check/archive/refs/heads/master.tar.gz")
+            .toURL()
+            .openStream().use { input ->
+                archiveFile.outputStream().use { output -> input.copyTo(output) }
+            }
+
+        copy {
+            from(tarTree(resources.gzip(archiveFile)))
+            into(targetDir)
+            includeEmptyDirs = false
+            eachFile {
+                val segments = relativePath.segments
+                if (segments.size <= 1) {
+                    exclude()
+                } else {
+                    relativePath = RelativePath(true, *segments.drop(1).toTypedArray())
+                }
+            }
+        }
     }
 }
 
 tasks.named<JavaExec>("run") {
-    dependsOn("cloneMemoryCheck")
+    dependsOn("downloadMemoryCheck")
     // Default: analyze memory-check and write to typemapper-output.json
     val memoryCheck = file("${layout.buildDirectory.get()}/memory-check/src/main/kotlin")
     args = listOf("analyze", "--output", "typemapper-output.json", memoryCheck.absolutePath)
