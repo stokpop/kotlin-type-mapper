@@ -20,6 +20,7 @@ import nl.stokpop.typemapper.model.*
 import java.io.File
 import java.security.MessageDigest
 import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.CliBindingTrace
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
@@ -32,10 +33,13 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 
 /**
  * Convenience overload: discovers all `.kt` files under [sourceRoot] and analyses them.
@@ -88,11 +92,13 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
         val factory = KtPsiFactory(environment.project, false)
         val ktFiles = files.map { factory.createPhysicalFile(it.name, it.readText()) }
 
-        val bindingContext = TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
+        val analysisResult: AnalysisResult = TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
             environment.project, ktFiles,
             CliBindingTrace(environment.project), configuration,
             environment::createPackagePartProvider
-        ).bindingContext
+        )
+        val bindingContext = analysisResult.bindingContext
+        val moduleDescriptor = analysisResult.moduleDescriptor
 
         val fileAsts = files.zip(ktFiles).map { (file, ktFile) ->
             FileAst(
@@ -100,7 +106,7 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
                 packageFqName = ktFile.packageFqName.asString(),
                 declarations = extractDeclarations(ktFile, bindingContext),
                 calls = extractCallSites(ktFile, bindingContext),
-                unresolvedReferences = extractUnresolvedReferences(ktFile, bindingContext),
+                unresolvedReferences = extractUnresolvedReferences(ktFile, bindingContext, moduleDescriptor),
                 contentHash = sha256(file),
             )
         }
@@ -146,7 +152,11 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
  * These are names (types, variables, functions) that the K1 compiler could not resolve,
  * typically because the dependency is missing from the classpath.
  */
-fun extractUnresolvedReferences(ktFile: KtFile, bindingContext: BindingContext): List<UnresolvedReferenceAst> {
+fun extractUnresolvedReferences(
+    ktFile: KtFile,
+    bindingContext: BindingContext,
+    moduleDescriptor: ModuleDescriptor,
+): List<UnresolvedReferenceAst> {
     val doc = ktFile.viewProvider.document
     fun lineOf(offset: Int) = (doc?.getLineNumber(offset) ?: 0) + 1
     fun colOf(offset: Int): Int {
@@ -155,6 +165,7 @@ fun extractUnresolvedReferences(ktFile: KtFile, bindingContext: BindingContext):
     }
 
     val result = mutableListOf<UnresolvedReferenceAst>()
+
     for (diagnostic in bindingContext.diagnostics) {
         if (diagnostic.psiFile != ktFile) continue
         if (diagnostic.factory != Errors.UNRESOLVED_REFERENCE) continue
@@ -168,8 +179,38 @@ fun extractUnresolvedReferences(ktFile: KtFile, bindingContext: BindingContext):
             )
         )
     }
+
+    // Kotlin compiler never emits UNRESOLVED_REFERENCE for wildcard imports (import x.*).
+    // Use the ModuleDescriptor to check whether each star-imported package actually exists.
+    for (import in ktFile.importDirectives) {
+        if (!import.isAllUnder) continue
+        val fqName = import.importedFqName ?: continue
+        val pkg = moduleDescriptor.getPackage(FqName(fqName.asString()))
+        if (!packageExistsOnClasspath(pkg)) {
+            val offset = import.textRange.startOffset
+            result.add(
+                UnresolvedReferenceAst(
+                    name = "${fqName.asString()}.*",
+                    line = lineOf(offset),
+                    column = colOf(offset),
+                )
+            )
+        }
+    }
+
     return result
 }
+
+/**
+ * Returns true if [pkg] exists on the classpath, i.e. it contains at least one classifier
+ * (class, interface, or object).
+ *
+ * [ModuleDescriptor.getPackage] never returns null — it always produces a [PackageViewDescriptor],
+ * even for packages that are not present on the classpath. Querying its member scope for
+ * contributed classifiers is the only reliable way to distinguish a real package from a phantom one.
+ */
+private fun packageExistsOnClasspath(pkg: org.jetbrains.kotlin.descriptors.PackageViewDescriptor): Boolean =
+    pkg.memberScope.getContributedDescriptors(DescriptorKindFilter.CLASSIFIERS).isNotEmpty()
 
 private fun sha256(file: File): String {
     val bytes = MessageDigest.getInstance("SHA-256").digest(file.readBytes())

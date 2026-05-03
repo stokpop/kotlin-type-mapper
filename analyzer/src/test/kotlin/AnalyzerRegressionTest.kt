@@ -85,4 +85,35 @@ class AnalyzerRegressionTest {
             "java: $javaImpl\nkotlin: $kotlinImpl"
         )
     }
+
+    /**
+     * A wildcard import from a package that does not exist on the classpath must be reported
+     * as an unresolved reference. A valid wildcard import (e.g. kotlin.collections.*) must not.
+     */
+    @Test
+    fun `star import from unknown package is reported as unresolved reference`() {
+        val srcRoot = tempDir.resolve("src-star").toFile().apply { mkdirs() }
+        File(srcRoot, "StarImports.kt").writeText(
+            """
+            import kotlin.collections.*
+            import com.example.nonexistent.*
+
+            class StarImportTest {
+                val list: List<String> = emptyList()
+            }
+            """.trimIndent() + "\n"
+        )
+
+        val ast = analyzeKotlinProject(srcRoot)
+        val refs = ast.files.flatMap { it.unresolvedReferences }.map { it.name }
+
+        assertTrue(
+            refs.any { it == "com.example.nonexistent.*" },
+            "Expected com.example.nonexistent.* to be reported as unresolved, got: $refs"
+        )
+        assertTrue(
+            refs.none { it == "kotlin.collections.*" },
+            "Expected kotlin.collections.* NOT to be reported as unresolved, got: $refs"
+        )
+    }
 }

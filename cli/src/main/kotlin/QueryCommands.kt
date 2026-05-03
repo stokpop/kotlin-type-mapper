@@ -92,3 +92,24 @@ class AnnotatedWithCommand : CliktCommand("annotated-with") {
         echoContext(ast.sourceRoot, path, decl.line, ctx ?: 3)
     }
 }
+
+class UnresolvedReferencesCommand : CliktCommand("unresolved-references") {
+    override fun help(context: Context) =
+        "List unresolved references found during analysis (named types and wildcard imports from unknown packages)."
+
+    val ast by requireObject<TypedAst>()
+    val ctx by option("--context", "-C", help = "Source lines of context (default: 0, off)").int()
+
+    override fun run() {
+        var count = 0
+        for (file in ast.files) {
+            for (ref in file.unresolvedReferences) {
+                val loc = "${file.relativePath}:${ref.line}:${ref.column}"
+                echo("$loc  ${ref.name}")
+                echoContext(ast.sourceRoot, file.relativePath, ref.line, ctx ?: 0)
+                count++
+            }
+        }
+        if (count == 0) echo("No unresolved references found.")
+    }
+}

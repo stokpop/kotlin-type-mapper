@@ -66,9 +66,12 @@ ktm query result.json calls "kotlin.String#trim()"
 ktm query result.json calls-polymorphic "kotlin.collections.Collection#size()"
 ktm query result.json implementors "java.io.Closeable"
 ktm query result.json annotated-with "org.springframework.stereotype.Service"
+ktm query result.json unresolved-references
 ```
 
-All query commands accept `--context/-C <N>` (default 3) to show ±N source lines around each match. Pass `0` to suppress context.
+All query commands accept `--context/-C <N>` to show ±N source lines around each match (default 3, pass `0` to suppress). `unresolved-references` defaults to `0`.
+
+`unresolved-references` lists all names the Kotlin compiler could not resolve, including wildcard imports from packages absent on the classpath (e.g. `import com.example.*` when `com.example` is not on the classpath).
 
 ```
 nl/stokpop/memory/HistoReader.kt:86:21  kotlin.collections.List<kotlin.String> → kotlin.collections.List.size(): kotlin.Int
