@@ -26,6 +26,26 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
+/**
+ * Returns true if this is a Kotlin stdlib extension function whose extension receiver
+ * maps to a Java class (e.g. `kotlin.text.indexOf` extends `kotlin.String`).
+ * For such calls we synthesise an additional call site that looks like a plain Java
+ * dispatch-receiver call, using only the required (non-default) parameters.
+ * This allows `matchesSig('java.lang.String#indexOf(java.lang.String)')` to work even
+ * though the Kotlin compiler resolves the call as an extension with extra default params.
+ */
+private fun shouldSynthesizeJavaCallSite(
+    extensionReceiverType: String?,
+    calleeFqName: String
+): Boolean {
+    if (extensionReceiverType == null) return false
+    // Only for stdlib extension functions whose receiver maps to a Java type.
+    val javaType = kotlinToJavaName(extensionReceiverType)
+    if (javaType == extensionReceiverType) return false   // no mapping → not a stdlib Java type
+    val pkg = calleeFqName.substringBeforeLast('.')
+    return pkg.startsWith("kotlin.")
+}
+
 /** Extracts all resolved call sites from a single [KtFile] via [BindingContext]. */
 fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallSiteAst> {
     val calls = mutableListOf<CallSiteAst>()
@@ -43,17 +63,40 @@ fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallS
             val resolvedCall = expression.getResolvedCall(bindingContext) ?: return
             val descriptor = resolvedCall.resultingDescriptor
             val offset = expression.textRange.startOffset
+            val extReceiverType = resolvedCall.extensionReceiver?.type?.toFqString()
+            val allArgTypes = descriptor.valueParameters.map { it.type.toFqString() }
             calls.add(
                 CallSiteAst(
                     calleeFqName = descriptor.fqNameSafe.asString(),
                     dispatchReceiverType = resolvedCall.dispatchReceiver?.type?.toFqString(),
-                    extensionReceiverType = resolvedCall.extensionReceiver?.type?.toFqString(),
+                    extensionReceiverType = extReceiverType,
                     returnType = descriptor.returnType?.toFqString() ?: "kotlin.Unit",
-                    argumentTypes = descriptor.valueParameters.map { it.type.toFqString() },
+                    argumentTypes = allArgTypes,
                     line = lineOf(offset),
                     column = colOf(offset),
                 )
             )
+            // For Kotlin stdlib extension functions on Java-mapped types (e.g. kotlin.text.indexOf
+            // extending kotlin.String), also emit a synthetic call site that looks like a plain
+            // Java dispatch-receiver call using only the required (non-default) parameters.
+            // This lets matchesSig('java.lang.String#indexOf(java.lang.String)') work even though
+            // the Kotlin compiler resolves the call with extra default params.
+            if (shouldSynthesizeJavaCallSite(extReceiverType, descriptor.fqNameSafe.asString())) {
+                val requiredArgTypes = descriptor.valueParameters
+                    .filter { !it.declaresDefaultValue() }
+                    .map { it.type.toFqString() }
+                calls.add(
+                    CallSiteAst(
+                        calleeFqName = descriptor.fqNameSafe.asString(),
+                        dispatchReceiverType = extReceiverType,
+                        extensionReceiverType = null,
+                        returnType = descriptor.returnType?.toFqString() ?: "kotlin.Unit",
+                        argumentTypes = requiredArgTypes,
+                        line = lineOf(offset),
+                        column = colOf(offset),
+                    )
+                )
+            }
         }
 
         // Property reads: list.size, map.keys, string.length, etc.
