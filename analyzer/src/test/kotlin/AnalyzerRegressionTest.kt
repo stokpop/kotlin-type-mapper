@@ -116,4 +116,31 @@ class AnalyzerRegressionTest {
             "Expected kotlin.collections.* NOT to be reported as unresolved, got: $refs"
         )
     }
+
+    /**
+     * Regression: a nullable receiver type (e.g. "kotlin.collections.List?") must be seeded
+     * correctly so that hierarchy traversal still finds its supertypes.
+     * Previously, the trailing '?' was not stripped before using the type as a map key, so
+     * typeHierarchy["kotlin.collections.List?"] was null and BFS returned no supertypes.
+     */
+    @Test
+    fun `nullable receiver type is seeded without trailing question mark`() {
+        val srcRoot = tempDir.resolve("src-nullable").toFile().apply { mkdirs() }
+        File(srcRoot, "NullableReceiver.kt").writeText(
+            """
+            fun processItems(items: List<String>?) {
+                val empty = items?.isEmpty() ?: true
+            }
+            """.trimIndent() + "\n"
+        )
+
+        val ast = analyzeKotlinProject(srcRoot)
+        val hierarchy = ast.typeHierarchy
+
+        val listSupertypes = hierarchy["kotlin.collections.List"]
+        assertTrue(
+            listSupertypes != null && listSupertypes.isNotEmpty(),
+            "Expected type hierarchy entry for kotlin.collections.List from nullable receiver, got: $hierarchy"
+        )
+    }
 }

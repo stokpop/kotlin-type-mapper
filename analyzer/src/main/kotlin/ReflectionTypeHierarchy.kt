@@ -20,6 +20,13 @@ import java.net.URLClassLoader
 import nl.stokpop.typemapper.model.javaToKotlinName
 import nl.stokpop.typemapper.model.kotlinToJavaName
 
+/** Strips trailing nullable marker and generic parameters, returning the raw type FQN. */
+internal fun rawTypeName(fqn: String): String {
+    val nonNullable = if (fqn.endsWith('?')) fqn.dropLast(1) else fqn
+    val angleIdx = nonNullable.indexOf('<')
+    return if (angleIdx >= 0) nonNullable.substring(0, angleIdx) else nonNullable
+}
+
 /** Converts a Java binary class name (from reflection) to the Kotlin FQN used in the AST. */
 internal fun javaNameToKotlinFqn(javaName: String): String =
     javaToKotlinName(javaName).let { if (it == javaName) javaName.replace('$', '.') else it }
@@ -52,7 +59,7 @@ internal fun loadClass(kotlinFqn: String, classLoader: ClassLoader): Class<*>? {
  */
 fun buildTypeHierarchy(seedTypes: Set<String>, classLoader: ClassLoader): Map<String, List<String>> {
     val result = mutableMapOf<String, MutableList<String>>()
-    val queue = ArrayDeque(seedTypes.map { it.substringBefore('<') }.distinct())
+    val queue = ArrayDeque(seedTypes.map { rawTypeName(it) }.distinct())
     val visited = mutableSetOf<String>()
 
     while (queue.isNotEmpty()) {

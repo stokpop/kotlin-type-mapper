@@ -116,11 +116,11 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
         val seedTypes = mutableSetOf<String>()
         for (fileAst in fileAsts) {
             for (call in fileAst.calls) {
-                call.dispatchReceiverType?.substringBefore('<')?.let { seedTypes.add(it) }
-                call.extensionReceiverType?.substringBefore('<')?.let { seedTypes.add(it) }
+                call.dispatchReceiverType?.let { seedTypes.add(rawTypeName(it)) }
+                call.extensionReceiverType?.let { seedTypes.add(rawTypeName(it)) }
             }
             for (decl in fileAst.declarations) {
-                if (decl.isClassLike()) seedTypes.add(decl.fqName.substringBefore('<'))
+                if (decl.isClassLike()) seedTypes.add(rawTypeName(decl.fqName))
             }
         }
         val classLoader = buildClassLoader(
@@ -135,7 +135,7 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
         for (fileAst in fileAsts) {
             for (decl in fileAst.declarations) {
                 if (decl.isClassLike() && decl.superTypes.isNotEmpty()) {
-                    sourceHierarchy[decl.fqName.substringBefore('<')] = decl.superTypes
+                    sourceHierarchy[rawTypeName(decl.fqName)] = decl.superTypes
                 }
             }
         }
