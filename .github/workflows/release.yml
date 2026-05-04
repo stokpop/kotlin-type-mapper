@@ -101,8 +101,8 @@ jobs:
         with:
           tag: ${{ env.VERSION }}
           artifacts: "model/build/libs/*.jar,analyzer/build/libs/*.jar,cli/build/libs/*.jar"
-          bodyFile: RELEASE.md
           allowUpdates: true
+          omitBodyDuringUpdate: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
   rollback:
