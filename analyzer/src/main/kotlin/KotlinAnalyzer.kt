@@ -111,8 +111,9 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
             )
         }
 
-        // Collect every type FQN that appears as a receiver or a declaration class/interface,
-        // then build the type hierarchy via reflection so queries can walk supertypes.
+        // Collect every type FQN that appears as a receiver, declaration, return type, property
+        // type, or parameter type, then build the type hierarchy via reflection so queries can
+        // walk supertypes (e.g. typeIs('java.util.Collection') matches List/Set return types).
         val seedTypes = mutableSetOf<String>()
         for (fileAst in fileAsts) {
             for (call in fileAst.calls) {
@@ -121,6 +122,9 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
             }
             for (decl in fileAst.declarations) {
                 if (decl.isClassLike()) seedTypes.add(rawTypeName(decl.fqName))
+                decl.returnType?.let { seedTypes.add(rawTypeName(it)) }
+                decl.type?.let { seedTypes.add(rawTypeName(it)) }
+                decl.parameters.forEach { seedTypes.add(rawTypeName(it.type)) }
             }
         }
         val classLoader = buildClassLoader(

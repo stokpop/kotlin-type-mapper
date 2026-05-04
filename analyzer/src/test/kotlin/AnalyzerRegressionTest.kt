@@ -118,6 +118,39 @@ class AnalyzerRegressionTest {
     }
 
     /**
+     * Regression: return types, property types, and parameter types must be seeded so that
+     * hierarchy traversal works even when those types never appear as call receivers.
+     * Previously typeIs('java.util.Collection') would fail on a List return type with no call sites.
+     */
+    @Test
+    fun `return type and property type are seeded for hierarchy traversal`() {
+        val srcRoot = tempDir.resolve("src-decl-types").toFile().apply { mkdirs() }
+        File(srcRoot, "DeclTypes.kt").writeText(
+            """
+            fun getItems(): List<String> = emptyList()
+            fun process(input: Set<Int>) {}
+            class Holder { val names: Collection<String> = emptyList() }
+            """.trimIndent() + "\n"
+        )
+
+        val ast = analyzeKotlinProject(srcRoot)
+        val hierarchy = ast.typeHierarchy
+
+        assertTrue(
+            hierarchy.containsKey("kotlin.collections.List"),
+            "Expected hierarchy entry for kotlin.collections.List (return type), got keys: ${hierarchy.keys}"
+        )
+        assertTrue(
+            hierarchy.containsKey("kotlin.collections.Set"),
+            "Expected hierarchy entry for kotlin.collections.Set (param type), got keys: ${hierarchy.keys}"
+        )
+        assertTrue(
+            hierarchy.containsKey("kotlin.collections.Collection"),
+            "Expected hierarchy entry for kotlin.collections.Collection (property type), got keys: ${hierarchy.keys}"
+        )
+    }
+
+    /**
      * Regression: a nullable receiver type (e.g. "kotlin.collections.List?") must be seeded
      * correctly so that hierarchy traversal still finds its supertypes.
      * Previously, the trailing '?' was not stripped before using the type as a map key, so
