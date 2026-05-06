@@ -74,3 +74,32 @@ used as a map key:
 
 Without stripping `?`, `typeHierarchy["kotlin.collections.List?"]` would be `null` and BFS
 would find no supertypes for nullable types.
+
+## 4. K1 vs K2 analysis API
+
+### Why K1 is used
+
+The analyzer uses the **K1 analysis API** (`KotlinCoreEnvironment`, `TopDownAnalyzerFacadeForJVM`,
+`CliBindingTrace`) — the programmatic compiler internals from the pre-2.x Kotlin compiler.
+
+The project itself compiles with Kotlin 2.x (K2 compiler), but the *analysis pipeline* invoked
+at runtime is still K1.
+
+### Why not K2
+
+The K2 Analysis API (`KaSession` / `analyze {}`) is a significantly different programming model:
+it is session-scoped, requires an IDE platform project context, and has a substantially
+different API surface. Migrating to K2 is a non-trivial task that can be done independently
+of the rest of the project.
+
+The K1 API is marked `@K1Deprecation` (deprecated, not removed) in `kotlin-compiler-embeddable`
+2.x and continues to work correctly. It is intentionally retained until a dedicated K2
+migration is done.
+
+### Migration path
+
+When migrating to K2:
+- Replace `KotlinCoreEnvironment` + `TopDownAnalyzerFacadeForJVM` with `KtAnalysisSession` / `analyze {}`.
+- Replace `BindingContext` lookups with `KaSession` symbol APIs.
+- The rest of the model (`TypedAst`, `TypeHierarchy`, `SignatureMatcher`) is independent and
+  should not need changes.
