@@ -41,6 +41,11 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 
+/** Normalizes CRLF and bare CR to LF. K1's DocumentImpl rejects any CR characters. */
+private fun String.normalizeLf(): String = replace("\r\n", "\n").replace("\r", "\n")
+
+private data class NamedSource(val relativePath: String, val content: String, val contentHash: String)
+
 /**
  * Convenience overload: discovers all `.kt` files under [sourceRoot] and analyses them.
  * Use the two-parameter overload when you need to analyse a specific subset of files.
@@ -55,8 +60,37 @@ fun analyzeKotlinProject(sourceRoot: File, extraClasspath: List<File> = emptyLis
 
 /**
  * Runs semantic analysis on all [files] under [sourceRoot] using the Kotlin K1 compiler
- * pipeline (KotlinCoreEnvironment / TopDownAnalyzerFacadeForJVM), returning a [TypedAst]
- * with declarations and call sites for every file.
+ * pipeline, returning a [TypedAst]. See [analyzeNamedSources] for full documentation.
+ */
+fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: List<File> = emptyList()): TypedAst {
+    val namedSources = files.map { file ->
+        NamedSource(
+            relativePath = file.relativeTo(sourceRoot).path,
+            content = file.readText(),
+            contentHash = sha256(file.readBytes()),
+        )
+    }
+    return analyzeNamedSources(namedSources, sourceRoot.absolutePath, extraClasspath)
+}
+
+/**
+ * Analyses Kotlin source code provided entirely in memory as a map of relative file name to
+ * source content (e.g. `mapOf("Foo.kt" to "class Foo")`). No files are written to disk.
+ * Content is LF-normalized automatically before being passed to the K1 compiler.
+ */
+fun analyzeKotlinSources(sources: Map<String, String>, extraClasspath: List<File> = emptyList()): TypedAst {
+    val namedSources = sources.map { (name, content) ->
+        NamedSource(
+            relativePath = name,
+            content = content,
+            contentHash = sha256(content.toByteArray(Charsets.UTF_8)),
+        )
+    }
+    return analyzeNamedSources(namedSources, "", extraClasspath)
+}
+
+/**
+ * Core K1 analysis pipeline shared by [analyzeKotlinProject] and [analyzeKotlinSources].
  *
  * Note: this uses the **K1 analysis API** (programmatic compiler internals), not the
  * language version. We compile with Kotlin 2.x (K2 compiler) but intentionally use the
@@ -72,7 +106,7 @@ fun analyzeKotlinProject(sourceRoot: File, extraClasspath: List<File> = emptyLis
                               // Analysis API, but not yet removed. Intentionally kept until a full
                               // migration to KaSession / analyze{} blocks is done.
 @Suppress("DEPRECATION") // Suppresses deprecation warnings from the K1 compiler internals used above.
-fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: List<File> = emptyList()): TypedAst {
+private fun analyzeNamedSources(namedSources: List<NamedSource>, sourceRootPath: String, extraClasspath: List<File>): TypedAst {
     val configuration = CompilerConfiguration()
     configuration.put(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
     configuration.put(CommonConfigurationKeys.MODULE_NAME, "typemapper")
@@ -90,7 +124,7 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
             disposable, configuration, EnvironmentConfigFiles.JVM_CONFIG_FILES)
 
         val factory = KtPsiFactory(environment.project, false)
-        val ktFiles = files.map { factory.createPhysicalFile(it.name, it.readText()) }
+        val ktFiles = namedSources.map { factory.createPhysicalFile(it.relativePath, it.content.normalizeLf()) }
 
         val analysisResult: AnalysisResult = TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
             environment.project, ktFiles,
@@ -100,14 +134,14 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
         val bindingContext = analysisResult.bindingContext
         val moduleDescriptor = analysisResult.moduleDescriptor
 
-        val fileAsts = files.zip(ktFiles).map { (file, ktFile) ->
+        val fileAsts = namedSources.zip(ktFiles).map { (src, ktFile) ->
             FileAst(
-                relativePath = file.relativeTo(sourceRoot).path,
+                relativePath = src.relativePath,
                 packageFqName = ktFile.packageFqName.asString(),
                 declarations = extractDeclarations(ktFile, bindingContext),
                 calls = extractCallSites(ktFile, bindingContext),
                 unresolvedReferences = extractUnresolvedReferences(ktFile, bindingContext, moduleDescriptor),
-                contentHash = sha256(file),
+                contentHash = src.contentHash,
             )
         }
 
@@ -145,7 +179,7 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
         }
         val typeHierarchy = sourceHierarchy + reflectionHierarchy   // reflection wins on conflict
 
-        return TypedAst(sourceRoot = sourceRoot.absolutePath, files = fileAsts, typeHierarchy = typeHierarchy)
+        return TypedAst(sourceRoot = sourceRootPath, files = fileAsts, typeHierarchy = typeHierarchy)
     } finally {
         Disposer.dispose(disposable)
     }
@@ -216,7 +250,6 @@ fun extractUnresolvedReferences(
 private fun packageExistsOnClasspath(pkg: org.jetbrains.kotlin.descriptors.PackageViewDescriptor): Boolean =
     pkg.memberScope.getContributedDescriptors(DescriptorKindFilter.CLASSIFIERS).isNotEmpty()
 
-private fun sha256(file: File): String {
-    val bytes = MessageDigest.getInstance("SHA-256").digest(file.readBytes())
-    return bytes.joinToString("") { "%02x".format(it) }
+private fun sha256(bytes: ByteArray): String {
+    return MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 }

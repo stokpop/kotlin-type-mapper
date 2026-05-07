@@ -53,7 +53,11 @@ class KotlinTypeMapper(
         autoResolveClasspath: Boolean = false,
     ) : this(listOf(sourceDir), classpathJars, autoResolveClasspath)
 
-    /** Analyses all Kotlin files in [sourceDirs] and returns the result in memory. */
+    /**
+     * Analyses all Kotlin files in [sourceDirs] and returns the result in memory.
+     * Use [fromSources] to analyse source code that is already available as strings
+     * without any disk I/O.
+     */
     fun analyze(): TypedAst {
         val kotlinFiles = sourceDirs
             .flatMap { dir -> dir.walkTopDown().filter { it.extension == "kt" }.toList() }
@@ -89,5 +93,20 @@ class KotlinTypeMapper(
             acc.zip(path).takeWhile { (a, b) -> a == b }.map { it.first }
         }
         return File(common.joinToString(File.separator))
+    }
+
+    companion object {
+        /**
+         * Analyses Kotlin source code provided entirely in memory as a map of relative file name
+         * to source content (e.g. `mapOf("Foo.kt" to "class Foo")`). No files are written to or
+         * read from disk. Content is LF-normalized automatically.
+         *
+         * This is particularly useful in test helpers and tooling where source is already in
+         * memory and temporary disk files would be wasteful.
+         */
+        @JvmStatic
+        @JvmOverloads
+        fun fromSources(sources: Map<String, String>, classpathJars: List<File> = emptyList()): TypedAst =
+            analyzeKotlinSources(sources, classpathJars)
     }
 }
