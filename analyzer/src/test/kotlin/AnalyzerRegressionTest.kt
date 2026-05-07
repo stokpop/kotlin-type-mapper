@@ -151,6 +151,25 @@ class AnalyzerRegressionTest {
     }
 
     /**
+     * Regression: a file with CRLF line endings (as checked out by git on Windows) must be
+     * analysed without throwing. K1's DocumentImpl rejects any CR characters.
+     */
+    @Test
+    fun `crlf file on disk is analysed without error`() {
+        val srcRoot = tempDir.resolve("src-crlf").toFile().apply { mkdirs() }
+        val crlfContent = "package nl.stokpop.memory\r\n\r\nclass CrlfClass\r\n"
+        File(srcRoot, "CrlfClass.kt").writeBytes(crlfContent.toByteArray(Charsets.UTF_8))
+
+        val ast = analyzeKotlinProject(srcRoot)
+
+        val declarations = ast.files.flatMap { it.declarations }
+        assertTrue(
+            declarations.any { it.fqName == "nl.stokpop.memory.CrlfClass" },
+            "Expected CrlfClass in declarations even with CRLF file on disk, got: ${declarations.map { it.fqName }}"
+        )
+    }
+
+    /**
      * Regression: a nullable receiver type (e.g. "kotlin.collections.List?") must be seeded
      * correctly so that hierarchy traversal still finds its supertypes.
      * Previously, the trailing '?' was not stripped before using the type as a map key, so
