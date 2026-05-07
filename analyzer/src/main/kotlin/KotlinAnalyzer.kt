@@ -107,7 +107,7 @@ fun analyzeKotlinSources(sources: Map<String, String>, extraClasspath: List<File
                               // CliBindingTrace) is deprecated in Kotlin 2.x in favour of the K2
                               // Analysis API, but not yet removed. Intentionally kept until a full
                               // migration to KaSession / analyze{} blocks is done.
-@Suppress("DEPRECATION") // Suppresses deprecation warnings from the K1 compiler internals used above.
+@Suppress("DEPRECATION", "DEPRECATION_ERROR") // K1 API deprecated at ERROR level in Kotlin 2.3+
 private fun analyzeNamedSources(namedSources: List<NamedSource>, sourceRootPath: String, extraClasspath: List<File>): TypedAst {
     val configuration = CompilerConfiguration()
     configuration.put(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
