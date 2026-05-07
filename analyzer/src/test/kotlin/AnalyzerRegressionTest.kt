@@ -16,6 +16,7 @@
 import nl.stokpop.typemapper.analyzer.analyzeKotlinProject
 import nl.stokpop.typemapper.model.implementorsOf
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
@@ -44,6 +45,10 @@ class AnalyzerRegressionTest {
     fun `analyze with relative source path does not throw`() {
         val srcRoot = createSampleSources().canonicalFile
         val cwd = File(System.getProperty("user.dir")).canonicalFile
+        assumeTrue(
+            srcRoot.toPath().root == cwd.toPath().root,
+            "Skipping: temp dir and CWD are on different drives — relative path not possible"
+        )
         val relativePathFromCwd = cwd.toPath().relativize(srcRoot.toPath()).toString()
         val relativeDir = File(relativePathFromCwd)
 
