@@ -64,10 +64,11 @@ fun analyzeKotlinProject(sourceRoot: File, extraClasspath: List<File> = emptyLis
  */
 fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: List<File> = emptyList()): TypedAst {
     val namedSources = files.map { file ->
+        val content = file.readText().normalizeLf()
         NamedSource(
             relativePath = file.relativeTo(sourceRoot).path,
-            content = file.readText(),
-            contentHash = sha256(file.readBytes()),
+            content = content,
+            contentHash = sha256(content.toByteArray(Charsets.UTF_8)),
         )
     }
     return analyzeNamedSources(namedSources, sourceRoot.absolutePath, extraClasspath)
@@ -80,10 +81,11 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
  */
 fun analyzeKotlinSources(sources: Map<String, String>, extraClasspath: List<File> = emptyList()): TypedAst {
     val namedSources = sources.map { (name, content) ->
+        val normalizedContent = content.normalizeLf()
         NamedSource(
             relativePath = name,
-            content = content,
-            contentHash = sha256(content.toByteArray(Charsets.UTF_8)),
+            content = normalizedContent,
+            contentHash = sha256(normalizedContent.toByteArray(Charsets.UTF_8)),
         )
     }
     return analyzeNamedSources(namedSources, "", extraClasspath)
