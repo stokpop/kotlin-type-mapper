@@ -32,4 +32,7 @@ fun main(args: Array<String>) {
             )
         )
         .main(args)
+    // K2 Analysis API leaves non-daemon IntelliJ threads (AppDelayQueue, thread pool workers)
+    // running after analysis completes; explicit exit is required to prevent hanging.
+    System.exit(0)
 }

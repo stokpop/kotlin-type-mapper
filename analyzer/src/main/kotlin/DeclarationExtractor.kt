@@ -169,7 +169,14 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
             val offset = parameter.textRange.startOffset
             when {
                 parameter.hasValOrVar() -> {
-                    val symbol = parameter.symbol as? KaPropertySymbol ?: return
+                    // In K2, primary constructor val/var parameters resolve to KaValueParameterSymbol;
+                    // the backing property is accessed via generatedPrimaryConstructorProperty.
+                    val rawSymbol = parameter.symbol
+                    val symbol: KaPropertySymbol = when (rawSymbol) {
+                        is KaPropertySymbol -> rawSymbol
+                        is KaValueParameterSymbol -> rawSymbol.generatedPrimaryConstructorProperty ?: return
+                        else -> return
+                    }
                     declarations.add(
                         DeclarationAst(
                             kind = DeclarationKind.PROPERTY,
@@ -204,7 +211,8 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
         override fun visitForExpression(expression: KtForExpression) {
             super.visitForExpression(expression)
             val param = expression.loopParameter ?: return
-            val symbol = param.symbol as? KaValueParameterSymbol ?: return
+            // In K2, for-loop iteration variables resolve to KaLocalVariableSymbol, a KaVariableSymbol subtype.
+            val symbol = param.symbol as? KaVariableSymbol ?: return
             declarations.add(
                 DeclarationAst(
                     kind = DeclarationKind.FOR_LOOP_VARIABLE,
@@ -222,7 +230,8 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
         override fun visitCatchSection(catchClause: KtCatchClause) {
             super.visitCatchSection(catchClause)
             val param = catchClause.catchParameter ?: return
-            val symbol = param.symbol as? KaValueParameterSymbol ?: return
+            // In K2, catch parameters resolve to KaLocalVariableSymbol, a KaVariableSymbol subtype.
+            val symbol = param.symbol as? KaVariableSymbol ?: return
             declarations.add(
                 DeclarationAst(
                     kind = DeclarationKind.CATCH_VARIABLE,

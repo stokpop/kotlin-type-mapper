@@ -8,14 +8,6 @@ plugins {
 val kotlinVersion = "2.4.0"
 
 repositories {
-    exclusiveContent {
-        forRepository {
-            maven("https://redirector.kotlinlang.org/maven/intellij-dependencies")
-        }
-        filter {
-            includeModuleByRegex("org\\.jetbrains\\.kotlin", ".*-for-ide")
-        }
-    }
     mavenCentral()
 }
 
