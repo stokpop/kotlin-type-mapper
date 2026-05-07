@@ -59,7 +59,54 @@ ktm analyze --output result.json /path/to/src/main/kotlin
 
 Classpath jars are resolved automatically from the nearest Gradle or Maven build.
 
-### Query from JSON
+### Step-by-step walkthrough
+
+**Step 1 — run analysis**
+
+Point the tool at your main Kotlin sources. Classpath is auto-resolved if a `gradlew` or `mvn` wrapper is found in an ancestor directory:
+
+```bash
+ktm analyze --output result.json /path/to/myproject/src/main/kotlin
+```
+
+Output shows how many files were found and how many declarations and call sites were extracted:
+
+```
+Analyzing 413 Kotlin file(s) across 1 source root(s)
+Written 16538 declarations, 34793 call sites → result.json
+```
+
+**Step 2 — check for unresolved references**
+
+```bash
+ktm query result.json unresolved-references
+```
+
+If types from external libraries could not be resolved (missing from the auto-detected classpath), they appear here.
+
+**Step 3 — add missing jars**
+
+Re-run analysis with `-cp` for each missing jar. The flag is repeatable:
+
+```bash
+ktm analyze --output result.json \
+  -cp ~/.m2/repository/javax/persistence/javax.persistence-api/2.2/javax.persistence-api-2.2.jar \
+  -cp ~/.m2/repository/org/springframework/spring-context/6.2.10/spring-context-6.2.10.jar \
+  /path/to/myproject/src/main/kotlin
+```
+
+Repeat until `unresolved-references` is empty (or only shows references that are intentionally absent).
+
+**Step 4 — run queries**
+
+```bash
+ktm query result.json calls "kotlin.String#trim()"
+ktm query result.json calls-polymorphic "kotlin.collections.Collection#size()"
+ktm query result.json implementors "java.io.Closeable"
+ktm query result.json annotated-with "org.springframework.stereotype.Service"
+```
+
+
 
 ```bash
 ktm query result.json calls "kotlin.String#trim()"
