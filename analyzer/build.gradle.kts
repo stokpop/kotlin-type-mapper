@@ -5,12 +5,14 @@ plugins {
     id("com.vanniktech.maven.publish")
 }
 
+val kotlinVersion = "2.4.0"
+
 dependencies {
     implementation(kotlin("stdlib"))
     api(project(":model"))
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.0")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:2.4.0")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:2.4.0")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:$kotlinVersion")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     implementation("io.github.java-diff-utils:java-diff-utils:4.16")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
