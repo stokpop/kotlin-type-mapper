@@ -15,70 +15,59 @@
  */
 package nl.stokpop.typemapper.analyzer
 
-import nl.stokpop.typemapper.model.*
-
-import java.io.File
-import java.security.MessageDigest
-import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.analyzer.AnalysisResult
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.cli.jvm.compiler.CliBindingTrace
-import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
-import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
-import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
-import org.jetbrains.kotlin.cli.jvm.config.configureJdkClasspathRoots
-import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.name.FqName
+import com.intellij.openapi.util.Disposer
+import nl.stokpop.typemapper.model.FileAst
+import nl.stokpop.typemapper.model.TypedAst
+import nl.stokpop.typemapper.model.UnresolvedReferenceAst
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
+import org.jetbrains.kotlin.analysis.api.standalone.buildStandaloneAnalysisAPISession
+import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtLibraryModule
+import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtSdkModule
+import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtSourceModule
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.security.MessageDigest
 
-/** Normalizes CRLF and bare CR to LF. K1's DocumentImpl rejects any CR characters. */
+/** Normalizes CRLF and bare CR to LF. */
 private fun String.normalizeLf(): String = replace("\r\n", "\n").replace("\r", "\n")
 
 private data class NamedSource(val relativePath: String, val content: String, val contentHash: String)
 
-/**
- * Convenience overload: discovers all `.kt` files under [sourceRoot] and analyses them.
- * Use the two-parameter overload when you need to analyse a specific subset of files.
- */
 fun analyzeKotlinProject(sourceRoot: File, extraClasspath: List<File> = emptyList()): TypedAst {
-    val files = sourceRoot.walkTopDown()
+    val canonicalRoot = sourceRoot.canonicalFile
+    val files = canonicalRoot.walkTopDown()
         .filter { it.extension == "kt" }
         .sortedBy { it.absolutePath }
         .toList()
-    return analyzeKotlinProject(files, sourceRoot, extraClasspath)
+    return analyzeKotlinProject(files, canonicalRoot, extraClasspath)
 }
 
-/**
- * Runs semantic analysis on all [files] under [sourceRoot] using the Kotlin K1 compiler
- * pipeline, returning a [TypedAst]. See [analyzeNamedSources] for full documentation.
- */
 fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: List<File> = emptyList()): TypedAst {
+    val canonicalRoot = sourceRoot.canonicalFile
     val namedSources = files.map { file ->
-        val content = file.readText().normalizeLf()
+        val canonicalFile = file.canonicalFile
+        val content = canonicalFile.readText().normalizeLf()
         NamedSource(
-            relativePath = file.relativeTo(sourceRoot).path,
+            relativePath = canonicalFile.relativeTo(canonicalRoot).invariantSeparatorsPath,
             content = content,
             contentHash = sha256(content.toByteArray(Charsets.UTF_8)),
         )
     }
-    return analyzeNamedSources(namedSources, sourceRoot.absolutePath, extraClasspath)
+    return analyzeNamedSources(
+        namedSources = namedSources,
+        sourceRoot = canonicalRoot,
+        sourceRootPath = canonicalRoot.absolutePath,
+        extraClasspath = extraClasspath,
+    )
 }
 
-/**
- * Analyses Kotlin source code provided entirely in memory as a map of relative file name to
- * source content (e.g. `mapOf("Foo.kt" to "class Foo")`). No files are written to disk.
- * Content is LF-normalized automatically before being passed to the K1 compiler.
- */
 fun analyzeKotlinSources(sources: Map<String, String>, extraClasspath: List<File> = emptyList()): TypedAst {
     val namedSources = sources.map { (name, content) ->
         val normalizedContent = content.normalizeLf()
@@ -88,65 +77,97 @@ fun analyzeKotlinSources(sources: Map<String, String>, extraClasspath: List<File
             contentHash = sha256(normalizedContent.toByteArray(Charsets.UTF_8)),
         )
     }
-    return analyzeNamedSources(namedSources, "", extraClasspath)
+
+    val tempRoot = createWorkingTempDir()
+    try {
+        namedSources.forEach { source ->
+            val targetFile = tempRoot.resolve(source.relativePath)
+            targetFile.parent?.let { Files.createDirectories(it) }
+            Files.writeString(targetFile, source.content)
+        }
+        return analyzeNamedSources(
+            namedSources = namedSources,
+            sourceRoot = tempRoot.toFile().canonicalFile,
+            sourceRootPath = "",
+            extraClasspath = extraClasspath,
+        )
+    } finally {
+        tempRoot.toFile().deleteRecursively()
+    }
 }
 
-/**
- * Core K1 analysis pipeline shared by [analyzeKotlinProject] and [analyzeKotlinSources].
- *
- * Note: this uses the **K1 analysis API** (programmatic compiler internals), not the
- * language version. We compile with Kotlin 2.x (K2 compiler) but intentionally use the
- * K1 analysis pipeline here because the K2 Analysis API (KaSession) is a significantly
- * different programming model. The K1 API is deprecated but still present in
- * kotlin-compiler-embeddable 2.x; migration can happen independently.
- *
- * All files are analysed in a single pass so that cross-file type references resolve
- * correctly. [extraClasspath] may contain dependency jars and/or compiled class directories.
- */
-@OptIn(K1Deprecation::class, org.jetbrains.kotlin.config.CompilerConfiguration.Internals::class)
-@Suppress("DEPRECATION", "DEPRECATION_ERROR") // K1 API deprecated at ERROR level in Kotlin 2.3+
-private fun analyzeNamedSources(namedSources: List<NamedSource>, sourceRootPath: String, extraClasspath: List<File>): TypedAst {
-    val configuration = CompilerConfiguration()
-    configuration.put(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
-    configuration.put(CommonConfigurationKeys.MODULE_NAME, "typemapper")
-    configuration.put(JVMConfigurationKeys.JVM_TARGET, JvmTarget.JVM_21)
-    configuration.put(JVMConfigurationKeys.JDK_HOME, File(System.getProperty("java.home")))
-    configuration.configureJdkClasspathRoots()
+private fun analyzeNamedSources(
+    namedSources: List<NamedSource>,
+    sourceRoot: File,
+    sourceRootPath: String,
+    extraClasspath: List<File>,
+): TypedAst {
+    val contentHashes = namedSources.associateBy({ it.relativePath }, { it.contentHash })
+    val selectedPaths = contentHashes.keys
+    val disposable = Disposer.newDisposable("TypeMapperAnalysis")
 
-    val stdlibJar = Unit::class.java.protectionDomain?.codeSource?.location?.toURI()?.let { File(it) }
-    if (stdlibJar != null && stdlibJar.exists()) configuration.addJvmClasspathRoots(listOf(stdlibJar))
-    if (extraClasspath.isNotEmpty()) configuration.addJvmClasspathRoots(extraClasspath)
-
-    val disposable = Disposer.newDisposable()
     try {
-        val environment = KotlinCoreEnvironment.createForProduction(
-            disposable, configuration, EnvironmentConfigFiles.JVM_CONFIG_FILES)
+        val stdlibJar = Unit::class.java.protectionDomain?.codeSource?.location?.toURI()?.let { File(it) }
+        val session = buildStandaloneAnalysisAPISession(disposable) {
+            buildKtModuleProvider {
+                platform = JvmPlatforms.defaultJvmPlatform
 
-        val factory = KtPsiFactory(environment.project, false)
-        val ktFiles = namedSources.map { factory.createPhysicalFile(it.relativePath, it.content.normalizeLf()) }
+                val jdkModule = buildKtSdkModule {
+                    addBinaryRootsFromJdkHome(Paths.get(System.getProperty("java.home")), isJre = false)
+                    libraryName = "JDK"
+                    platform = JvmPlatforms.defaultJvmPlatform
+                }
 
-        val analysisResult: AnalysisResult = TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
-            environment.project, ktFiles,
-            CliBindingTrace(environment.project), configuration,
-            environment::createPackagePartProvider
-        )
-        val bindingContext = analysisResult.bindingContext
-        val moduleDescriptor = analysisResult.moduleDescriptor
+                val stdlibModule = stdlibJar?.takeIf { it.exists() }?.let {
+                    buildKtLibraryModule {
+                        libraryName = "kotlin-stdlib"
+                        addBinaryRoot(it.toPath())
+                        platform = JvmPlatforms.defaultJvmPlatform
+                    }
+                }
 
-        val fileAsts = namedSources.zip(ktFiles).map { (src, ktFile) ->
-            FileAst(
-                relativePath = src.relativePath,
-                packageFqName = ktFile.packageFqName.asString(),
-                declarations = extractDeclarations(ktFile, bindingContext),
-                calls = extractCallSites(ktFile, bindingContext),
-                unresolvedReferences = extractUnresolvedReferences(ktFile, bindingContext, moduleDescriptor),
-                contentHash = src.contentHash,
-            )
+                val extraModules = extraClasspath.filter { it.exists() }.map { jar ->
+                    buildKtLibraryModule {
+                        libraryName = jar.nameWithoutExtension
+                        addBinaryRoot(jar.toPath())
+                        platform = JvmPlatforms.defaultJvmPlatform
+                    }
+                }
+
+                addModule(buildKtSourceModule {
+                    moduleName = "typemapper"
+                    platform = JvmPlatforms.defaultJvmPlatform
+                    addSourceRoot(sourceRoot.toPath())
+                    addRegularDependency(jdkModule)
+                    stdlibModule?.let { addRegularDependency(it) }
+                    extraModules.forEach { addRegularDependency(it) }
+                })
+            }
         }
 
-        // Collect every type FQN that appears as a receiver, declaration, return type, property
-        // type, or parameter type, then build the type hierarchy via reflection so queries can
-        // walk supertypes (e.g. typeIs('java.util.Collection') matches List/Set return types).
+        val sourceRootPathCanonical = sourceRoot.canonicalFile.invariantSeparatorsPath.trimEnd('/')
+        val fileAsts = session.modulesWithFiles.values
+            .flatten()
+            .filterIsInstance<KtFile>()
+            .mapNotNull { ktFile ->
+                val relativePath = relativePathOf(ktFile, sourceRootPathCanonical)
+                val contentHash = contentHashes[relativePath] ?: return@mapNotNull null
+                analyze(ktFile) {
+                    FileAst(
+                        relativePath = relativePath,
+                        packageFqName = ktFile.packageFqName.asString(),
+                        declarations = extractDeclarations(ktFile),
+                        calls = extractCallSites(ktFile),
+                        unresolvedReferences = extractUnresolvedReferences(ktFile),
+                        contentHash = contentHash,
+                    )
+                }
+            }
+            .sortedBy { it.relativePath }
+
+        // Collect every type FQN that appears as a receiver, return type, or parameter type.
+        // This seeds the reflection-based hierarchy so matchesSig can follow supertypes into
+        // classes that are not part of the analyzed source tree (stdlib, third-party libs).
         val seedTypes = mutableSetOf<String>()
         for (fileAst in fileAsts) {
             for (call in fileAst.calls) {
@@ -161,14 +182,11 @@ private fun analyzeNamedSources(namedSources: List<NamedSource>, sourceRootPath:
                 decl.superTypes.forEach { seedTypes.add(rawTypeName(it)) }
             }
         }
-        val classLoader = buildClassLoader(
-            listOfNotNull(stdlibJar) + extraClasspath
-        )
-        val reflectionHierarchy = buildTypeHierarchy(seedTypes, classLoader)
 
-        // Build a source-derived hierarchy from K1 analysis results (available without compiled
-        // classes). This captures user-defined class supertypes (e.g. "class Foo : Serializable")
-        // even when Foo is not yet compiled. The reflection hierarchy takes priority on conflict.
+        val classLoader = buildClassLoader(listOfNotNull(stdlibJar) + extraClasspath)
+        val reflectionHierarchy = buildTypeHierarchy(seedTypes, classLoader)
+        // Build a source-derived hierarchy from K2 analysis results (available without compiled classes).
+        // This covers user-defined classes that may not yet be on the classpath.
         val sourceHierarchy = mutableMapOf<String, List<String>>()
         for (fileAst in fileAsts) {
             for (decl in fileAst.declarations) {
@@ -177,24 +195,20 @@ private fun analyzeNamedSources(namedSources: List<NamedSource>, sourceRootPath:
                 }
             }
         }
-        val typeHierarchy = sourceHierarchy + reflectionHierarchy   // reflection wins on conflict
 
-        return TypedAst(sourceRoot = sourceRootPath, files = fileAsts, typeHierarchy = typeHierarchy)
+        return TypedAst(
+            sourceRoot = sourceRootPath,
+            files = fileAsts,
+            // sourceHierarchy + reflectionHierarchy: reflection wins on conflict since it has
+            // full supertype chains; source only covers types declared in analyzed files.
+            typeHierarchy = sourceHierarchy + reflectionHierarchy,
+        )
     } finally {
         Disposer.dispose(disposable)
     }
 }
 
-/**
- * Extracts unresolved references from the binding context diagnostics for a single [KtFile].
- * These are names (types, variables, functions) that the K1 compiler could not resolve,
- * typically because the dependency is missing from the classpath.
- */
-fun extractUnresolvedReferences(
-    ktFile: KtFile,
-    bindingContext: BindingContext,
-    moduleDescriptor: ModuleDescriptor,
-): List<UnresolvedReferenceAst> {
+internal fun KaSession.extractUnresolvedReferences(ktFile: KtFile): List<UnresolvedReferenceAst> {
     val doc = ktFile.viewProvider.document
     fun lineOf(offset: Int) = (doc?.getLineNumber(offset) ?: 0) + 1
     fun colOf(offset: Int): Int {
@@ -202,54 +216,60 @@ fun extractUnresolvedReferences(
         return offset - (doc.getLineStartOffset(line)) + 1
     }
 
-    val result = mutableListOf<UnresolvedReferenceAst>()
-
-    for (diagnostic in bindingContext.diagnostics) {
-        if (diagnostic.psiFile != ktFile) continue
-        if (diagnostic.factory != Errors.UNRESOLVED_REFERENCE) continue
-        val psiElement = diagnostic.psiElement
-        val offset = psiElement.textRange.startOffset
-        result.add(
+    val result = ktFile.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        .filter { it.factoryName == "UNRESOLVED_REFERENCE" }
+        .map { diagnostic ->
+            val psiElement = diagnostic.psi ?: return@map null
+            val offset = psiElement.textRange.startOffset
             UnresolvedReferenceAst(
                 name = psiElement.text,
+                line = lineOf(offset),
+                column = colOf(offset),
+            )
+        }
+        .filterNotNull()
+        .toMutableList()
+
+    for (importDirective in ktFile.importDirectives) {
+        if (!importDirective.isAllUnder) continue
+        val fqName = importDirective.importedFqName ?: continue
+        if (packageLikelyExists(ktFile, fqName.asString())) continue
+        val offset = importDirective.textRange.startOffset
+        result.add(
+            UnresolvedReferenceAst(
+                name = "${fqName.asString()}.*",
                 line = lineOf(offset),
                 column = colOf(offset),
             )
         )
     }
 
-    // Kotlin compiler never emits UNRESOLVED_REFERENCE for wildcard imports (import x.*).
-    // Use the ModuleDescriptor to check whether each star-imported package actually exists.
-    for (import in ktFile.importDirectives) {
-        if (!import.isAllUnder) continue
-        val fqName = import.importedFqName ?: continue
-        val pkg = moduleDescriptor.getPackage(FqName(fqName.asString()))
-        if (!packageExistsOnClasspath(pkg)) {
-            val offset = import.textRange.startOffset
-            result.add(
-                UnresolvedReferenceAst(
-                    name = "${fqName.asString()}.*",
-                    line = lineOf(offset),
-                    column = colOf(offset),
-                )
-            )
-        }
-    }
-
     return result
 }
 
-/**
- * Returns true if [pkg] exists on the classpath, i.e. it contains at least one classifier
- * (class, interface, or object).
- *
- * [ModuleDescriptor.getPackage] never returns null — it always produces a [PackageViewDescriptor],
- * even for packages that are not present on the classpath. Querying its member scope for
- * contributed classifiers is the only reliable way to distinguish a real package from a phantom one.
- */
-private fun packageExistsOnClasspath(pkg: org.jetbrains.kotlin.descriptors.PackageViewDescriptor): Boolean =
-    pkg.memberScope.getContributedDescriptors(DescriptorKindFilter.CLASSIFIERS).isNotEmpty()
-
-private fun sha256(bytes: ByteArray): String {
-    return MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+private fun packageLikelyExists(ktFile: KtFile, fqName: String): Boolean {
+    if (fqName.startsWith("kotlin.")) return true
+    val prefix = "$fqName."
+    return ktFile.containingKtFile.declarations.any { declaration ->
+        val name = when (declaration) {
+            is org.jetbrains.kotlin.psi.KtNamedDeclaration -> declaration.fqName?.asString()
+            else -> null
+        }
+        name?.startsWith(prefix) == true
+    }
+    // TODO Phase 5: replace this heuristic with a direct K2 package lookup once the stable API is available.
 }
+
+private fun relativePathOf(ktFile: KtFile, canonicalSourceRootPath: String): String {
+    val fullPath = ktFile.virtualFile.path.replace('\\', '/')
+    return fullPath.removePrefix("$canonicalSourceRootPath/")
+}
+
+private fun createWorkingTempDir(): Path {
+    val parent = File(".").canonicalFile.toPath().resolve(".typemapper-work")
+    Files.createDirectories(parent)
+    return Files.createTempDirectory(parent, "sources-")
+}
+
+private fun sha256(bytes: ByteArray): String =
+    MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }

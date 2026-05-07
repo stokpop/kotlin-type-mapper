@@ -15,16 +15,20 @@
  */
 package nl.stokpop.typemapper.analyzer
 
-import nl.stokpop.typemapper.model.*
-
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import nl.stokpop.typemapper.model.CallSiteAst
+import nl.stokpop.typemapper.model.kotlinToJavaName
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 /**
  * Returns true if this is a Kotlin stdlib extension function whose extension receiver
@@ -46,8 +50,8 @@ private fun shouldSynthesizeJavaCallSite(
     return pkg.startsWith("kotlin.")
 }
 
-/** Extracts all resolved call sites from a single [KtFile] via [BindingContext]. */
-fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallSiteAst> {
+@OptIn(KaExperimentalApi::class)
+internal fun KaSession.extractCallSites(ktFile: KtFile): List<CallSiteAst> {
     val calls = mutableListOf<CallSiteAst>()
     val doc = ktFile.viewProvider.document
 
@@ -60,17 +64,17 @@ fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallS
     ktFile.accept(object : KtTreeVisitorVoid() {
         override fun visitCallExpression(expression: KtCallExpression) {
             super.visitCallExpression(expression)
-            val resolvedCall = expression.getResolvedCall(bindingContext) ?: return
-            val descriptor = resolvedCall.resultingDescriptor
+            val call = expression.resolveToCall()?.successfulCallOrNull<KaFunctionCall<*>>() ?: return
+            val calleeFqName = call.symbol.callableId?.asSingleFqName()?.asString() ?: return
             val offset = expression.textRange.startOffset
-            val extReceiverType = resolvedCall.extensionReceiver?.type?.toFqString()
-            val allArgTypes = descriptor.valueParameters.map { it.type.toFqString() }
+            val extReceiverType = call.partiallyAppliedSymbol.extensionReceiver?.type?.let { renderType(it) }
+            val allArgTypes = call.symbol.valueParameters.map { renderType(it.returnType) }
             calls.add(
                 CallSiteAst(
-                    calleeFqName = descriptor.fqNameSafe.asString(),
-                    dispatchReceiverType = resolvedCall.dispatchReceiver?.type?.toFqString(),
+                    calleeFqName = calleeFqName,
+                    dispatchReceiverType = call.partiallyAppliedSymbol.dispatchReceiver?.type?.let { renderType(it) },
                     extensionReceiverType = extReceiverType,
-                    returnType = descriptor.returnType?.toFqString() ?: "kotlin.Unit",
+                    returnType = renderType(call.symbol.returnType),
                     argumentTypes = allArgTypes,
                     line = lineOf(offset),
                     column = colOf(offset),
@@ -81,16 +85,16 @@ fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallS
             // Java dispatch-receiver call using only the required (non-default) parameters.
             // This lets matchesSig('java.lang.String#indexOf(java.lang.String)') work even though
             // the Kotlin compiler resolves the call with extra default params.
-            if (shouldSynthesizeJavaCallSite(extReceiverType, descriptor.fqNameSafe.asString())) {
-                val requiredArgTypes = descriptor.valueParameters
-                    .filter { !it.declaresDefaultValue() }
-                    .map { it.type.toFqString() }
+            if (shouldSynthesizeJavaCallSite(extReceiverType, calleeFqName)) {
+                val requiredArgTypes = call.symbol.valueParameters
+                    .filter { !it.hasDefaultValue }
+                    .map { renderType(it.returnType) }
                 calls.add(
                     CallSiteAst(
-                        calleeFqName = descriptor.fqNameSafe.asString(),
+                        calleeFqName = calleeFqName,
                         dispatchReceiverType = extReceiverType,
                         extensionReceiverType = null,
-                        returnType = descriptor.returnType?.toFqString() ?: "kotlin.Unit",
+                        returnType = renderType(call.symbol.returnType),
                         argumentTypes = requiredArgTypes,
                         line = lineOf(offset),
                         column = colOf(offset),
@@ -106,19 +110,20 @@ fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallS
             super.visitSimpleNameExpression(expression)
             // Skip names that are the callee of a call expression (already captured above).
             if (expression.parent is KtCallExpression) return
-            val resolvedCall = expression.getResolvedCall(bindingContext) ?: return
-            val descriptor = resolvedCall.resultingDescriptor as? PropertyDescriptor ?: return
+            val call = expression.resolveToCall()?.successfulCallOrNull<KaSimpleVariableAccessCall>() ?: return
+            val symbol = call.symbol as? KaPropertySymbol ?: return
+            val dispatch = call.partiallyAppliedSymbol.dispatchReceiver?.type?.let { renderType(it) }
+            val extension = call.partiallyAppliedSymbol.extensionReceiver?.type?.let { renderType(it) }
             // Only record reads with a dispatch or extension receiver (i.e. qualified access).
-            val dispatch   = resolvedCall.dispatchReceiver?.type?.toFqString()
-            val extension  = resolvedCall.extensionReceiver?.type?.toFqString()
             if (dispatch == null && extension == null) return
+            val calleeFqName = symbol.callableId?.asSingleFqName()?.asString() ?: return
             val offset = expression.textRange.startOffset
             calls.add(
                 CallSiteAst(
-                    calleeFqName = descriptor.fqNameSafe.asString(),
+                    calleeFqName = calleeFqName,
                     dispatchReceiverType = dispatch,
                     extensionReceiverType = extension,
-                    returnType = descriptor.type.toFqString(),
+                    returnType = renderType(symbol.returnType),
                     argumentTypes = emptyList(),
                     line = lineOf(offset),
                     column = colOf(offset),

@@ -7,12 +7,33 @@ plugins {
 
 val kotlinVersion = "2.4.0"
 
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven("https://redirector.kotlinlang.org/maven/intellij-dependencies")
+        }
+        filter {
+            includeModuleByRegex("org\\.jetbrains\\.kotlin", ".*-for-ide")
+        }
+    }
+    mavenCentral()
+}
+
 dependencies {
     implementation(kotlin("stdlib"))
     api(project(":model"))
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:$kotlinVersion")
+    implementation("org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion")
+    implementation("org.jetbrains.kotlin:analysis-api-standalone-for-ide:$kotlinVersion") { isTransitive = false }
+    implementation("org.jetbrains.kotlin:analysis-api-for-ide:$kotlinVersion") { isTransitive = false }
+    implementation("org.jetbrains.kotlin:analysis-api-k2-for-ide:$kotlinVersion") { isTransitive = false }
+    implementation("org.jetbrains.kotlin:analysis-api-impl-base-for-ide:$kotlinVersion") { isTransitive = false }
+    implementation("org.jetbrains.kotlin:analysis-api-platform-interface-for-ide:$kotlinVersion") { isTransitive = false }
+    implementation("org.jetbrains.kotlin:low-level-api-fir-for-ide:$kotlinVersion") { isTransitive = false }
+    implementation("org.jetbrains.kotlin:symbol-light-classes-for-ide:$kotlinVersion") { isTransitive = false }
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8") { isTransitive = false }
+    implementation("org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core:1.10.2-intellij-1") { isTransitive = false }
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3") { isTransitive = false }
     implementation("io.github.java-diff-utils:java-diff-utils:4.16")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 

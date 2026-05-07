@@ -15,9 +15,25 @@
  */
 package nl.stokpop.typemapper.analyzer
 
-import nl.stokpop.typemapper.model.*
-
-import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import nl.stokpop.typemapper.model.AnnotationAst
+import nl.stokpop.typemapper.model.DeclarationAst
+import nl.stokpop.typemapper.model.DeclarationKind
+import nl.stokpop.typemapper.model.ParameterAst
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationList
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFileSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtClass
@@ -34,31 +50,14 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtTypeAlias
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
-/**
- * Returns the start offset of a declaration, skipping any leading KDoc comment.
- * KDoc is a child of the PSI node and is included in [textRange], so we use
- * [KtDeclaration.modifierList] (first annotation/modifier) or the first non-KDoc
- * child as the start offset instead.
- */
 private fun KtDeclaration.startOffsetSkippingKdoc(): Int =
     modifierList?.textRange?.startOffset
         ?: children.firstOrNull { it !is KDoc }?.textRange?.startOffset
         ?: textRange.startOffset
 
-private fun Annotations.toAstList(): List<AnnotationAst> =
-    mapNotNull { ann ->
-        val fqn = ann.fqName?.asString() ?: return@mapNotNull null
-        AnnotationAst(
-            fqName = fqn,
-            arguments = ann.allValueArguments.values.map { it.toString() },
-        )
-    }
-
-/** Extracts all typed declarations from a single [KtFile] via [BindingContext]. */
-fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<DeclarationAst> {
+@OptIn(KaExperimentalApi::class)
+internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst> {
     val declarations = mutableListOf<DeclarationAst>()
     val doc = ktFile.viewProvider.document
 
@@ -68,20 +67,44 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
         return offset - (doc.getLineStartOffset(line)) + 1
     }
 
-    ktFile.accept(object : KtTreeVisitorVoid() {
+    fun callableFqName(symbol: KaCallableSymbol): String =
+        symbol.callableId?.asSingleFqName()?.asString()
+            ?: (symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "") + "." +
+                ((symbol as? KaNamedSymbol)?.name?.asString() ?: "<anonymous>")
 
+    fun variableDeclaration(
+        kind: DeclarationKind,
+        name: String,
+        symbol: KaVariableSymbol,
+        offset: Int,
+    ): DeclarationAst = DeclarationAst(
+        kind = kind,
+        name = name,
+        fqName = callableFqName(symbol),
+        containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
+        type = renderType(symbol.returnType),
+        line = lineOf(offset),
+        column = colOf(offset),
+    )
+
+    ktFile.accept(object : KtTreeVisitorVoid() {
         override fun visitEnumEntry(enumEntry: KtEnumEntry) {
             super.visitEnumEntry(enumEntry)
-            val descriptor = bindingContext[BindingContext.CLASS, enumEntry] ?: return
+            val symbol = enumEntry.symbol as? KaEnumEntrySymbol ?: return
             val offset = enumEntry.textRange.startOffset
+            val containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: ""
+            val fqName = symbol.callableId?.asSingleFqName()?.asString()
+                ?: listOf(containingDeclaration, enumEntry.name ?: "<anonymous>")
+                    .filter { it.isNotEmpty() }
+                    .joinToString(".")
             declarations.add(
                 DeclarationAst(
                     kind = DeclarationKind.ENUM_ENTRY,
                     name = enumEntry.name ?: "<anonymous>",
-                    fqName = descriptor.fqNameSafe.asString(),
-                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    type = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    annotations = descriptor.annotations.toAstList(),
+                    fqName = fqName,
+                    containingDeclaration = containingDeclaration,
+                    type = containingDeclaration,
+                    annotations = symbol.annotations.toAstList(),
                     line = lineOf(offset),
                     column = colOf(offset),
                 )
@@ -91,26 +114,25 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
         override fun visitClass(klass: KtClass) {
             super.visitClass(klass)
             if (klass is KtEnumEntry) return   // handled by visitEnumEntry
-            val descriptor = bindingContext[BindingContext.CLASS, klass] ?: return
+            val symbol = klass.symbol as? KaClassSymbol ?: return
             val offset = klass.startOffsetSkippingKdoc()
             val kind = when {
-                klass.isEnum()       -> DeclarationKind.ENUM
-                klass.isInterface()  -> DeclarationKind.INTERFACE
+                klass.isEnum() -> DeclarationKind.ENUM
+                klass.isInterface() -> DeclarationKind.INTERFACE
                 klass.isAnnotation() -> DeclarationKind.ANNOTATION
-                klass.isData()       -> DeclarationKind.DATA_CLASS
-                klass.isSealed()     -> DeclarationKind.SEALED_CLASS
-                klass.isValue()      -> DeclarationKind.VALUE_CLASS
-                else                 -> DeclarationKind.CLASS
+                klass.isData() -> DeclarationKind.DATA_CLASS
+                klass.isSealed() -> DeclarationKind.SEALED_CLASS
+                klass.isValue() -> DeclarationKind.VALUE_CLASS
+                else -> DeclarationKind.CLASS
             }
-            val superTypes = descriptor.typeConstructor.supertypes
-                .map { it.toFqString().substringBefore('?') }
+            val superTypes = symbol.superTypes.map { renderType(it).substringBefore('?') }
             declarations.add(
                 DeclarationAst(
                     kind = kind,
                     name = klass.name ?: "<anonymous>",
-                    fqName = descriptor.fqNameSafe.asString(),
-                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    annotations = descriptor.annotations.toAstList(),
+                    fqName = symbol.classId?.asSingleFqName()?.asString() ?: klass.name ?: "<anonymous>",
+                    containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
+                    annotations = symbol.annotations.toAstList(),
                     superTypes = superTypes,
                     line = lineOf(offset),
                     column = colOf(offset),
@@ -120,22 +142,20 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
 
         override fun visitObjectDeclaration(declaration: KtObjectDeclaration) {
             super.visitObjectDeclaration(declaration)
-            val descriptor = bindingContext[BindingContext.CLASS, declaration] ?: return
+            val symbol = declaration.symbol as? KaClassSymbol ?: return
             val offset = declaration.startOffsetSkippingKdoc()
-            val superTypes = descriptor.typeConstructor.supertypes
-                .map { it.toFqString().substringBefore('?') }
             declarations.add(
                 DeclarationAst(
                     kind = when {
                         declaration.isCompanion() -> DeclarationKind.COMPANION_OBJECT
-                        declaration.isData()      -> DeclarationKind.DATA_OBJECT
-                        else                      -> DeclarationKind.OBJECT
+                        declaration.isData() -> DeclarationKind.DATA_OBJECT
+                        else -> DeclarationKind.OBJECT
                     },
                     name = declaration.name ?: "<anonymous>",
-                    fqName = descriptor.fqNameSafe.asString(),
-                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    annotations = descriptor.annotations.toAstList(),
-                    superTypes = superTypes,
+                    fqName = symbol.classId?.asSingleFqName()?.asString() ?: declaration.name ?: "<anonymous>",
+                    containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
+                    annotations = symbol.annotations.toAstList(),
+                    superTypes = symbol.superTypes.map { renderType(it).substringBefore('?') },
                     line = lineOf(offset),
                     column = colOf(offset),
                 )
@@ -149,26 +169,32 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             val offset = parameter.textRange.startOffset
             when {
                 parameter.hasValOrVar() -> {
-                    val descriptor = bindingContext[BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, parameter] ?: return
-                    declarations.add(DeclarationAst(
-                        kind = DeclarationKind.PROPERTY,
-                        name = parameter.name ?: "<anonymous>",
-                        fqName = descriptor.fqNameSafe.asString(),
-                        containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                        type = descriptor.type.toFqString(),
-                        line = lineOf(offset), column = colOf(offset),
-                    ))
+                    val symbol = parameter.symbol as? KaPropertySymbol ?: return
+                    declarations.add(
+                        DeclarationAst(
+                            kind = DeclarationKind.PROPERTY,
+                            name = parameter.name ?: "<anonymous>",
+                            fqName = callableFqName(symbol),
+                            containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
+                            type = renderType(symbol.returnType),
+                            line = lineOf(offset),
+                            column = colOf(offset),
+                        )
+                    )
                 }
                 parameter.typeReference != null && parameter.parent?.parent is KtFunctionLiteral -> {
-                    val descriptor = bindingContext[BindingContext.VALUE_PARAMETER, parameter] ?: return
-                    declarations.add(DeclarationAst(
-                        kind = DeclarationKind.LAMBDA_PARAMETER,
-                        name = parameter.name ?: "<anonymous>",
-                        fqName = descriptor.fqNameSafe.asString(),
-                        containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                        type = descriptor.type.toFqString(),
-                        line = lineOf(offset), column = colOf(offset),
-                    ))
+                    val symbol = parameter.symbol as? KaValueParameterSymbol ?: return
+                    declarations.add(
+                        DeclarationAst(
+                            kind = DeclarationKind.LAMBDA_PARAMETER,
+                            name = parameter.name ?: "<anonymous>",
+                            fqName = callableFqName(symbol),
+                            containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
+                            type = renderType(symbol.returnType),
+                            line = lineOf(offset),
+                            column = colOf(offset),
+                        )
+                    )
                 }
                 // for-loop and catch params handled by visitForExpression / visitCatchSection;
                 // named function params already included in the function's parameters list.
@@ -178,17 +204,16 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
         override fun visitForExpression(expression: KtForExpression) {
             super.visitForExpression(expression)
             val param = expression.loopParameter ?: return
-            val descriptor = bindingContext[BindingContext.VALUE_PARAMETER, param] ?: return
-            val offset = param.textRange.startOffset
+            val symbol = param.symbol as? KaValueParameterSymbol ?: return
             declarations.add(
                 DeclarationAst(
                     kind = DeclarationKind.FOR_LOOP_VARIABLE,
                     name = param.name ?: "<anonymous>",
-                    fqName = descriptor.fqNameSafe.asString(),
-                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    type = descriptor.type.toFqString(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    fqName = callableFqName(symbol),
+                    containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
+                    type = renderType(symbol.returnType),
+                    line = lineOf(param.textRange.startOffset),
+                    column = colOf(param.textRange.startOffset),
                 )
             )
         }
@@ -197,17 +222,16 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
         override fun visitCatchSection(catchClause: KtCatchClause) {
             super.visitCatchSection(catchClause)
             val param = catchClause.catchParameter ?: return
-            val descriptor = bindingContext[BindingContext.VALUE_PARAMETER, param] ?: return
-            val offset = param.textRange.startOffset
+            val symbol = param.symbol as? KaValueParameterSymbol ?: return
             declarations.add(
                 DeclarationAst(
                     kind = DeclarationKind.CATCH_VARIABLE,
                     name = param.name ?: "<anonymous>",
-                    fqName = descriptor.fqNameSafe.asString(),
-                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    type = descriptor.type.toFqString(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    fqName = callableFqName(symbol),
+                    containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
+                    type = renderType(symbol.returnType),
+                    line = lineOf(param.textRange.startOffset),
+                    column = colOf(param.textRange.startOffset),
                 )
             )
         }
@@ -215,33 +239,28 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
         // val (a, b) = pair — destructuring entries
         override fun visitDestructuringDeclarationEntry(entry: KtDestructuringDeclarationEntry) {
             super.visitDestructuringDeclarationEntry(entry)
-            val descriptor = bindingContext[BindingContext.VARIABLE, entry] ?: return
-            val offset = entry.textRange.startOffset
-            declarations.add(
-                DeclarationAst(
-                    kind = DeclarationKind.DESTRUCTURED_VARIABLE,
-                    name = entry.name ?: "<anonymous>",
-                    fqName = descriptor.fqNameSafe.asString(),
-                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    type = descriptor.type.toFqString(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
-                )
-            )
+            val symbol = entry.symbol as? KaVariableSymbol ?: return
+            declarations.add(variableDeclaration(
+                kind = DeclarationKind.DESTRUCTURED_VARIABLE,
+                name = entry.name ?: "<anonymous>",
+                symbol = symbol,
+                offset = entry.textRange.startOffset,
+            ))
         }
 
         // typealias Foo = Bar<Baz>
         override fun visitTypeAlias(typeAlias: KtTypeAlias) {
             super.visitTypeAlias(typeAlias)
-            val descriptor = bindingContext[BindingContext.TYPE_ALIAS, typeAlias] ?: return
+            val symbol = typeAlias.symbol as? KaTypeAliasSymbol ?: return
             val offset = typeAlias.startOffsetSkippingKdoc()
             declarations.add(
                 DeclarationAst(
                     kind = DeclarationKind.TYPEALIAS,
                     name = typeAlias.name ?: "<anonymous>",
-                    fqName = descriptor.fqNameSafe.asString(),
-                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    type = descriptor.expandedType.toFqString(),
+                    fqName = symbol.classId?.asSingleFqName()?.asString()
+                        ?: (symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "") + "." + ((symbol as? KaNamedSymbol)?.name?.asString() ?: "<anonymous>"),
+                    containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
+                    type = renderType(symbol.expandedType),
                     line = lineOf(offset),
                     column = colOf(offset),
                 )
@@ -251,19 +270,17 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
         // secondary constructor(x: Foo, y: Bar)
         override fun visitSecondaryConstructor(constructor: KtSecondaryConstructor) {
             super.visitSecondaryConstructor(constructor)
-            val descriptor = bindingContext[BindingContext.CONSTRUCTOR, constructor] ?: return
+            val symbol = constructor.symbol as? KaConstructorSymbol ?: return
             val offset = constructor.startOffsetSkippingKdoc()
             declarations.add(
                 DeclarationAst(
                     kind = DeclarationKind.CONSTRUCTOR,
                     name = constructor.name ?: "<anonymous>",
-                    fqName = descriptor.fqNameSafe.asString(),
-                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    returnType = descriptor.returnType.toFqString(),
-                    parameters = descriptor.valueParameters.map { p ->
-                        ParameterAst(name = p.name.asString(), type = p.type.toFqString())
-                    },
-                    annotations = descriptor.annotations.toAstList(),
+                    fqName = callableFqName(symbol),
+                    containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
+                    returnType = renderType(symbol.returnType),
+                    parameters = symbol.valueParameters.map { ParameterAst(name = it.name.asString(), type = renderType(it.returnType)) },
+                    annotations = symbol.annotations.toAstList(),
                     line = lineOf(offset),
                     column = colOf(offset),
                 )
@@ -272,19 +289,17 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
 
         override fun visitNamedFunction(function: KtNamedFunction) {
             super.visitNamedFunction(function)
-            val descriptor = bindingContext[BindingContext.FUNCTION, function] ?: return
+            val symbol = function.symbol as? KaNamedFunctionSymbol ?: return
             val offset = function.startOffsetSkippingKdoc()
             declarations.add(
                 DeclarationAst(
                     kind = DeclarationKind.FUNCTION,
                     name = function.name ?: "<anonymous>",
-                    fqName = descriptor.fqNameSafe.asString(),
-                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    returnType = descriptor.returnType?.toFqString() ?: "?",
-                    parameters = descriptor.valueParameters.map { p ->
-                        ParameterAst(name = p.name.asString(), type = p.type.toFqString())
-                    },
-                    annotations = descriptor.annotations.toAstList(),
+                    fqName = callableFqName(symbol),
+                    containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
+                    returnType = renderType(symbol.returnType),
+                    parameters = symbol.valueParameters.map { ParameterAst(name = it.name.asString(), type = renderType(it.returnType)) },
+                    annotations = symbol.annotations.toAstList(),
                     line = lineOf(offset),
                     column = colOf(offset),
                 )
@@ -293,21 +308,27 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
 
         override fun visitProperty(property: KtProperty) {
             super.visitProperty(property)
-            val descriptor = bindingContext[BindingContext.VARIABLE, property] ?: return
-            val offset = property.startOffsetSkippingKdoc()
-            declarations.add(
-                DeclarationAst(
-                    kind = DeclarationKind.PROPERTY,
-                    name = property.name ?: "<anonymous>",
-                    fqName = descriptor.fqNameSafe.asString(),
-                    containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    type = descriptor.type.toFqString(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
-                )
-            )
+            val symbol = property.symbol as? KaVariableSymbol ?: return
+            declarations.add(variableDeclaration(
+                kind = DeclarationKind.PROPERTY,
+                name = property.name ?: "<anonymous>",
+                symbol = symbol,
+                offset = property.startOffsetSkippingKdoc(),
+            ))
         }
     })
 
     return declarations
+}
+
+private fun KaSession.containingSymbolFqName(symbol: KaDeclarationSymbol): String = when (symbol) {
+    is KaClassSymbol -> symbol.classId?.asSingleFqName()?.asString() ?: (symbol as? KaNamedSymbol)?.name?.asString() ?: ""
+    is KaCallableSymbol -> symbol.callableId?.asSingleFqName()?.asString() ?: (symbol as? KaNamedSymbol)?.name?.asString() ?: ""
+    is KaFileSymbol -> (symbol.psi as? KtFile)?.packageFqName?.asString() ?: ""
+    else -> ""
+}
+
+private fun KaAnnotationList.toAstList(): List<AnnotationAst> = mapNotNull { ann ->
+    val fqn = ann.classId?.asSingleFqName()?.asString() ?: return@mapNotNull null
+    AnnotationAst(fqName = fqn, arguments = ann.arguments.map { it.expression.toString() })
 }
