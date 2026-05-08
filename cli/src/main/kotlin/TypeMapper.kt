@@ -17,6 +17,7 @@ package nl.stokpop.typemapper.cli
 
 import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
+import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
     TypeMapperCli()
@@ -32,7 +33,9 @@ fun main(args: Array<String>) {
             )
         )
         .main(args)
-    // K2 Analysis API leaves non-daemon IntelliJ threads (AppDelayQueue, thread pool workers)
-    // running after analysis completes; explicit exit is required to prevent hanging.
-    System.exit(0)
+    // buildStandaloneAnalysisAPISession starts non-daemon IntelliJ threads
+    // (AppDelayQueue$TransferThread, ThreadPoolExecutor$Worker) that survive
+    // Disposer.dispose() and prevent normal JVM exit. There is no public API
+    // to shut them down — see https://youtrack.jetbrains.com/issue/KT-73127
+    exitProcess(0)
 }
