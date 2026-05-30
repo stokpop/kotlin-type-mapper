@@ -104,3 +104,42 @@ class AnalyzeKotlinSourcesTest {
         )
     }
 }
+
+    @Test
+    fun `constructor call site is recorded for simple call`() {
+        val sources = mapOf(
+            "Test.kt" to """
+                package com.example
+                import java.util.Date
+                class Foo {
+                    fun bar(): Date = Date()
+                }
+            """.trimIndent()
+        )
+        val ast = analyzeKotlinSources(sources)
+        val calls = ast.files.flatMap { it.calls }
+        val ctorCall = calls.find { it.calleeFqName.endsWith("<init>") && it.calleeFqName.contains("Date") }
+        assertTrue(
+            ctorCall != null,
+            "Expected a java.util.Date.<init> call site, got: ${calls.map { it.calleeFqName }}"
+        )
+    }
+
+    @Test
+    fun `constructor call site is recorded for FQN call`() {
+        val sources = mapOf(
+            "Test.kt" to """
+                package com.example
+                class Foo {
+                    fun bar(): java.util.Date = java.util.Date()
+                }
+            """.trimIndent()
+        )
+        val ast = analyzeKotlinSources(sources)
+        val calls = ast.files.flatMap { it.calls }
+        val ctorCall = calls.find { it.calleeFqName.endsWith("<init>") && it.calleeFqName.contains("Date") }
+        assertTrue(
+            ctorCall != null,
+            "Expected a java.util.Date.<init> call site for FQN call, got: ${calls.map { it.calleeFqName }}"
+        )
+    }
