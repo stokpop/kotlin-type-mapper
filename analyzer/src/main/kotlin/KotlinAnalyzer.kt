@@ -161,6 +161,7 @@ private fun analyzeNamedSources(namedSources: List<NamedSource>, sourceRootPath:
                 decl.returnType?.let { seedTypes.add(rawTypeName(it)) }
                 decl.type?.let { seedTypes.add(rawTypeName(it)) }
                 decl.parameters.forEach { seedTypes.add(rawTypeName(it.type)) }
+                decl.superTypes.forEach { seedTypes.add(rawTypeName(it)) }
             }
         }
         val classLoader = buildClassLoader(
