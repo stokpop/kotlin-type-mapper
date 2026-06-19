@@ -18,7 +18,7 @@ plugins {
     kotlin("jvm")
 }
 
-val kotlinVersion = "2.3.21"
+val kotlinVersion = "2.3.21" // TODO: bump to 2.4.0 once -for-ide repo resolution is fixed
 
 repositories {
     // K2 Analysis API fat JARs (`*-for-ide`) are not on Maven Central (KT-56203).
