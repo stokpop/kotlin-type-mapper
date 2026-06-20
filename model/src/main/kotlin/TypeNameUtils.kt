@@ -142,6 +142,12 @@ fun kotlinToJavaName(kotlinFqn: String): String =
  * ```
  */
 /**
+ * Returns the raw type FQN: strips generic type parameters and the nullable marker.
+ * `"java.util.List<kotlin.String>"` → `"java.util.List"`, `"kotlin.String?"` → `"kotlin.String"`.
+ */
+internal fun String.rawTypeName(): String = substringBefore('<').trimEnd('?')
+
+/**
  * Returns true if [name] is a simple (unqualified) type name — i.e. contains no dot
  * after stripping generics. Examples: `"HttpClient"` → true, `"org.example.Foo"` → false.
  */

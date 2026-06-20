@@ -82,10 +82,10 @@ fun TypedAst.callsMatchingPolymorphicLocated(sig: String): List<Pair<String, Cal
  * Generics and the nullable marker (`?`) are stripped before comparison.
  */
 fun TypedAst.callsOnReceiver(fqn: String): List<CallSiteAst> {
-    val raw = fqn.substringBefore('<').trimEnd('?')
+    val raw = fqn.rawTypeName()
     return calls().filter { call ->
         listOfNotNull(call.dispatchReceiverType, call.extensionReceiverType).any { recv ->
-            typeNamesEquivalent(raw, recv.substringBefore('<').trimEnd('?'))
+            typeNamesEquivalent(raw, recv.rawTypeName())
         }
     }
 }
@@ -106,8 +106,8 @@ fun TypedAst.callsOnReceiverSubtype(fqn: String): List<CallSiteAst> =
  * Generics and the nullable marker (`?`) are stripped before comparison.
  */
 fun TypedAst.callsReturning(fqn: String): List<CallSiteAst> {
-    val raw = fqn.substringBefore('<').trimEnd('?')
-    return calls().filter { typeNamesEquivalent(raw, it.returnType.substringBefore('<').trimEnd('?')) }
+    val raw = fqn.rawTypeName()
+    return calls().filter { typeNamesEquivalent(raw, it.returnType.rawTypeName()) }
 }
 
 /**
