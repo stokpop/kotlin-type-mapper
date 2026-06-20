@@ -17,8 +17,10 @@ package nl.stokpop.typemapper.analyzer
 
 import nl.stokpop.typemapper.model.*
 
+import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
+import org.jetbrains.kotlin.types.AbbreviatedType
 import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -49,6 +51,33 @@ private fun KtDeclaration.startOffsetSkippingKdoc(): Int =
         ?: children.firstOrNull { it !is KDoc && it.text.isNotBlank() }?.textRange?.startOffset
         ?: (this as? org.jetbrains.kotlin.psi.KtNamedDeclaration)?.nameIdentifier?.textRange?.startOffset
         ?: textRange.startOffset
+
+/**
+ * Builds the typealias resolution chain starting from [descriptor].
+ * Returns a list: [aliasFqn, ..., concreteFqn].
+ * Iterates one step at a time via underlyingType to capture intermediate aliases.
+ */
+private fun buildAliasChain(descriptor: TypeAliasDescriptor): List<String> {
+    val chain = mutableListOf(descriptor.fqNameSafe.asString())
+    var current: TypeAliasDescriptor = descriptor
+    while (true) {
+        val underlying = current.underlyingType
+        // An AbbreviatedType wraps a typealias application; abbreviation carries the alias descriptor.
+        val unwrapped = underlying.unwrap()
+        val nextAlias: TypeAliasDescriptor? = when (unwrapped) {
+            is AbbreviatedType -> unwrapped.abbreviation.constructor.declarationDescriptor as? TypeAliasDescriptor
+            else               -> unwrapped.constructor.declarationDescriptor as? TypeAliasDescriptor
+        }
+        if (nextAlias != null) {
+            chain.add(nextAlias.fqNameSafe.asString())
+            current = nextAlias
+        } else {
+            chain.add(underlying.toFqString())
+            break
+        }
+    }
+    return chain
+}
 
 private fun Annotations.toAstList(): List<AnnotationAst> =
     mapNotNull { ann ->
@@ -263,6 +292,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                     type = descriptor.expandedType.toFqString(),
+                    typeAliasChain = buildAliasChain(descriptor),
                     line = lineOf(offset), column = colOf(offset),
                     endLine = endLineOf(typeAlias.textRange.endOffset),
                     endColumn = endColOf(typeAlias.textRange.endOffset),
