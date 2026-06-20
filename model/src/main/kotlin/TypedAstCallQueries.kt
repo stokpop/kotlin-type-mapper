@@ -75,3 +75,44 @@ fun TypedAst.callsMatchingPolymorphicLocated(sig: String): List<Pair<String, Cal
     val matchingCalls = callsMatchingPolymorphic(sig).toHashSet()
     return files.flatMap { f -> f.calls.filter { it in matchingCalls }.map { f.relativePath to it } }
 }
+
+/**
+ * Returns all call sites where the dispatch or extension receiver type matches [fqn]
+ * after Kotlin/Java name mapping (e.g. `kotlin.String` matches `java.lang.String`).
+ * Generics are stripped before comparison.
+ */
+fun TypedAst.callsOnReceiver(fqn: String): List<CallSiteAst> {
+    val raw = fqn.substringBefore('<')
+    return calls().filter { call ->
+        listOfNotNull(call.dispatchReceiverType, call.extensionReceiverType).any { recv ->
+            typeNamesEquivalent(raw, recv.substringBefore('<'))
+        }
+    }
+}
+
+/**
+ * Returns all call sites where the dispatch or extension receiver type is [fqn] or a subtype of
+ * [fqn] according to [TypedAst.typeHierarchy]. Uses [isSubtypeOf] for equivalence and hierarchy.
+ */
+fun TypedAst.callsOnReceiverSubtype(fqn: String): List<CallSiteAst> =
+    calls().filter { call ->
+        listOfNotNull(call.dispatchReceiverType, call.extensionReceiverType).any { recv ->
+            isSubtypeOf(fqn, recv)
+        }
+    }
+
+/**
+ * Returns all call sites whose return type matches [fqn] after Kotlin/Java name mapping.
+ * Generics are stripped before comparison.
+ */
+fun TypedAst.callsReturning(fqn: String): List<CallSiteAst> {
+    val raw = fqn.substringBefore('<')
+    return calls().filter { typeNamesEquivalent(raw, it.returnType.substringBefore('<')) }
+}
+
+/**
+ * Returns all call sites whose return type is [fqn] or a subtype of [fqn]
+ * according to [TypedAst.typeHierarchy]. Uses [isSubtypeOf] for equivalence and hierarchy.
+ */
+fun TypedAst.callsReturningSubtype(fqn: String): List<CallSiteAst> =
+    calls().filter { isSubtypeOf(fqn, it.returnType) }
