@@ -64,7 +64,12 @@ internal fun TypedAst.allSubtypesOf(targetFqn: String): Set<String> {
  */
 fun TypedAst.isTypeKnown(fqn: String): Boolean {
     val raw = fqn.substringBefore('<')
-    return typeEquivalents(raw).any { it in typeHierarchy }
+    val equivalents = typeEquivalents(raw)
+
+    if (equivalents.any { it in typeHierarchy }) return true
+
+    // Some types (e.g. marker interfaces, kotlin.Any) may only appear as supertypes.
+    return typeHierarchy.values.any { supers -> supers.any { it in equivalents } }
 }
 
 /**
