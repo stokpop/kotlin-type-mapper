@@ -118,6 +118,26 @@ fun TypedAst.implementorsOf(
     return strict + fromImports
 }
 
+/**
+ * Returns true if [actualFqn] is the same type as, or a transitive subtype of, [expectedFqn].
+ * Generics are stripped before lookup. Handles Kotlin/Java mapped type equivalence
+ * (e.g. kotlin.String and java.lang.String are treated as equivalent).
+ *
+ * Examples:
+ * ```
+ * ast.isSubtypeOf("java.io.Closeable", "java.io.FileInputStream") // true - FileInputStream implements Closeable
+ * ast.isSubtypeOf("java.lang.String",  "kotlin.String")           // true - equivalent names
+ * ast.isSubtypeOf("java.util.List",    "java.util.Set")           // false
+ * ```
+ */
+fun TypedAst.isSubtypeOf(expectedFqn: String, actualFqn: String): Boolean {
+    val rawExpected = expectedFqn.substringBefore('<')
+    val rawActual = actualFqn.substringBefore('<')
+    if (typeNamesEquivalent(rawExpected, rawActual)) return true
+    val subtypes = allSubtypesOf(rawExpected)
+    return typeEquivalents(rawActual).any { it in subtypes }
+}
+
 /** Returns [fqn] plus its Java↔Kotlin equivalent name(s), if any. */
 internal fun typeEquivalents(fqn: String): Set<String> =
     setOfNotNull(fqn, KOTLIN_TO_JAVA[fqn], JAVA_TO_KOTLIN[fqn])
