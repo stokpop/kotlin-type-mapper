@@ -68,8 +68,15 @@ data class CallSiteAst(
     val extensionReceiverType: String? = null,   // non-null for extension function calls
     val returnType: String,
     val argumentTypes: List<String> = emptyList(),
+    /** 1-based line of the start of the call expression (including the receiver object).
+     *  For `foo.bar()` this is the line of `foo`, not `bar`. */
     val line: Int,
     val column: Int,
+    /** 1-based line of the end of the call expression (the closing parenthesis).
+     *  Equal to [line] for single-line calls. Defaults to 0 for ASTs loaded from
+     *  older JSON (schema < 1.5) that did not record this field. */
+    val endLine: Int = 0,
+    val endColumn: Int = 0,
 )
 
 @Serializable
@@ -90,8 +97,16 @@ data class DeclarationAst(
      *  jar is absent and K1 cannot resolve the FQN). Populated only for class-kind declarations.
      *  Used together with file imports for lenient type-resolution mode. */
     val textualSuperTypes: List<String> = emptyList(),
+    /** 1-based line of the first token of the declaration, skipping any leading KDoc comment.
+     *  Points to the first modifier or keyword (e.g. `fun`, `class`, `val`, `@Annotation`).
+     *  For annotated declarations this is the annotation line, not the keyword line. */
     val line: Int,
     val column: Int,
+    /** 1-based line of the last token of the declaration (closing `}` for block declarations,
+     *  end of expression for single-expression properties). Equal to [line] for one-liners.
+     *  Defaults to 0 for ASTs loaded from older JSON (schema < 1.5). */
+    val endLine: Int = 0,
+    val endColumn: Int = 0,
 ) {
     /** Returns true if this declaration represents a class-like type (class, interface, object, etc.). */
     fun isClassLike(): Boolean = kind in CLASS_KINDS
@@ -128,7 +143,7 @@ enum class TypeResolutionMode {
 
 @Serializable
 data class TypedAst(
-    val schemaVersion: String = "1.4",
+    val schemaVersion: String = "1.5",
     val generatedBy: String = "kotlin-type-mapper",
     /** Absolute path of the common source-root directory used during analysis.
      *  **Never null.** Empty string (`""`) when analysis was performed in-memory

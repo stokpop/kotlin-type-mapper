@@ -67,6 +67,9 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
         val line = doc?.getLineNumber(offset) ?: return 1
         return offset - (doc.getLineStartOffset(line)) + 1
     }
+    // endOffset is exclusive; clamp to the last actual character so line calc is correct.
+    fun endLineOf(endOffset: Int) = lineOf((endOffset - 1).coerceAtLeast(0))
+    fun endColOf(endOffset: Int) = colOf((endOffset - 1).coerceAtLeast(0))
 
     ktFile.accept(object : KtTreeVisitorVoid() {
 
@@ -82,8 +85,9 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                     type = descriptor.containingDeclaration.fqNameSafe.asString(),
                     annotations = descriptor.annotations.toAstList(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(enumEntry.textRange.endOffset),
+                    endColumn = endColOf(enumEntry.textRange.endOffset),
                 )
             )
         }
@@ -115,8 +119,9 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     annotations = descriptor.annotations.toAstList(),
                     superTypes = superTypes,
                     textualSuperTypes = textualSuperTypes,
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(klass.textRange.endOffset),
+                    endColumn = endColOf(klass.textRange.endOffset),
                 )
             )
         }
@@ -142,8 +147,9 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     annotations = descriptor.annotations.toAstList(),
                     superTypes = superTypes,
                     textualSuperTypes = textualSuperTypes,
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(declaration.textRange.endOffset),
+                    endColumn = endColOf(declaration.textRange.endOffset),
                 )
             )
         }
@@ -163,6 +169,8 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                         containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                         type = descriptor.type.toFqString(),
                         line = lineOf(offset), column = colOf(offset),
+                        endLine = endLineOf(parameter.textRange.endOffset),
+                        endColumn = endColOf(parameter.textRange.endOffset),
                     ))
                 }
                 parameter.typeReference != null && parameter.parent?.parent is KtFunctionLiteral -> {
@@ -174,6 +182,8 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                         containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                         type = descriptor.type.toFqString(),
                         line = lineOf(offset), column = colOf(offset),
+                        endLine = endLineOf(parameter.textRange.endOffset),
+                        endColumn = endColOf(parameter.textRange.endOffset),
                     ))
                 }
                 // for-loop and catch params handled by visitForExpression / visitCatchSection;
@@ -193,8 +203,9 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                     type = descriptor.type.toFqString(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(param.textRange.endOffset),
+                    endColumn = endColOf(param.textRange.endOffset),
                 )
             )
         }
@@ -212,8 +223,9 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                     type = descriptor.type.toFqString(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(param.textRange.endOffset),
+                    endColumn = endColOf(param.textRange.endOffset),
                 )
             )
         }
@@ -230,8 +242,9 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                     type = descriptor.type.toFqString(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(entry.textRange.endOffset),
+                    endColumn = endColOf(entry.textRange.endOffset),
                 )
             )
         }
@@ -248,8 +261,9 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                     type = descriptor.expandedType.toFqString(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(typeAlias.textRange.endOffset),
+                    endColumn = endColOf(typeAlias.textRange.endOffset),
                 )
             )
         }
@@ -270,8 +284,9 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                         ParameterAst(name = p.name.asString(), type = p.type.toFqString())
                     },
                     annotations = descriptor.annotations.toAstList(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(constructor.textRange.endOffset),
+                    endColumn = endColOf(constructor.textRange.endOffset),
                 )
             )
         }
@@ -291,8 +306,9 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                         ParameterAst(name = p.name.asString(), type = p.type.toFqString())
                     },
                     annotations = descriptor.annotations.toAstList(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(function.textRange.endOffset),
+                    endColumn = endColOf(function.textRange.endOffset),
                 )
             )
         }
@@ -308,8 +324,9 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                     type = descriptor.type.toFqString(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(property.textRange.endOffset),
+                    endColumn = endColOf(property.textRange.endOffset),
                 )
             )
         }
