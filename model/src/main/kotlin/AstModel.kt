@@ -68,12 +68,14 @@ data class CallSiteAst(
     val extensionReceiverType: String? = null,   // non-null for extension function calls
     val returnType: String,
     val argumentTypes: List<String> = emptyList(),
-    /** 1-based line of the start of the call expression (including the receiver object).
-     *  For `foo.bar()` this is the line of `foo`, not `bar`. */
+    /** 1-based line of the start of the call expression node.
+     *  For method calls (`foo.bar()`) this is the line of the callee name `bar`, not the receiver `foo`.
+     *  For property reads (`foo.size`) this is the line of the property name `size`. */
     val line: Int,
     val column: Int,
-    /** 1-based line of the end of the call expression (the closing parenthesis).
-     *  Equal to [line] for single-line calls. Defaults to 0 for ASTs loaded from
+    /** 1-based line of the end of the call expression node.
+     *  For function calls this is the closing `)`. For property reads it is the end of the property name.
+     *  Equal to [line] for single-line expressions. Defaults to 0 for ASTs loaded from
      *  older JSON (schema < 1.5) that did not record this field. */
     val endLine: Int = 0,
     val endColumn: Int = 0,

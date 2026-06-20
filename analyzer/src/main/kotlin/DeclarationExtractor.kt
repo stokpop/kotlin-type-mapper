@@ -39,13 +39,15 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 /**
  * Returns the start offset of a declaration, skipping any leading KDoc comment.
- * KDoc is a child of the PSI node and is included in [textRange], so we use
- * [KtDeclaration.modifierList] (first annotation/modifier) or the first non-KDoc
- * child as the start offset instead.
+ * Uses [KtDeclaration.modifierList] when present, otherwise the first non-KDoc
+ * non-blank child, then [KtNamedDeclaration.nameIdentifier] as a final fallback
+ * (needed for KtEnumEntry: its identifier is not a direct PSI child, so only
+ * KDoc appears in children, and textRange.startOffset would include the KDoc).
  */
 private fun KtDeclaration.startOffsetSkippingKdoc(): Int =
     modifierList?.textRange?.startOffset
-        ?: children.firstOrNull { it !is KDoc }?.textRange?.startOffset
+        ?: children.firstOrNull { it !is KDoc && it.text.isNotBlank() }?.textRange?.startOffset
+        ?: (this as? org.jetbrains.kotlin.psi.KtNamedDeclaration)?.nameIdentifier?.textRange?.startOffset
         ?: textRange.startOffset
 
 private fun Annotations.toAstList(): List<AnnotationAst> =
@@ -76,7 +78,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
         override fun visitEnumEntry(enumEntry: KtEnumEntry) {
             super.visitEnumEntry(enumEntry)
             val descriptor = bindingContext[BindingContext.CLASS, enumEntry] ?: return
-            val offset = enumEntry.textRange.startOffset
+            val offset = enumEntry.startOffsetSkippingKdoc()
             declarations.add(
                 DeclarationAst(
                     kind = DeclarationKind.ENUM_ENTRY,
