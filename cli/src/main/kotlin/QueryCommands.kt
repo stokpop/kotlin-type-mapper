@@ -20,8 +20,11 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.obj
 import com.github.ajalt.clikt.core.requireObject
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.int
+import nl.stokpop.typemapper.model.TypeResolutionMode
 import nl.stokpop.typemapper.model.TypedAst
 import nl.stokpop.typemapper.model.TypedAstJson
 import nl.stokpop.typemapper.model.callsMatchingLocated
@@ -73,10 +76,22 @@ class ImplementorsCommand : CliktCommand("implementors") {
     val ast by requireObject<TypedAst>()
     val fqn by argument("INTERFACE_FQN")
     val ctx by option("--context", "-C", help = "Source lines of context (default: 3, 0 = off)").int()
-    override fun run() = ast.implementorsOf(fqn).forEach { decl ->
-        val path = ast.files.firstOrNull { f -> f.declarations.any { it.fqName == decl.fqName } }?.relativePath ?: ""
-        echo(decl.format(path))
-        echoContext(ast.sourceRoot, path, decl.line, ctx ?: 3)
+    val resolutionMode by option(
+        "--type-resolution-mode", "-m",
+        help = "How to handle types whose jar is absent: strict (default), lenient-warn, lenient-quiet"
+    ).enum<TypeResolutionMode>(ignoreCase = true).default(TypeResolutionMode.STRICT)
+
+    override fun run() {
+        val results = if (resolutionMode == TypeResolutionMode.STRICT) {
+            ast.implementorsOf(fqn)
+        } else {
+            ast.implementorsOf(fqn, resolutionMode) { warning -> echo("Warning: $warning", err = true) }
+        }
+        results.forEach { decl ->
+            val path = ast.files.firstOrNull { f -> f.declarations.any { it.fqName == decl.fqName } }?.relativePath ?: ""
+            echo(decl.format(path))
+            echoContext(ast.sourceRoot, path, decl.line, ctx ?: 3)
+        }
     }
 }
 

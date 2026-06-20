@@ -134,6 +134,9 @@ private fun analyzeNamedSources(namedSources: List<NamedSource>, sourceRootPath:
         val moduleDescriptor = analysisResult.moduleDescriptor
 
         val fileAsts = namedSources.zip(ktFiles).map { (src, ktFile) ->
+            val imports = ktFile.importDirectives
+                .filter { !it.isAllUnder }
+                .mapNotNull { it.importedFqName?.asString() }
             FileAst(
                 relativePath = src.relativePath,
                 packageFqName = ktFile.packageFqName.asString(),
@@ -141,6 +144,7 @@ private fun analyzeNamedSources(namedSources: List<NamedSource>, sourceRootPath:
                 calls = extractCallSites(ktFile, bindingContext),
                 unresolvedReferences = extractUnresolvedReferences(ktFile, bindingContext, moduleDescriptor),
                 contentHash = src.contentHash,
+                imports = imports,
             )
         }
 
