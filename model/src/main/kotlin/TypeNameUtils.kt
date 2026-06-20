@@ -157,6 +157,12 @@ fun resolveSimpleName(simpleName: String, importedFqns: Collection<String>): Str
     importedFqns.firstOrNull { it.endsWith(".$simpleName") }
 
 /**
+ * Returns true if [fqn1] and [fqn2] refer to the same type after Java/Kotlin name mapping.
+ * Generics are stripped before comparison (e.g. kotlin.String and java.lang.String are equivalent).
+ */
+fun isTypeEquivalent(fqn1: String, fqn2: String): Boolean = typeNamesEquivalent(fqn1, fqn2)
+
+/**
  * Returns true if two type names refer to the same type after Java↔Kotlin mapping.
  * Both names are stripped of generics before comparison.
  */

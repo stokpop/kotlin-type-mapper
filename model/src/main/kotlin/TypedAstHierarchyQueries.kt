@@ -43,7 +43,8 @@ internal fun TypedAst.allSubtypesOf(targetFqn: String): Set<String> {
     val children = mutableMapOf<String, MutableSet<String>>()
     for ((type, supers) in typeHierarchy) {
         for (sup in supers) {
-            children.getOrPut(sup) { mutableSetOf() }.add(type)
+            val rawSup = sup.substringBefore('<').trimEnd('?')
+            children.getOrPut(rawSup) { mutableSetOf() }.add(type)
         }
     }
     val seeds = typeEquivalents(targetFqn)
@@ -116,6 +117,42 @@ fun TypedAst.implementorsOf(
     }
 
     return strict + fromImports
+}
+
+/**
+ * Returns true if [actualFqn] is the same type as, or a transitive subtype of, [expectedFqn].
+ *
+ * Generics and nullability are stripped before lookup -- this function checks structural
+ * inheritance only, not generic instantiation. `List<String>` and `List<Integer>` are treated
+ * as the same type. `String?` is treated the same as `String`.
+ *
+ * Handles Kotlin/Java mapped type equivalence so that e.g. `kotlin.String` and `java.lang.String`
+ * are treated as equivalent. The equivalence check is pairwise: `java.util.List` == `kotlin.collections.MutableList`
+ * because MutableList maps directly to java.util.List. However, `kotlin.collections.List` is NOT
+ * treated as equivalent to `kotlin.collections.MutableList` even though both map to java.util.List --
+ * the check is a direct pair lookup, not transitive through a shared Java name.
+ *
+ * Transitive lookups use [TypedAst.typeHierarchy]. If the hierarchy is empty or the type is not
+ * present, only direct name/equivalence matching is performed and unrelated unknown types return false.
+ *
+ * Examples:
+ * ```
+ * ast.isSubtypeOf("java.io.Closeable", "java.io.FileInputStream") // true - FileInputStream implements Closeable
+ * ast.isSubtypeOf("java.lang.String",  "kotlin.String")           // true - equivalent names
+ * ast.isSubtypeOf("java.util.List",    "kotlin.collections.MutableList") // true - direct java.util.List mapping
+ * ast.isSubtypeOf("java.util.List<kotlin.String>", "java.util.List<kotlin.Int>") // true - generics erased
+ * ast.isSubtypeOf("com.example.Animal", "com.example.Dog?")       // true - nullable marker stripped
+ * ast.isSubtypeOf("java.util.List",    "java.util.Set")           // false - unrelated
+ * ast.isSubtypeOf("kotlin.collections.List", "kotlin.collections.MutableList") // false - pairwise only
+ * ast.isSubtypeOf("com.example.Foo",   "com.example.Bar")         // false - unknown with no hierarchy
+ * ```
+ */
+fun TypedAst.isSubtypeOf(expectedFqn: String, actualFqn: String): Boolean {
+    val rawExpected = expectedFqn.substringBefore('<').trimEnd('?')
+    val rawActual = actualFqn.substringBefore('<').trimEnd('?')
+    if (typeNamesEquivalent(rawExpected, rawActual)) return true
+    val subtypes = allSubtypesOf(rawExpected)
+    return typeEquivalents(rawActual).any { it in subtypes }
 }
 
 /** Returns [fqn] plus its Java↔Kotlin equivalent name(s), if any. */
