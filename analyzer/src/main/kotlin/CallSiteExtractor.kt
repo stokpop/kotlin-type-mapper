@@ -56,6 +56,8 @@ fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallS
         val line = doc?.getLineNumber(offset) ?: return 1
         return offset - (doc.getLineStartOffset(line)) + 1
     }
+    fun endLineOf(endOffset: Int) = lineOf((endOffset - 1).coerceAtLeast(0))
+    fun endColOf(endOffset: Int) = colOf((endOffset - 1).coerceAtLeast(0))
 
     ktFile.accept(object : KtTreeVisitorVoid() {
         override fun visitCallExpression(expression: KtCallExpression) {
@@ -65,6 +67,7 @@ fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallS
             val offset = expression.textRange.startOffset
             val extReceiverType = resolvedCall.extensionReceiver?.type?.toFqString()
             val allArgTypes = descriptor.valueParameters.map { it.type.toFqString() }
+            val endOffset = expression.textRange.endOffset
             calls.add(
                 CallSiteAst(
                     calleeFqName = descriptor.fqNameSafe.asString(),
@@ -72,8 +75,8 @@ fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallS
                     extensionReceiverType = extReceiverType,
                     returnType = descriptor.returnType?.toFqString() ?: "kotlin.Unit",
                     argumentTypes = allArgTypes,
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(endOffset), endColumn = endColOf(endOffset),
                 )
             )
             // For Kotlin stdlib extension functions on Java-mapped types (e.g. kotlin.text.indexOf
@@ -92,8 +95,9 @@ fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallS
                         extensionReceiverType = null,
                         returnType = descriptor.returnType?.toFqString() ?: "kotlin.Unit",
                         argumentTypes = requiredArgTypes,
-                        line = lineOf(offset),
-                        column = colOf(offset),
+                        line = lineOf(offset), column = colOf(offset),
+                        endLine = endLineOf(expression.textRange.endOffset),
+                        endColumn = endColOf(expression.textRange.endOffset),
                     )
                 )
             }
@@ -120,8 +124,9 @@ fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallS
                     extensionReceiverType = extension,
                     returnType = descriptor.type.toFqString(),
                     argumentTypes = emptyList(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(expression.textRange.endOffset),
+                    endColumn = endColOf(expression.textRange.endOffset),
                 )
             )
         }
