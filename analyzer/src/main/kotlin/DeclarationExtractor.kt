@@ -104,6 +104,8 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             }
             val superTypes = descriptor.typeConstructor.supertypes
                 .map { it.toFqString().substringBefore('?') }
+            val textualSuperTypes = klass.superTypeListEntries
+                .mapNotNull { it.typeReference?.text?.substringBefore('<')?.trim() }
             declarations.add(
                 DeclarationAst(
                     kind = kind,
@@ -112,6 +114,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                     annotations = descriptor.annotations.toAstList(),
                     superTypes = superTypes,
+                    textualSuperTypes = textualSuperTypes,
                     line = lineOf(offset),
                     column = colOf(offset),
                 )
@@ -124,6 +127,8 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
             val offset = declaration.startOffsetSkippingKdoc()
             val superTypes = descriptor.typeConstructor.supertypes
                 .map { it.toFqString().substringBefore('?') }
+            val textualSuperTypes = declaration.superTypeListEntries
+                .mapNotNull { it.typeReference?.text?.substringBefore('<')?.trim() }
             declarations.add(
                 DeclarationAst(
                     kind = when {
@@ -136,6 +141,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                     annotations = descriptor.annotations.toAstList(),
                     superTypes = superTypes,
+                    textualSuperTypes = textualSuperTypes,
                     line = lineOf(offset),
                     column = colOf(offset),
                 )

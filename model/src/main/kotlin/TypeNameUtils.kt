@@ -141,6 +141,25 @@ fun kotlinToJavaName(kotlinFqn: String): String =
  * typeNamesEquivalent("java.util.regex.Pattern",  "kotlin.String")           == false
  * ```
  */
+/**
+ * Returns true if [name] is a simple (unqualified) type name — i.e. contains no dot
+ * after stripping generics. Examples: `"HttpClient"` → true, `"org.example.Foo"` → false.
+ */
+fun isSimpleName(name: String): Boolean = '.' !in name.substringBefore('<')
+
+/**
+ * Given a simple type name (no package), returns the first matching FQN found in [importedFqns],
+ * or null if none match. Only explicit single-type imports are considered; star-imports are skipped.
+ *
+ * Example: `resolveSimpleName("HttpClient", listOf("org.apache.http.client.HttpClient"))` → `"org.apache.http.client.HttpClient"`
+ */
+fun resolveSimpleName(simpleName: String, importedFqns: Collection<String>): String? =
+    importedFqns.firstOrNull { it.endsWith(".$simpleName") }
+
+/**
+ * Returns true if two type names refer to the same type after Java↔Kotlin mapping.
+ * Both names are stripped of generics before comparison.
+ */
 fun typeNamesEquivalent(nameA: String, nameB: String): Boolean {
     val rawA = nameA.substringBefore('<')
     val rawB = nameB.substringBefore('<')

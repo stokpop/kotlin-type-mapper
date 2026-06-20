@@ -86,6 +86,10 @@ data class DeclarationAst(
      *  extracted from K1 source analysis. Empty for non-class kinds.
      *  Populated regardless of whether compiled classes are available. */
     val superTypes: List<String> = emptyList(),
+    /** Source-text of super-type references as written in the file (e.g. ["HttpClient"] when the
+     *  jar is absent and K1 cannot resolve the FQN). Populated only for class-kind declarations.
+     *  Used together with file imports for lenient type-resolution mode. */
+    val textualSuperTypes: List<String> = emptyList(),
     val line: Int,
     val column: Int,
 ) {
@@ -108,11 +112,23 @@ data class FileAst(
     val calls: List<CallSiteAst> = emptyList(),
     val unresolvedReferences: List<UnresolvedReferenceAst> = emptyList(),
     val contentHash: String = "",              // SHA-256 of source file content
+    /** Explicit import FQNs from the source file (star-imports excluded). */
+    val imports: List<String> = emptyList(),
 )
+
+/** Controls how type names are resolved when a dependency jar is absent from the classpath. */
+enum class TypeResolutionMode {
+    /** Require a full hierarchy entry; return no match for unresolved simple names. Default. */
+    STRICT,
+    /** Resolve simple names via file imports for exact-match; emit a warning when fallback fires. */
+    LENIENT_WARN,
+    /** Resolve simple names via file imports for exact-match; suppress the warning. */
+    LENIENT_QUIET,
+}
 
 @Serializable
 data class TypedAst(
-    val schemaVersion: String = "1.3",
+    val schemaVersion: String = "1.4",
     val generatedBy: String = "kotlin-type-mapper",
     /** Absolute path of the common source-root directory used during analysis.
      *  **Never null.** Empty string (`""`) when analysis was performed in-memory
