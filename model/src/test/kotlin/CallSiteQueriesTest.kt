@@ -90,6 +90,24 @@ class CallSiteQueriesTest {
         assertTrue(ast.callsOnReceiver("com.example.Bar").isEmpty())
     }
 
+    @Test
+    fun `callsOnReceiver strips nullable marker from receiver type`() {
+        val ast = astWith(
+            call("com.example.Foo.doIt", dispatch = "com.example.Foo?"),
+        )
+        assertEquals(1, ast.callsOnReceiver("com.example.Foo").size,
+            "Foo? receiver must match query for Foo")
+    }
+
+    @Test
+    fun `callsOnReceiver strips generics from receiver type`() {
+        val ast = astWith(
+            call("java.util.List.add", dispatch = "java.util.List<kotlin.String>"),
+        )
+        assertEquals(1, ast.callsOnReceiver("java.util.List").size,
+            "List<String> receiver must match query for raw List")
+    }
+
     // --- callsOnReceiverSubtype ---
 
     @Test
@@ -142,6 +160,24 @@ class CallSiteQueriesTest {
         )
         val result = ast.callsReturning("kotlin.String")
         assertEquals(1, result.size, "kotlin.String should match java.lang.String return type")
+    }
+
+    @Test
+    fun `callsReturning strips nullable marker from return type`() {
+        val ast = astWith(
+            call("com.example.Foo.find", returnType = "com.example.Widget?"),
+        )
+        assertEquals(1, ast.callsReturning("com.example.Widget").size,
+            "Widget? return must match query for Widget")
+    }
+
+    @Test
+    fun `callsReturning strips generics from return type`() {
+        val ast = astWith(
+            call("com.example.Repo.all", returnType = "java.util.List<com.example.Widget>"),
+        )
+        assertEquals(1, ast.callsReturning("java.util.List").size,
+            "List<Widget> return must match query for raw List")
     }
 
     @Test

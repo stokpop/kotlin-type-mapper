@@ -79,13 +79,13 @@ fun TypedAst.callsMatchingPolymorphicLocated(sig: String): List<Pair<String, Cal
 /**
  * Returns all call sites where the dispatch or extension receiver type matches [fqn]
  * after Kotlin/Java name mapping (e.g. `kotlin.String` matches `java.lang.String`).
- * Generics are stripped before comparison.
+ * Generics and the nullable marker (`?`) are stripped before comparison.
  */
 fun TypedAst.callsOnReceiver(fqn: String): List<CallSiteAst> {
-    val raw = fqn.substringBefore('<')
+    val raw = fqn.substringBefore('<').trimEnd('?')
     return calls().filter { call ->
         listOfNotNull(call.dispatchReceiverType, call.extensionReceiverType).any { recv ->
-            typeNamesEquivalent(raw, recv.substringBefore('<'))
+            typeNamesEquivalent(raw, recv.substringBefore('<').trimEnd('?'))
         }
     }
 }
@@ -103,11 +103,11 @@ fun TypedAst.callsOnReceiverSubtype(fqn: String): List<CallSiteAst> =
 
 /**
  * Returns all call sites whose return type matches [fqn] after Kotlin/Java name mapping.
- * Generics are stripped before comparison.
+ * Generics and the nullable marker (`?`) are stripped before comparison.
  */
 fun TypedAst.callsReturning(fqn: String): List<CallSiteAst> {
-    val raw = fqn.substringBefore('<')
-    return calls().filter { typeNamesEquivalent(raw, it.returnType.substringBefore('<')) }
+    val raw = fqn.substringBefore('<').trimEnd('?')
+    return calls().filter { typeNamesEquivalent(raw, it.returnType.substringBefore('<').trimEnd('?')) }
 }
 
 /**
