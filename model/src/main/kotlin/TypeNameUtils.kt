@@ -156,6 +156,10 @@ fun isSimpleName(name: String): Boolean = '.' !in name.substringBefore('<')
 fun resolveSimpleName(simpleName: String, importedFqns: Collection<String>): String? =
     importedFqns.firstOrNull { it.endsWith(".$simpleName") }
 
+/**
+ * Returns true if two type names refer to the same type after Java↔Kotlin mapping.
+ * Both names are stripped of generics before comparison.
+ */
 fun typeNamesEquivalent(nameA: String, nameB: String): Boolean {
     val rawA = nameA.substringBefore('<')
     val rawB = nameB.substringBefore('<')
