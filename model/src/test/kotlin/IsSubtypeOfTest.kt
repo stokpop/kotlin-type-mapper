@@ -96,6 +96,30 @@ class IsSubtypeOfTest {
     }
 
     @Test
+    fun `isSubtypeOf different generic params treated equal - generics erased for structural checks`() {
+        // List<String> and List<Integer> are the same raw type; generics erased at JVM level.
+        // isSubtypeOf checks structural inheritance only, not generic instantiation.
+        val ast = astWithHierarchy()
+        assertTrue(ast.isSubtypeOf("java.util.List<kotlin.String>", "java.util.List<kotlin.Int>"))
+    }
+
+    @Test
+    fun `isSubtypeOf MutableList equivalent to java List via direct KOTLIN-TO-JAVA mapping`() {
+        // kotlin.collections.MutableList maps to java.util.List, so isSubtypeOf("java.util.List", ...) is true.
+        // kotlin.collections.List vs kotlin.collections.MutableList are NOT treated as equivalent:
+        // both happen to map to java.util.List, but the check is pairwise, not transitive-via-java.
+        val ast = astWithHierarchy()
+        assertTrue(ast.isSubtypeOf("java.util.List", "kotlin.collections.MutableList"))
+        assertFalse(ast.isSubtypeOf("kotlin.collections.List", "kotlin.collections.MutableList"))
+    }
+
+    @Test
+    fun `isSubtypeOf unknown types with empty hierarchy returns false`() {
+        val ast = astWithHierarchy()
+        assertFalse(ast.isSubtypeOf("com.example.Foo", "com.example.Bar"))
+    }
+
+    @Test
     fun `isTypeEquivalent kotlin-java pairs`() {
         assertTrue(isTypeEquivalent("java.lang.String", "kotlin.String"))
         assertTrue(isTypeEquivalent("kotlin.String", "java.lang.String"))
