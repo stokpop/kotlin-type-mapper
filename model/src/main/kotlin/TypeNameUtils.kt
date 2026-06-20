@@ -130,18 +130,6 @@ fun kotlinToJavaName(kotlinFqn: String): String =
     KOTLIN_TO_JAVA[kotlinFqn] ?: kotlinFqnToJavaBinaryName(kotlinFqn)
 
 /**
- * Returns true if two type names refer to the same type after Java↔Kotlin mapping.
- * Both names are first stripped of generics before comparison.
- *
- * Examples:
- * ```
- * typeNamesEquivalent("java.lang.String",        "kotlin.String")           == true
- * typeNamesEquivalent("java.util.List",           "kotlin.collections.List") == true
- * typeNamesEquivalent("java.util.regex.Pattern",  "java.util.regex.Pattern") == true
- * typeNamesEquivalent("java.util.regex.Pattern",  "kotlin.String")           == false
- * ```
- */
-/**
  * Returns the raw type FQN: strips generic type parameters and the nullable marker.
  * `"java.util.List<kotlin.String>"` → `"java.util.List"`, `"kotlin.String?"` → `"kotlin.String"`.
  */

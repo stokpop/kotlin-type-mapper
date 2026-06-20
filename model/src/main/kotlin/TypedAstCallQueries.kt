@@ -93,13 +93,18 @@ fun TypedAst.callsOnReceiver(fqn: String): List<CallSiteAst> {
 /**
  * Returns all call sites where the dispatch or extension receiver type is [fqn] or a subtype of
  * [fqn] according to [TypedAst.typeHierarchy]. Uses [isSubtypeOf] for equivalence and hierarchy.
+ * The subtype set is precomputed once per call to avoid O(calls * hierarchy) overhead.
  */
-fun TypedAst.callsOnReceiverSubtype(fqn: String): List<CallSiteAst> =
-    calls().filter { call ->
+fun TypedAst.callsOnReceiverSubtype(fqn: String): List<CallSiteAst> {
+    val rawFqn = fqn.rawTypeName()
+    val subtypes = allSubtypesOf(rawFqn)
+    return calls().filter { call ->
         listOfNotNull(call.dispatchReceiverType, call.extensionReceiverType).any { recv ->
-            isSubtypeOf(fqn, recv)
+            val rawRecv = recv.rawTypeName()
+            typeNamesEquivalent(rawFqn, rawRecv) || typeEquivalents(rawRecv).any { it in subtypes }
         }
     }
+}
 
 /**
  * Returns all call sites whose return type matches [fqn] after Kotlin/Java name mapping.
@@ -113,6 +118,13 @@ fun TypedAst.callsReturning(fqn: String): List<CallSiteAst> {
 /**
  * Returns all call sites whose return type is [fqn] or a subtype of [fqn]
  * according to [TypedAst.typeHierarchy]. Uses [isSubtypeOf] for equivalence and hierarchy.
+ * The subtype set is precomputed once per call to avoid O(calls * hierarchy) overhead.
  */
-fun TypedAst.callsReturningSubtype(fqn: String): List<CallSiteAst> =
-    calls().filter { isSubtypeOf(fqn, it.returnType) }
+fun TypedAst.callsReturningSubtype(fqn: String): List<CallSiteAst> {
+    val rawFqn = fqn.rawTypeName()
+    val subtypes = allSubtypesOf(rawFqn)
+    return calls().filter { call ->
+        val rawReturn = call.returnType.rawTypeName()
+        typeNamesEquivalent(rawFqn, rawReturn) || typeEquivalents(rawReturn).any { it in subtypes }
+    }
+}
