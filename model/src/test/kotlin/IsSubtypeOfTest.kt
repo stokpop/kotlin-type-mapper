@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import nl.stokpop.typemapper.model.FileAst
 import nl.stokpop.typemapper.model.TypedAst
 import nl.stokpop.typemapper.model.isSubtypeOf
 import nl.stokpop.typemapper.model.isTypeEquivalent
@@ -76,6 +75,24 @@ class IsSubtypeOfTest {
             "com.example.MyList" to listOf("java.util.List"),
         )
         assertTrue(ast.isSubtypeOf("java.util.List<kotlin.String>", "com.example.MyList<kotlin.Int>"))
+    }
+
+    @Test
+    fun `isSubtypeOf hierarchy value with generics still matches raw target`() {
+        // typeHierarchy stores supertype with type param (source-derived); must still match raw lookup
+        val ast = astWithHierarchy(
+            "com.example.MyList" to listOf("java.util.List<kotlin.String>"),
+        )
+        assertTrue(ast.isSubtypeOf("java.util.List", "com.example.MyList"))
+    }
+
+    @Test
+    fun `isSubtypeOf strips nullable marker from inputs`() {
+        val ast = astWithHierarchy(
+            "com.example.Dog" to listOf("com.example.Animal"),
+        )
+        assertTrue(ast.isSubtypeOf("com.example.Animal", "com.example.Dog?"))
+        assertTrue(ast.isSubtypeOf("com.example.Animal?", "com.example.Dog"))
     }
 
     @Test
