@@ -103,10 +103,7 @@ fun analyzeKotlinSources(sources: Map<String, String>, extraClasspath: List<File
  * All files are analysed in a single pass so that cross-file type references resolve
  * correctly. [extraClasspath] may contain dependency jars and/or compiled class directories.
  */
-@OptIn(K1Deprecation::class) // K1 analysis API (KotlinCoreEnvironment, TopDownAnalyzerFacadeForJVM,
-                              // CliBindingTrace) is deprecated in Kotlin 2.x in favour of the K2
-                              // Analysis API, but not yet removed. Intentionally kept until a full
-                              // migration to KaSession / analyze{} blocks is done.
+@OptIn(K1Deprecation::class, org.jetbrains.kotlin.config.CompilerConfiguration.Internals::class)
 @Suppress("DEPRECATION", "DEPRECATION_ERROR") // K1 API deprecated at ERROR level in Kotlin 2.3+
 private fun analyzeNamedSources(namedSources: List<NamedSource>, sourceRootPath: String, extraClasspath: List<File>): TypedAst {
     val configuration = CompilerConfiguration()
@@ -137,6 +134,9 @@ private fun analyzeNamedSources(namedSources: List<NamedSource>, sourceRootPath:
         val moduleDescriptor = analysisResult.moduleDescriptor
 
         val fileAsts = namedSources.zip(ktFiles).map { (src, ktFile) ->
+            val imports = ktFile.importDirectives
+                .filter { !it.isAllUnder }
+                .mapNotNull { it.importedFqName?.asString() }
             FileAst(
                 relativePath = src.relativePath,
                 packageFqName = ktFile.packageFqName.asString(),
@@ -144,6 +144,7 @@ private fun analyzeNamedSources(namedSources: List<NamedSource>, sourceRootPath:
                 calls = extractCallSites(ktFile, bindingContext),
                 unresolvedReferences = extractUnresolvedReferences(ktFile, bindingContext, moduleDescriptor),
                 contentHash = src.contentHash,
+                imports = imports,
             )
         }
 

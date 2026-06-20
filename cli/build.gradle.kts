@@ -5,7 +5,7 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
     application
-    id("com.gradleup.shadow") version "9.4.1"
+    id("com.gradleup.shadow") version "9.4.2"
     id("com.github.jk1.dependency-license-report") version "3.1.2"
 }
 

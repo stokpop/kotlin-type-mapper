@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 import nl.stokpop.typemapper.analyzer.analyzeKotlinSources
+import nl.stokpop.typemapper.model.TypeResolutionMode
 import nl.stokpop.typemapper.model.implementorsOf
+import nl.stokpop.typemapper.model.isTypeKnown
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -78,6 +81,115 @@ class AnalyzeKotlinSourcesTest {
             declarations.any { it.fqName == "com.example.CrlfFoo" },
             "Expected com.example.CrlfFoo even with CRLF input, got: ${declarations.map { it.fqName }}"
         )
+    }
+
+    @Test
+    fun `imports are captured in FileAst`() {
+        val sources = mapOf(
+            "Client.kt" to """
+                package com.example
+
+                import org.apache.http.client.HttpClient
+                import org.apache.http.impl.client.DefaultHttpClient
+
+                class MyClient : HttpClient
+            """.trimIndent()
+        )
+
+        val ast = analyzeKotlinSources(sources)
+        val file = ast.files.first()
+
+        assertTrue(
+            "org.apache.http.client.HttpClient" in file.imports,
+            "Expected HttpClient in imports, got: ${file.imports}"
+        )
+        assertTrue(
+            "org.apache.http.impl.client.DefaultHttpClient" in file.imports,
+            "Expected DefaultHttpClient in imports, got: ${file.imports}"
+        )
+    }
+
+    @Test
+    fun `isTypeKnown returns false for missing jar type`() {
+        val sources = mapOf(
+            "Client.kt" to """
+                package com.example
+
+                import org.apache.http.client.HttpClient
+
+                class MyClient : HttpClient
+            """.trimIndent()
+        )
+
+        val ast = analyzeKotlinSources(sources)
+        assertFalse(ast.isTypeKnown("org.apache.http.client.HttpClient"),
+            "HttpClient jar not on classpath — should not be known")
+    }
+
+    @Test
+    fun `textualSuperTypes captures PSI text when jar missing`() {
+        val sources = mapOf(
+            "Client.kt" to """
+                package com.example
+
+                import org.apache.http.client.HttpClient
+
+                class MyClient : HttpClient
+            """.trimIndent()
+        )
+
+        val ast = analyzeKotlinSources(sources)
+        val myClient = ast.files.flatMap { it.declarations }.first { it.name == "MyClient" }
+
+        assertTrue(
+            myClient.textualSuperTypes.any { it == "HttpClient" },
+            "Expected textualSuperTypes to contain 'HttpClient', got: ${myClient.textualSuperTypes}"
+        )
+    }
+
+    @Test
+    fun `lenient implementorsOf resolves supertype via imports when jar missing`() {
+        val sources = mapOf(
+            "Client.kt" to """
+                package com.example
+
+                import org.apache.http.client.HttpClient
+
+                class MyClient : HttpClient
+            """.trimIndent()
+        )
+
+        val ast = analyzeKotlinSources(sources)
+
+        val strict = ast.implementorsOf("org.apache.http.client.HttpClient")
+        val warnings = mutableListOf<String>()
+        val lenient = ast.implementorsOf(
+            "org.apache.http.client.HttpClient",
+            TypeResolutionMode.LENIENT_WARN
+        ) { warnings.add(it) }
+
+        assertTrue(lenient.any { it.fqName == "com.example.MyClient" },
+            "Lenient mode should find MyClient via import resolution. Strict found: ${strict.map { it.fqName }}")
+        assertTrue(warnings.isNotEmpty(), "LENIENT_WARN should emit a warning when jar is missing")
+    }
+
+    @Test
+    fun `lenient quiet implementorsOf emits no warning`() {
+        val sources = mapOf(
+            "Client.kt" to """
+                package com.example
+
+                import org.apache.http.client.HttpClient
+
+                class MyClient : HttpClient
+            """.trimIndent()
+        )
+
+        val ast = analyzeKotlinSources(sources)
+        val warnings = mutableListOf<String>()
+        ast.implementorsOf("org.apache.http.client.HttpClient", TypeResolutionMode.LENIENT_QUIET) { warnings.add(it) }
+
+        assertTrue(warnings.isEmpty(), "LENIENT_QUIET should not emit any warning")
     }
 
     @Test
