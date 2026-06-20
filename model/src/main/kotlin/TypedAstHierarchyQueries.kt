@@ -43,7 +43,7 @@ internal fun TypedAst.allSubtypesOf(targetFqn: String): Set<String> {
     val children = mutableMapOf<String, MutableSet<String>>()
     for ((type, supers) in typeHierarchy) {
         for (sup in supers) {
-            val rawSup = sup.substringBefore('<').trimEnd('?')
+            val rawSup = sup.rawTypeName()
             children.getOrPut(rawSup) { mutableSetOf() }.add(type)
         }
     }
@@ -148,8 +148,8 @@ fun TypedAst.implementorsOf(
  * ```
  */
 fun TypedAst.isSubtypeOf(expectedFqn: String, actualFqn: String): Boolean {
-    val rawExpected = expectedFqn.substringBefore('<').trimEnd('?')
-    val rawActual = actualFqn.substringBefore('<').trimEnd('?')
+    val rawExpected = expectedFqn.rawTypeName()
+    val rawActual = actualFqn.rawTypeName()
     if (typeNamesEquivalent(rawExpected, rawActual)) return true
     val subtypes = allSubtypesOf(rawExpected)
     return typeEquivalents(rawActual).any { it in subtypes }

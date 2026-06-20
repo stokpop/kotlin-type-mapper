@@ -75,3 +75,56 @@ fun TypedAst.callsMatchingPolymorphicLocated(sig: String): List<Pair<String, Cal
     val matchingCalls = callsMatchingPolymorphic(sig).toHashSet()
     return files.flatMap { f -> f.calls.filter { it in matchingCalls }.map { f.relativePath to it } }
 }
+
+/**
+ * Returns all call sites where the dispatch or extension receiver type matches [fqn]
+ * after Kotlin/Java name mapping (e.g. `kotlin.String` matches `java.lang.String`).
+ * Generics and the nullable marker (`?`) are stripped before comparison.
+ */
+fun TypedAst.callsOnReceiver(fqn: String): List<CallSiteAst> {
+    val raw = fqn.rawTypeName()
+    return calls().filter { call ->
+        listOfNotNull(call.dispatchReceiverType, call.extensionReceiverType).any { recv ->
+            typeNamesEquivalent(raw, recv.rawTypeName())
+        }
+    }
+}
+
+/**
+ * Returns all call sites where the dispatch or extension receiver type is [fqn] or a subtype of
+ * [fqn] according to [TypedAst.typeHierarchy]. Uses [isSubtypeOf] for equivalence and hierarchy.
+ * The subtype set is precomputed once per call to avoid O(calls * hierarchy) overhead.
+ */
+fun TypedAst.callsOnReceiverSubtype(fqn: String): List<CallSiteAst> {
+    val rawFqn = fqn.rawTypeName()
+    val subtypes = allSubtypesOf(rawFqn)
+    return calls().filter { call ->
+        listOfNotNull(call.dispatchReceiverType, call.extensionReceiverType).any { recv ->
+            val rawRecv = recv.rawTypeName()
+            typeNamesEquivalent(rawFqn, rawRecv) || typeEquivalents(rawRecv).any { it in subtypes }
+        }
+    }
+}
+
+/**
+ * Returns all call sites whose return type matches [fqn] after Kotlin/Java name mapping.
+ * Generics and the nullable marker (`?`) are stripped before comparison.
+ */
+fun TypedAst.callsReturning(fqn: String): List<CallSiteAst> {
+    val raw = fqn.rawTypeName()
+    return calls().filter { typeNamesEquivalent(raw, it.returnType.rawTypeName()) }
+}
+
+/**
+ * Returns all call sites whose return type is [fqn] or a subtype of [fqn]
+ * according to [TypedAst.typeHierarchy]. Uses [isSubtypeOf] for equivalence and hierarchy.
+ * The subtype set is precomputed once per call to avoid O(calls * hierarchy) overhead.
+ */
+fun TypedAst.callsReturningSubtype(fqn: String): List<CallSiteAst> {
+    val rawFqn = fqn.rawTypeName()
+    val subtypes = allSubtypesOf(rawFqn)
+    return calls().filter { call ->
+        val rawReturn = call.returnType.rawTypeName()
+        typeNamesEquivalent(rawFqn, rawReturn) || typeEquivalents(rawReturn).any { it in subtypes }
+    }
+}
