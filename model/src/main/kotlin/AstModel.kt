@@ -130,6 +130,11 @@ enum class TypeResolutionMode {
 data class TypedAst(
     val schemaVersion: String = "1.4",
     val generatedBy: String = "kotlin-type-mapper",
+    /** Absolute path of the common source-root directory used during analysis.
+     *  **Never null.** Empty string (`""`) when analysis was performed in-memory
+     *  (e.g. via `KotlinTypeMapper.fromSources`); a non-empty path otherwise.
+     *  Use `TypedAst.hasSourceRoot()` to distinguish the two cases, and
+     *  `TypedAst.resolveAbsolutePath(FileAst)` to safely construct absolute file paths. */
     val sourceRoot: String,
     val files: List<FileAst>,
     /** Direct supertypes per type FQN, built via reflection at analysis time.

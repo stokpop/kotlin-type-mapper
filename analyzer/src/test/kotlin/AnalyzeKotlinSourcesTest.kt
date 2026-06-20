@@ -14,15 +14,46 @@
  * limitations under the License.
  */
 import nl.stokpop.typemapper.analyzer.analyzeKotlinSources
-import nl.stokpop.typemapper.model.TypeResolutionMode
+import nl.stokpop.typemapper.analyzer.analyzeKotlinProject
 import nl.stokpop.typemapper.model.implementorsOf
+import nl.stokpop.typemapper.model.resolveAbsolutePath
+import nl.stokpop.typemapper.model.TypeResolutionMode
 import nl.stokpop.typemapper.model.isTypeKnown
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.io.File
 
 class AnalyzeKotlinSourcesTest {
+
+    @Test
+    fun `sourceRoot is empty string for in-memory analysis`() {
+        val ast = analyzeKotlinSources(mapOf("Foo.kt" to "package com.example\nclass Foo"))
+        assertEquals("", ast.sourceRoot, "In-memory analysis should produce empty sourceRoot")
+    }
+
+    @Test
+    fun `resolveAbsolutePath returns null when sourceRoot is empty`() {
+        val ast = analyzeKotlinSources(mapOf("Foo.kt" to "package com.example\nclass Foo"))
+        val file = ast.files.first()
+        assertNull(ast.resolveAbsolutePath(file),
+            "resolveAbsolutePath should return null for in-memory AST (no sourceRoot)")
+    }
+
+    @Test
+    fun `resolveAbsolutePath returns absolute path for file-based analysis`(@TempDir tempDir: File) {
+        val src = File(tempDir, "Foo.kt").also { it.writeText("package com.example\nclass Foo") }
+        val ast = analyzeKotlinProject(tempDir)
+        val file = ast.files.first()
+        val resolved = ast.resolveAbsolutePath(file)
+        assertNotNull(resolved, "resolveAbsolutePath should return non-null for file-based AST")
+        assertEquals(src.canonicalPath, File(resolved!!).canonicalPath,
+            "Resolved path should point to the source file")
+    }
 
     @Test
     fun `single in-memory source is analysed`() {
