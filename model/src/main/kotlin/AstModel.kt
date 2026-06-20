@@ -110,7 +110,9 @@ data class DeclarationAst(
     val endLine: Int = 0,
     val endColumn: Int = 0,
     /** For TYPEALIAS declarations: ordered list starting with this alias FQN, followed by each
-     *  intermediate alias FQN, and ending with the concrete (non-alias) expanded type FQN.
+     *  intermediate alias FQN, and ending with the concrete (non-alias) expanded type string.
+     *  The last element is the analyzer's rendered type and may include generic arguments
+     *  (e.g. `"kotlin.collections.List<kotlin.String>"` for `typealias A = List<String>`).
      *  Example: `["com.example.A", "com.example.B", "kotlin.String"]` for `typealias A = B`
      *  where `typealias B = String`. Empty for all other declaration kinds. */
     val typeAliasChain: List<String> = emptyList(),

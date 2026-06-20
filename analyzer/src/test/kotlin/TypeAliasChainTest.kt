@@ -123,4 +123,19 @@ class TypeAliasChainTest {
         val ast = analyzeKotlinSources(mapOf("Foo.kt" to src))
         assertTrue(ast.typeAliasChainOf("com.example.NoAlias").isEmpty())
     }
+
+    @Test
+    fun `typealias with generic argument has rendered type string as last chain element`() {
+        val src = """
+            package com.example
+            typealias StringList = List<String>
+        """.trimIndent()
+
+        val ast = analyzeKotlinSources(mapOf("Aliases.kt" to src))
+        val chain = ast.typeAliasChainOf("com.example.StringList")
+        assertEquals("com.example.StringList", chain.first())
+        // last element includes generic argument — not a bare FQN
+        assertTrue(chain.last().startsWith("kotlin.collections.List<"),
+            "Last chain element must include generic: got ${chain.last()}")
+    }
 }

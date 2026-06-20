@@ -16,8 +16,10 @@
 package nl.stokpop.typemapper.model
 
 /**
- * Returns the fully expanded (concrete) type FQN for the typealias identified by [fqn],
+ * Returns the fully expanded (concrete) type string for the typealias identified by [fqn],
  * or null if [fqn] is not a known typealias in this AST.
+ * The returned string is the analyzer's rendered type and may include generic arguments
+ * (e.g. `"kotlin.collections.List<kotlin.String>"` for `typealias A = List<String>`).
  *
  * Example: given `typealias A = B` and `typealias B = String`,
  * `resolveTypeAlias("com.example.A")` returns `"kotlin.String"`.
@@ -27,7 +29,9 @@ fun TypedAst.resolveTypeAlias(fqn: String): String? =
 
 /**
  * Returns the full alias resolution chain for the typealias identified by [fqn],
- * starting with [fqn] itself and ending with the concrete (non-alias) type FQN.
+ * starting with [fqn] itself and ending with the concrete (non-alias) type string.
+ * The last element is the analyzer's rendered type and may include generic arguments
+ * (e.g. `"kotlin.collections.List<kotlin.String>"` for `typealias A = List<String>`).
  * Returns an empty list if [fqn] is not a known typealias in this AST.
  *
  * Example: given `typealias A = B` and `typealias B = String`,
