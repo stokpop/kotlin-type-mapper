@@ -128,3 +128,42 @@ fun TypedAst.callsReturningSubtype(fqn: String): List<CallSiteAst> {
         typeNamesEquivalent(rawFqn, rawReturn) || typeEquivalents(rawReturn).any { it in subtypes }
     }
 }
+
+/**
+ * Returns the FQN of the class being constructed when this is a constructor call site
+ * (i.e. [CallSiteAst.calleeFqName] ends with `.<init>`), or `null` otherwise.
+ * Shared with [matchesSig] and [matchesSigEquivalent] to avoid duplicating the `.<init>` detection logic.
+ */
+internal fun CallSiteAst.constructorClassFqn(): String? {
+    if (!calleeFqName.endsWith(".<init>")) {
+        return null
+    }
+    return calleeFqName.removeSuffix(".<init>")
+}
+
+/**
+ * Returns all call sites that are constructor invocations of [fqn].
+ * Handles Kotlin/Java name mapping (e.g. `kotlin.String` matches `java.lang.String.<init>`).
+ * Generics and nullability are stripped before comparison.
+ */
+fun TypedAst.constructorCallsOf(fqn: String): List<CallSiteAst> {
+    val raw = fqn.rawTypeName()
+    return calls().filter { call ->
+        val constructed = call.constructorClassFqn()?.rawTypeName() ?: return@filter false
+        typeNamesEquivalent(raw, constructed)
+    }
+}
+
+/**
+ * Returns all call sites that are constructor invocations of [fqn] or any of its subtypes
+ * according to [TypedAst.typeHierarchy].
+ * The subtype set is precomputed once per call to avoid O(calls * hierarchy) overhead.
+ */
+fun TypedAst.constructorCallsOfSubtype(fqn: String): List<CallSiteAst> {
+    val rawFqn = fqn.rawTypeName()
+    val subtypes = allSubtypesOf(rawFqn)
+    return calls().filter { call ->
+        val constructed = call.constructorClassFqn()?.rawTypeName() ?: return@filter false
+        typeNamesEquivalent(rawFqn, constructed) || typeEquivalents(constructed).any { it in subtypes }
+    }
+}

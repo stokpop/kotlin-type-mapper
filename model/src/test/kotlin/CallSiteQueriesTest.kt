@@ -20,6 +20,8 @@ import nl.stokpop.typemapper.model.callsOnReceiver
 import nl.stokpop.typemapper.model.callsOnReceiverSubtype
 import nl.stokpop.typemapper.model.callsReturning
 import nl.stokpop.typemapper.model.callsReturningSubtype
+import nl.stokpop.typemapper.model.constructorCallsOf
+import nl.stokpop.typemapper.model.constructorCallsOfSubtype
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -209,5 +211,121 @@ class CallSiteQueriesTest {
         )
         val result = ast.callsReturningSubtype("com.example.Dog")
         assertTrue(result.isEmpty(), "Animal is not a subtype of Dog")
+    }
+
+    // --- constructorCallsOf ---
+
+    @Test
+    fun `constructorCallsOf returns constructor call for exact type`() {
+        val ast = astWith(
+            call("com.example.Dog.<init>"),
+            call("com.example.Dog.bark", dispatch = "com.example.Dog"),
+        )
+        val result = ast.constructorCallsOf("com.example.Dog")
+        assertEquals(1, result.size)
+        assertEquals("com.example.Dog.<init>", result.single().calleeFqName)
+    }
+
+    @Test
+    fun `constructorCallsOf returns empty when no constructor call matches`() {
+        val ast = astWith(
+            call("com.example.Cat.<init>"),
+        )
+        assertTrue(ast.constructorCallsOf("com.example.Dog").isEmpty())
+    }
+
+    @Test
+    fun `constructorCallsOf ignores non-constructor calls`() {
+        val ast = astWith(
+            call("com.example.Dog.bark", dispatch = "com.example.Dog"),
+        )
+        assertTrue(ast.constructorCallsOf("com.example.Dog").isEmpty())
+    }
+
+    @Test
+    fun `constructorCallsOf handles kotlin-java equivalence`() {
+        val ast = astWith(
+            call("java.lang.String.<init>"),
+        )
+        val result = ast.constructorCallsOf("kotlin.String")
+        assertEquals(1, result.size, "kotlin.String must match java.lang.String constructor")
+    }
+
+    // --- constructorCallsOfSubtype ---
+
+    @Test
+    fun `constructorCallsOfSubtype returns constructor call for direct match`() {
+        val ast = astWith(
+            call("com.example.Dog.<init>"),
+            hierarchy = mapOf("com.example.Dog" to listOf("com.example.Animal")),
+        )
+        val result = ast.constructorCallsOfSubtype("com.example.Dog")
+        assertEquals(1, result.size)
+    }
+
+    @Test
+    fun `constructorCallsOfSubtype returns constructor call for subtype`() {
+        val ast = astWith(
+            call("com.example.Dog.<init>"),
+            hierarchy = mapOf("com.example.Dog" to listOf("com.example.Animal")),
+        )
+        val result = ast.constructorCallsOfSubtype("com.example.Animal")
+        assertEquals(1, result.size)
+    }
+
+    @Test
+    fun `constructorCallsOfSubtype returns empty for supertype instantiation`() {
+        val ast = astWith(
+            call("com.example.Animal.<init>"),
+            hierarchy = mapOf("com.example.Dog" to listOf("com.example.Animal")),
+        )
+        assertTrue(ast.constructorCallsOfSubtype("com.example.Dog").isEmpty())
+    }
+
+    @Test
+    fun `constructorCallsOfSubtype returns empty when no constructor call`() {
+        val ast = astWith(
+            call("com.example.Dog.bark", dispatch = "com.example.Dog"),
+            hierarchy = mapOf("com.example.Dog" to listOf("com.example.Animal")),
+        )
+        assertTrue(ast.constructorCallsOfSubtype("com.example.Animal").isEmpty())
+    }
+
+    @Test
+    fun `constructorCallsOf strips nullable marker from query type`() {
+        val ast = astWith(
+            call("com.example.Dog.<init>"),
+        )
+        assertEquals(1, ast.constructorCallsOf("com.example.Dog?").size,
+            "Nullable query Dog? must still match Dog.<init>")
+    }
+
+    @Test
+    fun `constructorCallsOf strips generics from query type`() {
+        val ast = astWith(
+            call("com.example.Box.<init>"),
+        )
+        assertEquals(1, ast.constructorCallsOf("com.example.Box<kotlin.Int>").size,
+            "Generic query Box<Int> must still match Box.<init>")
+    }
+
+    @Test
+    fun `constructorCallsOfSubtype strips nullable marker from query type`() {
+        val ast = astWith(
+            call("com.example.Dog.<init>"),
+            hierarchy = mapOf("com.example.Dog" to listOf("com.example.Animal")),
+        )
+        assertEquals(1, ast.constructorCallsOfSubtype("com.example.Animal?").size,
+            "Nullable query Animal? must still match Dog.<init>")
+    }
+
+    @Test
+    fun `constructorCallsOfSubtype strips generics from query type`() {
+        val ast = astWith(
+            call("com.example.Dog.<init>"),
+            hierarchy = mapOf("com.example.Dog" to listOf("com.example.Animal")),
+        )
+        assertEquals(1, ast.constructorCallsOfSubtype("com.example.Animal<kotlin.String>").size,
+            "Generic query Animal<String> must still match Dog.<init>")
     }
 }
