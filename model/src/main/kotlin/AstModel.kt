@@ -178,8 +178,9 @@ data class TypedAst(
      * Returns `null` when [sourceRoot] is empty, which happens for in-memory analyses where
      * no files exist on disk.
      *
-     * Prefer this helper over manual string concatenation to avoid the
-     * `"null/" + relativePath` trap when sourceRoot is empty.
+     * Prefer this helper over manual string concatenation: when [sourceRoot] is empty,
+     * naive concatenation produces a root-relative path (e.g. `/Foo.kt`) instead of a
+     * proper absolute path, which is almost certainly wrong.
      */
     fun resolveAbsolutePath(file: FileAst): String? {
         if (sourceRoot.isEmpty()) {
