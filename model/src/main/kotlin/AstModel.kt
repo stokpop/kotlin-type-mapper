@@ -109,6 +109,13 @@ data class DeclarationAst(
      *  Defaults to 0 for ASTs loaded from older JSON (schema < 1.5). */
     val endLine: Int = 0,
     val endColumn: Int = 0,
+    /** For TYPEALIAS declarations: ordered list starting with this alias FQN, followed by each
+     *  intermediate alias FQN, and ending with the concrete (non-alias) expanded type string.
+     *  The last element is the analyzer's rendered type and may include generic arguments
+     *  (e.g. `"kotlin.collections.List<kotlin.String>"` for `typealias A = List<String>`).
+     *  Example: `["com.example.A", "com.example.B", "kotlin.String"]` for `typealias A = B`
+     *  where `typealias B = String`. Empty for all other declaration kinds. */
+    val typeAliasChain: List<String> = emptyList(),
 ) {
     /** Returns true if this declaration represents a class-like type (class, interface, object, etc.). */
     fun isClassLike(): Boolean = kind in CLASS_KINDS
@@ -145,7 +152,7 @@ enum class TypeResolutionMode {
 
 @Serializable
 data class TypedAst(
-    val schemaVersion: String = "1.5",
+    val schemaVersion: String = "1.6",
     val generatedBy: String = "kotlin-type-mapper",
     /** Absolute path of the common source-root directory used during analysis.
      *  **Never null.** Empty string (`""`) when analysis was performed in-memory
