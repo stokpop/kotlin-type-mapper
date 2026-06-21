@@ -52,7 +52,9 @@ internal fun TypedAst.allSubtypesOf(targetFqn: String): Set<String> {
     val queue = ArrayDeque(seeds.flatMap { children[it] ?: emptySet() })
     while (queue.isNotEmpty()) {
         val t = queue.removeFirst()
-        if (result.add(t)) queue.addAll(children[t] ?: emptySet())
+        if (result.add(t)) {
+            queue.addAll(children[t] ?: emptySet())
+        }
     }
     return result
 }
@@ -67,7 +69,9 @@ fun TypedAst.isTypeKnown(fqn: String): Boolean {
     val raw = fqn.substringBefore('<')
     val equivalents = typeEquivalents(raw)
 
-    if (equivalents.any { it in typeHierarchy }) return true
+    if (equivalents.any { it in typeHierarchy }) {
+        return true
+    }
 
     // Some types (e.g. marker interfaces, kotlin.Any) may only appear as supertypes.
     return typeHierarchy.values.any { supers -> supers.any { it in equivalents } }
@@ -101,7 +105,9 @@ fun TypedAst.implementorsOf(
 
     val strict = implementorsOf(fqName)
 
-    if (knownInHierarchy || mode == TypeResolutionMode.STRICT) return strict
+    if (knownInHierarchy || mode == TypeResolutionMode.STRICT) {
+        return strict
+    }
 
     val strictFqns = strict.map { it.fqName }.toSet()
     val fromImports = files.flatMap { file ->
@@ -135,6 +141,8 @@ fun TypedAst.implementorsOf(
  * Transitive lookups use [TypedAst.typeHierarchy]. If the hierarchy is empty or the type is not
  * present, only direct name/equivalence matching is performed and unrelated unknown types return false.
  *
+ * `java.lang.Object` / `kotlin.Any` are short-circuited: every type is a subtype, no BFS needed.
+ *
  * Examples:
  * ```
  * ast.isSubtypeOf("java.io.Closeable", "java.io.FileInputStream") // true - FileInputStream implements Closeable
@@ -142,6 +150,7 @@ fun TypedAst.implementorsOf(
  * ast.isSubtypeOf("java.util.List",    "kotlin.collections.MutableList") // true - direct java.util.List mapping
  * ast.isSubtypeOf("java.util.List<kotlin.String>", "java.util.List<kotlin.Int>") // true - generics erased
  * ast.isSubtypeOf("com.example.Animal", "com.example.Dog?")       // true - nullable marker stripped
+ * ast.isSubtypeOf("java.lang.Object",  "com.example.Anything")    // true - short-circuit
  * ast.isSubtypeOf("java.util.List",    "java.util.Set")           // false - unrelated
  * ast.isSubtypeOf("kotlin.collections.List", "kotlin.collections.MutableList") // false - pairwise only
  * ast.isSubtypeOf("com.example.Foo",   "com.example.Bar")         // false - unknown with no hierarchy
@@ -149,10 +158,56 @@ fun TypedAst.implementorsOf(
  */
 fun TypedAst.isSubtypeOf(expectedFqn: String, actualFqn: String): Boolean {
     val rawExpected = expectedFqn.rawTypeName()
+    // typeNamesEquivalent covers kotlin.Any via KOTLIN_TO_JAVA mapping, so one check suffices.
+    if (typeNamesEquivalent(rawExpected, "java.lang.Object")) {
+        return true
+    }
     val rawActual = actualFqn.rawTypeName()
-    if (typeNamesEquivalent(rawExpected, rawActual)) return true
+    if (typeNamesEquivalent(rawExpected, rawActual)) {
+        return true
+    }
     val subtypes = allSubtypesOf(rawExpected)
     return typeEquivalents(rawActual).any { it in subtypes }
+}
+
+/**
+ * Returns true if [actualFqn] is the same type as, or a transitive subtype of, [expectedFqn],
+ * by walking the **supertypes** of [actualFqn] upward through [TypedAst.typeHierarchy].
+ *
+ * Same contract as [isSubtypeOf] (generics stripped, nullability stripped, Java/Kotlin equivalence
+ * handled). Prefer this variant for per-node rule checking where [expectedFqn] is a fixed framework
+ * type and [actualFqn] varies per AST node: ancestry depth is typically 3-10 hops regardless of
+ * how many subtypes [expectedFqn] has, so this is O(ancestors) vs O(all subtypes) for [isSubtypeOf].
+ *
+ * `java.lang.Object` (and its Kotlin equivalent `kotlin.Any`) is short-circuited: every type is a
+ * subtype, no traversal needed.
+ */
+fun TypedAst.isSubtypeOfUpward(expectedFqn: String, actualFqn: String): Boolean {
+    val rawExpected = expectedFqn.rawTypeName()
+    // typeNamesEquivalent covers kotlin.Any via KOTLIN_TO_JAVA mapping, so one check suffices.
+    if (typeNamesEquivalent(rawExpected, "java.lang.Object")) {
+        return true
+    }
+    val rawActual = actualFqn.rawTypeName()
+    if (typeNamesEquivalent(rawExpected, rawActual)) {
+        return true
+    }
+    val visited = mutableSetOf<String>()
+    val queue = ArrayDeque(typeEquivalents(rawActual).toList())
+    while (queue.isNotEmpty()) {
+        val current = queue.removeFirst()
+        if (!visited.add(current)) {
+            continue
+        }
+        for (sup in typeHierarchy[current] ?: emptyList()) {
+            val rawSup = sup.rawTypeName()
+            if (typeNamesEquivalent(rawExpected, rawSup)) {
+                return true
+            }
+            queue.addAll(typeEquivalents(rawSup).filter { it !in visited })
+        }
+    }
+    return false
 }
 
 /** Returns [fqn] plus its Java↔Kotlin equivalent name(s), if any. */
