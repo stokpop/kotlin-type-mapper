@@ -157,12 +157,35 @@ data class TypedAst(
     /** Absolute path of the common source-root directory used during analysis.
      *  **Never null.** Empty string (`""`) when analysis was performed in-memory
      *  (e.g. via `KotlinTypeMapper.fromSources`); a non-empty path otherwise.
-     *  Use `TypedAst.hasSourceRoot()` to distinguish the two cases, and
-     *  `TypedAst.resolveAbsolutePath(FileAst)` to safely construct absolute file paths. */
+     *  Use [hasSourceRoot] to distinguish the two cases, and
+     *  [resolveAbsolutePath] to safely construct absolute file paths. */
     val sourceRoot: String,
     val files: List<FileAst>,
     /** Direct supertypes per type FQN, built via reflection at analysis time.
      *  Key: raw type FQN (no generics). Value: list of direct supertype FQNs.
      *  Kotlin-mapped names are used (e.g. kotlin.Any, kotlin.collections.List). */
     val typeHierarchy: Map<String, List<String>> = emptyMap(),
-)
+) {
+    /**
+     * Returns true when this AST was produced from files on disk (i.e. [sourceRoot] is
+     * non-empty). Returns false for in-memory analyses created via
+     * `KotlinTypeMapper.fromSources`.
+     */
+    fun hasSourceRoot(): Boolean = sourceRoot.isNotEmpty()
+
+    /**
+     * Resolves the absolute path of [file] by joining [sourceRoot] with [FileAst.relativePath].
+     * Returns `null` when [sourceRoot] is empty, which happens for in-memory analyses where
+     * no files exist on disk.
+     *
+     * Prefer this helper over manual string concatenation: when [sourceRoot] is empty,
+     * naive concatenation produces a root-relative path (e.g. `/Foo.kt`) instead of a
+     * proper absolute path, which is almost certainly wrong.
+     */
+    fun resolveAbsolutePath(file: FileAst): String? {
+        if (sourceRoot.isEmpty()) {
+            return null
+        }
+        return sourceRoot.trimEnd('/', '\\') + java.io.File.separator + file.relativePath
+    }
+}

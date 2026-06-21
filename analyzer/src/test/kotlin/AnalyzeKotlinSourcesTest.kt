@@ -16,7 +16,6 @@
 import nl.stokpop.typemapper.analyzer.analyzeKotlinSources
 import nl.stokpop.typemapper.analyzer.analyzeKotlinProject
 import nl.stokpop.typemapper.model.implementorsOf
-import nl.stokpop.typemapper.model.resolveAbsolutePath
 import nl.stokpop.typemapper.model.TypeResolutionMode
 import nl.stokpop.typemapper.model.isTypeKnown
 import org.junit.jupiter.api.Assertions.assertEquals

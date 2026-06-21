@@ -23,22 +23,3 @@ fun TypedAst.properties(): List<DeclarationAst> = declarations().filter { it.kin
 fun TypedAst.fileByPath(relativePath: String): FileAst? =
     files.firstOrNull { it.relativePath == relativePath }
 
-/**
- * Returns true when this AST was produced from files on disk (i.e. [TypedAst.sourceRoot] is
- * non-empty). Returns false for in-memory analyses created via [analyzeKotlinSources] /
- * [KotlinTypeMapper.fromSources].
- */
-fun TypedAst.hasSourceRoot(): Boolean = sourceRoot.isNotEmpty()
-
-/**
- * Resolves the absolute path of [file] by joining [TypedAst.sourceRoot] with
- * [FileAst.relativePath].  Returns `null` when [sourceRoot] is empty, which happens for
- * in-memory analyses where no files exist on disk.
- *
- * Prefer this helper over manual string concatenation to avoid the
- * `"null/" + relativePath` trap when sourceRoot is empty.
- */
-fun TypedAst.resolveAbsolutePath(file: FileAst): String? {
-    if (sourceRoot.isEmpty()) return null
-    return sourceRoot.trimEnd('/', '\\') + java.io.File.separator + file.relativePath
-}
