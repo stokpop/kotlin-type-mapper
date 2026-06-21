@@ -132,7 +132,7 @@ fun TypedAst.callsReturningSubtype(fqn: String): List<CallSiteAst> {
 /**
  * Returns the FQN of the class being constructed when this is a constructor call site
  * (i.e. [CallSiteAst.calleeFqName] ends with `.<init>`), or `null` otherwise.
- * Shared with [SignatureMatcher] to avoid duplicating the `.<init>` detection logic.
+ * Shared with [matchesSig] and [matchesSigEquivalent] to avoid duplicating the `.<init>` detection logic.
  */
 internal fun CallSiteAst.constructorClassFqn(): String? {
     if (!calleeFqName.endsWith(".<init>")) {

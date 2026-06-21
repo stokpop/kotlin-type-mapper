@@ -318,4 +318,14 @@ class CallSiteQueriesTest {
         assertEquals(1, ast.constructorCallsOfSubtype("com.example.Animal?").size,
             "Nullable query Animal? must still match Dog.<init>")
     }
+
+    @Test
+    fun `constructorCallsOfSubtype strips generics from query type`() {
+        val ast = astWith(
+            call("com.example.Dog.<init>"),
+            hierarchy = mapOf("com.example.Dog" to listOf("com.example.Animal")),
+        )
+        assertEquals(1, ast.constructorCallsOfSubtype("com.example.Animal<kotlin.String>").size,
+            "Generic query Animal<String> must still match Dog.<init>")
+    }
 }
