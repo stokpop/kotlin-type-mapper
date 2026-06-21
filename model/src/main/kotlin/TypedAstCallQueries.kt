@@ -129,7 +129,12 @@ fun TypedAst.callsReturningSubtype(fqn: String): List<CallSiteAst> {
     }
 }
 
-private fun CallSiteAst.constructedType(): String? {
+/**
+ * Returns the FQN of the class being constructed when this is a constructor call site
+ * (i.e. [CallSiteAst.calleeFqName] ends with `.<init>`), or `null` otherwise.
+ * Shared with [SignatureMatcher] to avoid duplicating the `.<init>` detection logic.
+ */
+internal fun CallSiteAst.constructorClassFqn(): String? {
     if (!calleeFqName.endsWith(".<init>")) {
         return null
     }
@@ -144,7 +149,7 @@ private fun CallSiteAst.constructedType(): String? {
 fun TypedAst.constructorCallsOf(fqn: String): List<CallSiteAst> {
     val raw = fqn.rawTypeName()
     return calls().filter { call ->
-        val constructed = call.constructedType()?.rawTypeName() ?: return@filter false
+        val constructed = call.constructorClassFqn()?.rawTypeName() ?: return@filter false
         typeNamesEquivalent(raw, constructed)
     }
 }
@@ -158,7 +163,7 @@ fun TypedAst.constructorCallsOfSubtype(fqn: String): List<CallSiteAst> {
     val rawFqn = fqn.rawTypeName()
     val subtypes = allSubtypesOf(rawFqn)
     return calls().filter { call ->
-        val constructed = call.constructedType()?.rawTypeName() ?: return@filter false
+        val constructed = call.constructorClassFqn()?.rawTypeName() ?: return@filter false
         typeNamesEquivalent(rawFqn, constructed) || typeEquivalents(constructed).any { it in subtypes }
     }
 }

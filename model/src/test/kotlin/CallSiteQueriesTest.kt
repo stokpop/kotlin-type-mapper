@@ -290,4 +290,32 @@ class CallSiteQueriesTest {
         )
         assertTrue(ast.constructorCallsOfSubtype("com.example.Animal").isEmpty())
     }
+
+    @Test
+    fun `constructorCallsOf strips nullable marker from query type`() {
+        val ast = astWith(
+            call("com.example.Dog.<init>"),
+        )
+        assertEquals(1, ast.constructorCallsOf("com.example.Dog?").size,
+            "Nullable query Dog? must still match Dog.<init>")
+    }
+
+    @Test
+    fun `constructorCallsOf strips generics from query type`() {
+        val ast = astWith(
+            call("com.example.Box.<init>"),
+        )
+        assertEquals(1, ast.constructorCallsOf("com.example.Box<kotlin.Int>").size,
+            "Generic query Box<Int> must still match Box.<init>")
+    }
+
+    @Test
+    fun `constructorCallsOfSubtype strips nullable marker from query type`() {
+        val ast = astWith(
+            call("com.example.Dog.<init>"),
+            hierarchy = mapOf("com.example.Dog" to listOf("com.example.Animal")),
+        )
+        assertEquals(1, ast.constructorCallsOfSubtype("com.example.Animal?").size,
+            "Nullable query Animal? must still match Dog.<init>")
+    }
 }
