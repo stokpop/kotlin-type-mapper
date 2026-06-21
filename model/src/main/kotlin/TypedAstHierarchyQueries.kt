@@ -52,7 +52,9 @@ internal fun TypedAst.allSubtypesOf(targetFqn: String): Set<String> {
     val queue = ArrayDeque(seeds.flatMap { children[it] ?: emptySet() })
     while (queue.isNotEmpty()) {
         val t = queue.removeFirst()
-        if (result.add(t)) queue.addAll(children[t] ?: emptySet())
+        if (result.add(t)) {
+            queue.addAll(children[t] ?: emptySet())
+        }
     }
     return result
 }
@@ -67,7 +69,9 @@ fun TypedAst.isTypeKnown(fqn: String): Boolean {
     val raw = fqn.substringBefore('<')
     val equivalents = typeEquivalents(raw)
 
-    if (equivalents.any { it in typeHierarchy }) return true
+    if (equivalents.any { it in typeHierarchy }) {
+        return true
+    }
 
     // Some types (e.g. marker interfaces, kotlin.Any) may only appear as supertypes.
     return typeHierarchy.values.any { supers -> supers.any { it in equivalents } }
@@ -101,7 +105,9 @@ fun TypedAst.implementorsOf(
 
     val strict = implementorsOf(fqName)
 
-    if (knownInHierarchy || mode == TypeResolutionMode.STRICT) return strict
+    if (knownInHierarchy || mode == TypeResolutionMode.STRICT) {
+        return strict
+    }
 
     val strictFqns = strict.map { it.fqName }.toSet()
     val fromImports = files.flatMap { file ->
@@ -152,10 +158,14 @@ fun TypedAst.implementorsOf(
  */
 fun TypedAst.isSubtypeOf(expectedFqn: String, actualFqn: String): Boolean {
     val rawExpected = expectedFqn.rawTypeName()
-    if (typeNamesEquivalent(rawExpected, "java.lang.Object") ||
-        typeNamesEquivalent(rawExpected, "kotlin.Any")) return true
+    // typeNamesEquivalent covers kotlin.Any via KOTLIN_TO_JAVA mapping, so one check suffices.
+    if (typeNamesEquivalent(rawExpected, "java.lang.Object")) {
+        return true
+    }
     val rawActual = actualFqn.rawTypeName()
-    if (typeNamesEquivalent(rawExpected, rawActual)) return true
+    if (typeNamesEquivalent(rawExpected, rawActual)) {
+        return true
+    }
     val subtypes = allSubtypesOf(rawExpected)
     return typeEquivalents(rawActual).any { it in subtypes }
 }
@@ -169,22 +179,31 @@ fun TypedAst.isSubtypeOf(expectedFqn: String, actualFqn: String): Boolean {
  * type and [actualFqn] varies per AST node: ancestry depth is typically 3-10 hops regardless of
  * how many subtypes [expectedFqn] has, so this is O(ancestors) vs O(all subtypes) for [isSubtypeOf].
  *
- * `java.lang.Object` / `kotlin.Any` are short-circuited: every type is a subtype, no traversal needed.
+ * `java.lang.Object` (and its Kotlin equivalent `kotlin.Any`) is short-circuited: every type is a
+ * subtype, no traversal needed.
  */
 fun TypedAst.isSubtypeOfUpward(expectedFqn: String, actualFqn: String): Boolean {
     val rawExpected = expectedFqn.rawTypeName()
-    if (typeNamesEquivalent(rawExpected, "java.lang.Object") ||
-        typeNamesEquivalent(rawExpected, "kotlin.Any")) return true
+    // typeNamesEquivalent covers kotlin.Any via KOTLIN_TO_JAVA mapping, so one check suffices.
+    if (typeNamesEquivalent(rawExpected, "java.lang.Object")) {
+        return true
+    }
     val rawActual = actualFqn.rawTypeName()
-    if (typeNamesEquivalent(rawExpected, rawActual)) return true
+    if (typeNamesEquivalent(rawExpected, rawActual)) {
+        return true
+    }
     val visited = mutableSetOf<String>()
     val queue = ArrayDeque(typeEquivalents(rawActual).toList())
     while (queue.isNotEmpty()) {
         val current = queue.removeFirst()
-        if (!visited.add(current)) continue
+        if (!visited.add(current)) {
+            continue
+        }
         for (sup in typeHierarchy[current] ?: emptyList()) {
             val rawSup = sup.rawTypeName()
-            if (typeNamesEquivalent(rawExpected, rawSup)) return true
+            if (typeNamesEquivalent(rawExpected, rawSup)) {
+                return true
+            }
             queue.addAll(typeEquivalents(rawSup).filter { it !in visited })
         }
     }
