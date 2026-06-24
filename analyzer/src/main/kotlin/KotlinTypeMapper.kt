@@ -64,7 +64,7 @@ class KotlinTypeMapper(
             .flatMap { dir -> dir.walkTopDown().filter { it.extension == "kt" }.toList() }
             .sortedBy { it.name }
 
-        val sourceRoot = commonAncestorDirs(sourceDirs)
+        val sourceRoot = commonAncestor(sourceDirs)
 
         val classpath = when {
             autoResolveClasspath -> {
@@ -87,6 +87,15 @@ class KotlinTypeMapper(
         return ast
     }
 
+    private fun commonAncestor(dirs: List<File>): File {
+        if (dirs.size == 1) return dirs.first().canonicalFile
+        val parts = dirs.map { it.canonicalFile.absolutePath.split(File.separator) }
+        val common = parts.reduce { acc, path ->
+            acc.zip(path).takeWhile { (a, b) -> a == b }.map { it.first }
+        }
+        return File(common.joinToString(File.separator))
+    }
+
     companion object {
         /**
          * Analyses Kotlin source code provided entirely in memory as a map of relative file name
@@ -106,35 +115,19 @@ class KotlinTypeMapper(
          * caller to pre-load file contents into memory. KTM reads each file itself, so source
          * strings are not duplicated between caller and analyser.
          *
-         * Use [fromSources] when source is already available as strings (e.g. in tests).
+         * Each file's canonical absolute path is used as its identifier — no common source root
+         * directory is required. Use [fromSources] when source is already available as strings
+         * (e.g. in tests).
          *
          * @param sourceFiles Paths to the `.kt` source files to analyse.
          * @param classpathJars Dependency jars / class directories for type resolution.
          */
         @JvmStatic
         @JvmOverloads
-        fun fromPaths(sourceFiles: List<Path>, classpathJars: List<Path> = emptyList()): TypedAst {
-            val files = sourceFiles.map { it.toFile() }
-            val sourceRoot = commonAncestorOfFiles(files)
-            return analyzeKotlinProject(files, sourceRoot, classpathJars.map { it.toFile() })
-        }
-
-        private fun commonAncestorDirs(dirs: List<File>): File {
-            if (dirs.size == 1) return dirs.first().canonicalFile
-            val parts = dirs.map { it.canonicalFile.absolutePath.split(File.separator) }
-            val common = parts.reduce { acc, path ->
-                acc.zip(path).takeWhile { (a, b) -> a == b }.map { it.first }
-            }
-            return File(common.joinToString(File.separator))
-        }
-
-        private fun commonAncestorOfFiles(files: List<File>): File {
-            if (files.size == 1) return files.first().canonicalFile.parentFile
-            val parts = files.map { it.canonicalFile.absolutePath.split(File.separator) }
-            val common = parts.reduce { acc, path ->
-                acc.zip(path).takeWhile { (a, b) -> a == b }.map { it.first }
-            }
-            return File(common.joinToString(File.separator))
-        }
+        fun fromPaths(sourceFiles: List<Path>, classpathJars: List<Path> = emptyList()): TypedAst =
+            analyzeKotlinFileList(
+                sourceFiles.map { it.toFile() },
+                classpathJars.map { it.toFile() },
+            )
     }
 }

@@ -75,6 +75,29 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
 }
 
 /**
+ * Analyses an explicit list of Kotlin source [files] on disk without requiring a common source
+ * root directory. Each file's canonical absolute path is used as its identifier in the resulting
+ * [TypedAst], so callers can look up declarations by absolute path.
+ *
+ * Use [analyzeKotlinProject] when all files share a known source root and relative paths matter.
+ * Use [analyzeKotlinSources] for in-memory / test use cases.
+ */
+fun analyzeKotlinFileList(files: List<File>, extraClasspath: List<File> = emptyList()): TypedAst {
+    val fsRoot = files.firstOrNull()?.canonicalFile?.toPath()?.root?.toString() ?: "/"
+    val namedSources = files.map { file ->
+        val canonical = file.canonicalFile
+        val content = canonical.readText().normalizeLf()
+        NamedSource(
+            // Strip the filesystem root prefix so resolveAbsolutePath(fsRoot + sep + rel) == canonical path.
+            relativePath = canonical.absolutePath.removePrefix(fsRoot),
+            content = content,
+            contentHash = sha256(content.toByteArray(Charsets.UTF_8)),
+        )
+    }
+    return analyzeNamedSources(namedSources, fsRoot, extraClasspath)
+}
+
+/**
  * Analyses Kotlin source code provided entirely in memory as a map of relative file name to
  * source content (e.g. `mapOf("Foo.kt" to "class Foo")`). No files are written to disk.
  * Content is LF-normalized automatically before being passed to the K1 compiler.
