@@ -106,7 +106,7 @@ class KotlinTypeMapper(
          * caller to pre-load file contents into memory. KTM reads each file itself, so source
          * strings are not duplicated between caller and analyser.
          *
-         * Use [fromSources] when source is already available as strings (e.g. in Designer or tests).
+         * Use [fromSources] when source is already available as strings (e.g. in tests).
          *
          * @param sourceFiles Paths to the `.kt` source files to analyse.
          * @param classpathJars Dependency jars / class directories for type resolution.
