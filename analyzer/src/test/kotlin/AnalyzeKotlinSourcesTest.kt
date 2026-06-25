@@ -15,6 +15,7 @@
  */
 import nl.stokpop.typemapper.analyzer.analyzeKotlinSources
 import nl.stokpop.typemapper.analyzer.analyzeKotlinProject
+import nl.stokpop.typemapper.analyzer.KotlinTypeMapper
 import nl.stokpop.typemapper.model.implementorsOf
 import nl.stokpop.typemapper.model.TypeResolutionMode
 import nl.stokpop.typemapper.model.isTypeKnown
@@ -220,6 +221,27 @@ class AnalyzeKotlinSourcesTest {
         ast.implementorsOf("org.apache.http.client.HttpClient", TypeResolutionMode.LENIENT_QUIET) { warnings.add(it) }
 
         assertTrue(warnings.isEmpty(), "LENIENT_QUIET should not emit any warning")
+    }
+
+    @Test
+    fun `fromPaths analyzes a source file and finds declarations`(@TempDir tempDir: File) {
+        val src = File(tempDir, "Foo.kt").also { it.writeText("package com.example\nclass Foo") }
+        val ast = KotlinTypeMapper.fromPaths(listOf(src.toPath()))
+        val decls = ast.files.flatMap { it.declarations }
+        assertTrue(
+            decls.any { it.fqName == "com.example.Foo" },
+            "Expected com.example.Foo in declarations, got: ${decls.map { it.fqName }}"
+        )
+    }
+
+    @Test
+    fun `fromPaths resolveAbsolutePath matches canonical path`(@TempDir tempDir: File) {
+        val src = File(tempDir, "Bar.kt").also { it.writeText("package com.example\nclass Bar") }
+        val ast = KotlinTypeMapper.fromPaths(listOf(src.toPath()))
+        val file = ast.files.first()
+        val resolved = ast.resolveAbsolutePath(file)
+        assertNotNull(resolved, "resolveAbsolutePath must return non-null for file-list analysis")
+        assertEquals(src.canonicalPath, File(resolved!!).canonicalPath)
     }
 
     @Test
