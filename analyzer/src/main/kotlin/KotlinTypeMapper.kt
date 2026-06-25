@@ -115,9 +115,10 @@ class KotlinTypeMapper(
          * caller to pre-load file contents into memory. KTM reads each file itself, so source
          * strings are not duplicated between caller and analyser.
          *
-         * Each file's canonical absolute path is used as its identifier — no common source root
-         * directory is required. Use [fromSources] when source is already available as strings
-         * (e.g. in tests).
+         * `FileAst.relativePath` holds the absolute path minus the filesystem root prefix;
+         * use `TypedAst.resolveAbsolutePath` to reconstruct the full absolute path. All files
+         * must reside on the same filesystem root (same drive on Windows). Use [fromSources]
+         * when source is already available as strings (e.g. in tests).
          *
          * @param sourceFiles Paths to the `.kt` source files to analyse.
          * @param classpathJars Dependency jars / class directories for type resolution.
