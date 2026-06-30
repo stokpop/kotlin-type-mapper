@@ -118,6 +118,22 @@ ktm query result.json unresolved-references
 
 All query commands accept `--context/-C <N>` to show ±N source lines around each match (default 3, pass `0` to suppress). `unresolved-references` defaults to `0`.
 
+### Nullable types
+
+K1 preserves the nullable marker (`?`) in stored receiver and return types. The standard query functions strip it before comparison so `callsOnReceiver("p.Dog")` matches both `Dog` and `Dog?` receivers.
+
+Use the nullable predicates to distinguish them:
+
+```bash
+# only calls where the receiver was nullable (safe-call sites: dog?.bark())
+ktm query result.json calls "com.example.Dog#bark()" --nullable-receiver
+
+# only calls where the receiver was non-null
+ktm query result.json calls "com.example.Dog#bark()" --non-null-receiver
+```
+
+Both flags are also available on `calls-polymorphic`.
+
 ### Type aliases
 
 K1 always expands type aliases when recording call site receiver and return types. If your codebase defines `typealias MyDog = Dog`, call sites with a `MyDog` receiver are stored with `dispatchReceiverType = "com.example.Dog"` — not `"com.example.MyDog"`.
@@ -202,6 +218,14 @@ ast.callsMatching("_#size()").forEach { println(it) }
 ast.callsMatchingPolymorphic("kotlin.collections.Collection#size()").forEach { println(it) }
 ast.implementorsOf("java.io.Closeable").forEach { println(it) }
 ast.declarationsAnnotatedWith("kotlin.Deprecated").forEach { println(it) }
+
+// Nullable types — K1 preserves ? in stored types; standard queries strip it (match both)
+// dispatchReceiverType = type of the object a member is called ON (dog.bark() → "Dog")
+// extensionReceiverType = type for extension functions (dog.ext() → "Dog", dispatchReceiver = null)
+// returnType = type the callee declares as its return value
+ast.callsOnReceiver("p.Dog")
+    .filter { it.dispatchReceiverIsNullable() }   // only dog?.bark() sites
+    .filter { it.returnTypeIsNullable() }          // only calls returning Dog?
 
 // Type aliases — K1 expands aliases in call site types; use alias-aware variants or expandAlias()
 // typealias MyDog = Dog  →  dispatchReceiverType is "com.example.Dog", not "com.example.MyDog"

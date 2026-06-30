@@ -21,6 +21,7 @@ import com.github.ajalt.clikt.core.obj
 import com.github.ajalt.clikt.core.requireObject
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.int
@@ -30,9 +31,12 @@ import nl.stokpop.typemapper.model.TypedAstJson
 import nl.stokpop.typemapper.model.callsMatchingLocated
 import nl.stokpop.typemapper.model.callsMatchingPolymorphicLocated
 import nl.stokpop.typemapper.model.declarationsAnnotatedWith
+import nl.stokpop.typemapper.model.dispatchReceiverIsNullable
 import nl.stokpop.typemapper.model.expandAlias
+import nl.stokpop.typemapper.model.extensionReceiverIsNullable
 import nl.stokpop.typemapper.model.implementorsOf
 import nl.stokpop.typemapper.model.resolveTypeAlias
+import nl.stokpop.typemapper.model.returnTypeIsNullable
 import nl.stokpop.typemapper.model.typeAliasChainOf
 import java.io.File
 
@@ -53,9 +57,23 @@ class CallsCommand : CliktCommand("calls") {
     val ast by requireObject<TypedAst>()
     val sig by argument("SIG", help = "Signature pattern, e.g. 'kotlin.String#trim()'")
     val ctx by option("--context", "-C", help = "Source lines of context (default: 3, 0 = off)").int()
-    override fun run() = ast.callsMatchingLocated(sig).forEach { (path, call) ->
-        echo(call.format(path))
-        echoContext(ast.sourceRoot, path, call.line, ctx ?: 3)
+    val nullableReceiver by option("--nullable-receiver",
+        help = "Only show calls where the dispatch or extension receiver is nullable").flag()
+    val nonNullReceiver by option("--non-null-receiver",
+        help = "Only show calls where the dispatch or extension receiver is non-null").flag()
+
+    override fun run() {
+        var results = ast.callsMatchingLocated(sig)
+        if (nullableReceiver) {
+            results = results.filter { (_, c) -> c.dispatchReceiverIsNullable() || c.extensionReceiverIsNullable() }
+        }
+        if (nonNullReceiver) {
+            results = results.filter { (_, c) -> !c.dispatchReceiverIsNullable() && !c.extensionReceiverIsNullable() }
+        }
+        results.forEach { (path, call) ->
+            echo(call.format(path))
+            echoContext(ast.sourceRoot, path, call.line, ctx ?: 3)
+        }
     }
 }
 
@@ -66,9 +84,23 @@ class CallsPolymorphicCommand : CliktCommand("calls-polymorphic") {
     val ast by requireObject<TypedAst>()
     val sig by argument("SIG")
     val ctx by option("--context", "-C", help = "Source lines of context (default: 3, 0 = off)").int()
-    override fun run() = ast.callsMatchingPolymorphicLocated(sig).forEach { (path, call) ->
-        echo(call.format(path))
-        echoContext(ast.sourceRoot, path, call.line, ctx ?: 3)
+    val nullableReceiver by option("--nullable-receiver",
+        help = "Only show calls where the dispatch or extension receiver is nullable").flag()
+    val nonNullReceiver by option("--non-null-receiver",
+        help = "Only show calls where the dispatch or extension receiver is non-null").flag()
+
+    override fun run() {
+        var results = ast.callsMatchingPolymorphicLocated(sig)
+        if (nullableReceiver) {
+            results = results.filter { (_, c) -> c.dispatchReceiverIsNullable() || c.extensionReceiverIsNullable() }
+        }
+        if (nonNullReceiver) {
+            results = results.filter { (_, c) -> !c.dispatchReceiverIsNullable() && !c.extensionReceiverIsNullable() }
+        }
+        results.forEach { (path, call) ->
+            echo(call.format(path))
+            echoContext(ast.sourceRoot, path, call.line, ctx ?: 3)
+        }
     }
 }
 

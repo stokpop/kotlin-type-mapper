@@ -130,6 +130,27 @@ fun TypedAst.callsReturningSubtype(fqn: String): List<CallSiteAst> {
 }
 
 /**
+ * Returns true if the dispatch receiver type of this call site is marked nullable (`?`).
+ * Returns false when there is no dispatch receiver or it is non-nullable.
+ * Compose with any call query: `ast.callsOnReceiver("p.Dog").filter { it.dispatchReceiverIsNullable() }`
+ */
+fun CallSiteAst.dispatchReceiverIsNullable(): Boolean =
+    dispatchReceiverType?.endsWith('?') == true
+
+/**
+ * Returns true if the extension receiver type of this call site is marked nullable (`?`).
+ * Returns false when there is no extension receiver or it is non-nullable.
+ */
+fun CallSiteAst.extensionReceiverIsNullable(): Boolean =
+    extensionReceiverType?.endsWith('?') == true
+
+/**
+ * Returns true if the return type of this call site is marked nullable (`?`).
+ */
+fun CallSiteAst.returnTypeIsNullable(): Boolean =
+    returnType.endsWith('?')
+
+/**
  * Returns the FQN of the class being constructed when this is a constructor call site
  * (i.e. [CallSiteAst.calleeFqName] ends with `.<init>`), or `null` otherwise.
  * Shared with [matchesSig] and [matchesSigEquivalent] to avoid duplicating the `.<init>` detection logic.

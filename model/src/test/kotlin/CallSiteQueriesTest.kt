@@ -22,7 +22,11 @@ import nl.stokpop.typemapper.model.callsReturning
 import nl.stokpop.typemapper.model.callsReturningSubtype
 import nl.stokpop.typemapper.model.constructorCallsOf
 import nl.stokpop.typemapper.model.constructorCallsOfSubtype
+import nl.stokpop.typemapper.model.dispatchReceiverIsNullable
+import nl.stokpop.typemapper.model.extensionReceiverIsNullable
+import nl.stokpop.typemapper.model.returnTypeIsNullable
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -327,5 +331,61 @@ class CallSiteQueriesTest {
         )
         assertEquals(1, ast.constructorCallsOfSubtype("com.example.Animal<kotlin.String>").size,
             "Generic query Animal<String> must still match Dog.<init>")
+    }
+
+    // --- nullable predicates ---
+
+    @Test
+    fun `dispatchReceiverIsNullable returns true for nullable receiver`() {
+        val c = call("p.Dog.bark", dispatch = "p.Dog?")
+        assertTrue(c.dispatchReceiverIsNullable())
+    }
+
+    @Test
+    fun `dispatchReceiverIsNullable returns false for non-null receiver`() {
+        val c = call("p.Dog.bark", dispatch = "p.Dog")
+        assertFalse(c.dispatchReceiverIsNullable())
+    }
+
+    @Test
+    fun `dispatchReceiverIsNullable returns false when no dispatch receiver`() {
+        val c = call("p.Dog.bark")
+        assertFalse(c.dispatchReceiverIsNullable())
+    }
+
+    @Test
+    fun `extensionReceiverIsNullable returns true for nullable extension receiver`() {
+        val c = call("p.ext", extension = "p.Dog?")
+        assertTrue(c.extensionReceiverIsNullable())
+    }
+
+    @Test
+    fun `extensionReceiverIsNullable returns false for non-null extension receiver`() {
+        val c = call("p.ext", extension = "p.Dog")
+        assertFalse(c.extensionReceiverIsNullable())
+    }
+
+    @Test
+    fun `returnTypeIsNullable returns true for nullable return type`() {
+        val c = call("p.Dog.find", returnType = "p.Dog?")
+        assertTrue(c.returnTypeIsNullable())
+    }
+
+    @Test
+    fun `returnTypeIsNullable returns false for non-null return type`() {
+        val c = call("p.Dog.create", returnType = "p.Dog")
+        assertFalse(c.returnTypeIsNullable())
+    }
+
+    @Test
+    fun `nullable predicates compose with callsOnReceiver`() {
+        val ast = astWith(
+            call("p.Dog.bark", dispatch = "p.Dog?"),
+            call("p.Dog.bark", dispatch = "p.Dog"),
+        )
+        val nullableOnly = ast.callsOnReceiver("p.Dog").filter { it.dispatchReceiverIsNullable() }
+        val nonNullOnly  = ast.callsOnReceiver("p.Dog").filter { !it.dispatchReceiverIsNullable() }
+        assertEquals(1, nullableOnly.size)
+        assertEquals(1, nonNullOnly.size)
     }
 }
