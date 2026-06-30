@@ -15,8 +15,6 @@
  */
 package nl.stokpop.typemapper.model
 
-private fun TypedAst.expandAlias(fqn: String): String = resolveTypeAlias(fqn) ?: fqn
-
 /**
  * Returns the fully expanded (concrete) type string for the typealias identified by [fqn],
  * or null if [fqn] is not a known typealias in this AST.
@@ -46,6 +44,17 @@ fun TypedAst.typeAliasChainOf(fqn: String): List<String> =
         ?: emptyList()
 
 /**
+ * Expands a type alias FQN to its concrete type; returns [fqn] unchanged if it is not
+ * a known alias. Use this to pre-expand an alias before passing it to any call query, e.g.:
+ * ```kotlin
+ * ast.callsOnReceiverSubtype(ast.expandAlias("com.example.MyDog"))
+ * ```
+ * K1 always stores the expanded type at call sites, so passing an alias name directly to
+ * the standard queries yields no results.
+ */
+fun TypedAst.expandAlias(fqn: String): String = resolveTypeAlias(fqn) ?: fqn
+
+/**
  * Like [callsOnReceiver] but accepts a type alias FQN — expands it to the concrete type
  * before matching. Call sites always store the expanded type, so querying by alias name
  * directly via [callsOnReceiver] returns no results.
@@ -54,31 +63,13 @@ fun TypedAst.callsOnReceiverAlias(fqn: String): List<CallSiteAst> =
     callsOnReceiver(expandAlias(fqn))
 
 /**
- * Like [callsOnReceiverSubtype] but accepts a type alias FQN — expands it before matching.
- */
-fun TypedAst.callsOnReceiverSubtypeAlias(fqn: String): List<CallSiteAst> =
-    callsOnReceiverSubtype(expandAlias(fqn))
-
-/**
  * Like [callsReturning] but accepts a type alias FQN — expands it before matching.
  */
 fun TypedAst.callsReturningAlias(fqn: String): List<CallSiteAst> =
     callsReturning(expandAlias(fqn))
 
 /**
- * Like [callsReturningSubtype] but accepts a type alias FQN — expands it before matching.
- */
-fun TypedAst.callsReturningSubtypeAlias(fqn: String): List<CallSiteAst> =
-    callsReturningSubtype(expandAlias(fqn))
-
-/**
  * Like [constructorCallsOf] but accepts a type alias FQN — expands it before matching.
  */
 fun TypedAst.constructorCallsOfAlias(fqn: String): List<CallSiteAst> =
     constructorCallsOf(expandAlias(fqn))
-
-/**
- * Like [constructorCallsOfSubtype] but accepts a type alias FQN — expands it before matching.
- */
-fun TypedAst.constructorCallsOfSubtypeAlias(fqn: String): List<CallSiteAst> =
-    constructorCallsOfSubtype(expandAlias(fqn))

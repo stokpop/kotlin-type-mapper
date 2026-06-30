@@ -17,9 +17,10 @@ import nl.stokpop.typemapper.analyzer.analyzeKotlinSources
 import nl.stokpop.typemapper.model.DeclarationKind
 import nl.stokpop.typemapper.model.callsOnReceiver
 import nl.stokpop.typemapper.model.callsOnReceiverAlias
-import nl.stokpop.typemapper.model.callsOnReceiverSubtypeAlias
+import nl.stokpop.typemapper.model.callsOnReceiverSubtype
 import nl.stokpop.typemapper.model.callsReturningAlias
 import nl.stokpop.typemapper.model.constructorCallsOfAlias
+import nl.stokpop.typemapper.model.expandAlias
 import nl.stokpop.typemapper.model.resolveTypeAlias
 import nl.stokpop.typemapper.model.typeAliasChainOf
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -159,10 +160,10 @@ class TypeAliasChainTest {
     }
 
     @Test
-    fun `callsOnReceiverSubtypeAlias finds calls on receiver matching expanded alias`() {
-        // MyDog expands to Dog; callsOnReceiverSubtypeAlias("MyDog") == callsOnReceiverSubtype("Dog")
+    fun `expandAlias composes with callsOnReceiverSubtype`() {
+        // expandAlias("MyDog") == "Dog"; then callsOnReceiverSubtype("Dog") finds Dog calls
         val ast = analyzeKotlinSources(aliasSources)
-        val result = ast.callsOnReceiverSubtypeAlias("com.example.MyDog")
+        val result = ast.callsOnReceiverSubtype(ast.expandAlias("com.example.MyDog"))
         assertEquals(1, result.size)
         assertEquals("com.example.Dog.bark", result.single().calleeFqName)
     }
