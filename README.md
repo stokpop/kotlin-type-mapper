@@ -187,6 +187,20 @@ kotlin.String#_()          any method on String
 kotlin.String#_(*)         any method, any params
 ```
 
+Extension functions are matched by their **extension receiver type**, not by a type-prefixed name. For `fun Dog.fetch()` called as `dog.fetch()`:
+
+- `calleeFqName` = `"com.example.fetch"` (package + function name, no `Dog` in it)
+- `extensionReceiverType` = `"com.example.Dog"`
+
+Use the receiver-prefixed signature form — it matches against the extension receiver:
+
+```
+com.example.Dog#fetch()    ✓ matches extension fn via extensionReceiverType
+com.example.Dog.fetch()    ✗ no match — calleeFqName is com.example.fetch
+```
+
+`callsOnReceiver("com.example.Dog")` also finds extension calls since it checks both dispatch and extension receiver fields.
+
 ## Library usage
 
 Publish to local Maven and add `:model` + `:analyzer` as dependencies:

@@ -16,6 +16,7 @@
 import nl.stokpop.typemapper.model.CallSiteAst
 import nl.stokpop.typemapper.model.FileAst
 import nl.stokpop.typemapper.model.TypedAst
+import nl.stokpop.typemapper.model.callsMatching
 import nl.stokpop.typemapper.model.callsOnReceiver
 import nl.stokpop.typemapper.model.callsOnReceiverSubtype
 import nl.stokpop.typemapper.model.callsReturning
@@ -375,6 +376,46 @@ class CallSiteQueriesTest {
     fun `returnTypeIsNullable returns false for non-null return type`() {
         val c = call("p.Dog.create", returnType = "p.Dog")
         assertFalse(c.returnTypeIsNullable())
+    }
+
+    // --- extension function call matching ---
+
+    @Test
+    fun `callsMatching finds extension function call by receiver type in sig`() {
+        // Extension fn: calleeFqName = "com.example.fetch" (no Dog in name)
+        // extensionReceiverType = "com.example.Dog", dispatchReceiverType = null
+        val ast = astWith(
+            call("com.example.fetch", extension = "com.example.Dog"),
+        )
+        assertEquals(1, ast.callsMatching("com.example.Dog#fetch()").size,
+            "Receiver in sig must match extensionReceiverType for extension fn calls")
+    }
+
+    @Test
+    fun `callsOnReceiver finds extension function call`() {
+        val ast = astWith(
+            call("com.example.fetch", extension = "com.example.Dog"),
+        )
+        assertEquals(1, ast.callsOnReceiver("com.example.Dog").size,
+            "callsOnReceiver must check extensionReceiverType")
+    }
+
+    @Test
+    fun `callsMatching with wildcard receiver finds extension function call`() {
+        val ast = astWith(
+            call("com.example.fetch", extension = "com.example.Dog"),
+        )
+        assertEquals(1, ast.callsMatching("_#fetch()").size)
+    }
+
+    @Test
+    fun `callsTo misses extension function when using Dog-prefixed name`() {
+        // calleeFqName for extension fns has no receiver type in the name
+        val ast = astWith(
+            call("com.example.fetch", extension = "com.example.Dog"),
+        )
+        assertTrue(ast.callsMatching("com.example.Dog.fetch()").isEmpty(),
+            "calleeFqName is com.example.fetch not com.example.Dog.fetch — sig must use receiver#method form")
     }
 
     @Test
