@@ -17,6 +17,8 @@ import nl.stokpop.typemapper.analyzer.analyzeKotlinSources
 import nl.stokpop.typemapper.analyzer.analyzeKotlinProject
 import nl.stokpop.typemapper.analyzer.KotlinTypeMapper
 import nl.stokpop.typemapper.model.calls
+import nl.stokpop.typemapper.model.callsOnReceiver
+import nl.stokpop.typemapper.model.callsMatching
 import nl.stokpop.typemapper.model.implementorsOf
 import nl.stokpop.typemapper.model.TypeResolutionMode
 import nl.stokpop.typemapper.model.isTypeKnown
@@ -267,6 +269,35 @@ class AnalyzeKotlinSourcesTest {
             "com.example.DataException" in implementors,
             "Expected DataException as implementor of java.lang.Exception, got: $implementors"
         )
+    }
+
+    @Test
+    fun `call inside with block has typed dispatch receiver and is found by queries`() {
+        val sources = mapOf(
+            "Foo.kt" to """
+                package com.example
+
+                class Dog { fun bark(): Unit = Unit }
+
+                fun test(dog: Dog) {
+                    with(dog) { bark() }
+                }
+            """.trimIndent()
+        )
+
+        val ast = analyzeKotlinSources(sources)
+        val barkCall = ast.calls().find { it.calleeFqName.endsWith(".bark") }
+
+        assertNotNull(barkCall, "Expected to find bark() call inside with block")
+        assertEquals(
+            "com.example.Dog",
+            barkCall!!.dispatchReceiverType,
+            "dispatchReceiverType must resolve for implicit this inside with block"
+        )
+        assertEquals(1, ast.callsOnReceiver("com.example.Dog").size,
+            "callsOnReceiver must find bark() via with-block receiver")
+        assertEquals(1, ast.callsMatching("com.example.Dog#bark()").size,
+            "callsMatching must find bark() via with-block receiver")
     }
 
     @Test
