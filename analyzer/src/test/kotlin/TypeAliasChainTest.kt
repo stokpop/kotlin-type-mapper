@@ -15,6 +15,11 @@
  */
 import nl.stokpop.typemapper.analyzer.analyzeKotlinSources
 import nl.stokpop.typemapper.model.DeclarationKind
+import nl.stokpop.typemapper.model.callsOnReceiver
+import nl.stokpop.typemapper.model.callsOnReceiverAlias
+import nl.stokpop.typemapper.model.callsOnReceiverSubtypeAlias
+import nl.stokpop.typemapper.model.callsReturningAlias
+import nl.stokpop.typemapper.model.constructorCallsOfAlias
 import nl.stokpop.typemapper.model.resolveTypeAlias
 import nl.stokpop.typemapper.model.typeAliasChainOf
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -122,6 +127,60 @@ class TypeAliasChainTest {
 
         val ast = analyzeKotlinSources(mapOf("Foo.kt" to src))
         assertTrue(ast.typeAliasChainOf("com.example.NoAlias").isEmpty())
+    }
+
+    // --- alias-aware call queries ---
+
+    private val aliasSources = mapOf("Aliases.kt" to """
+        package com.example
+
+        open class Animal
+        class Dog : Animal() { fun bark(): Unit = Unit }
+        typealias MyDog = Dog
+
+        fun callOnAlias(d: MyDog) { d.bark() }
+        fun returnAlias(): MyDog = Dog()
+        fun constructAlias(): MyDog = MyDog()
+    """.trimIndent())
+
+    @Test
+    fun `callsOnReceiver misses calls on aliased receiver type`() {
+        val ast = analyzeKotlinSources(aliasSources)
+        assertTrue(ast.callsOnReceiver("com.example.MyDog").isEmpty(),
+            "callsOnReceiver must not match alias name — K1 expands aliases in call sites")
+    }
+
+    @Test
+    fun `callsOnReceiverAlias finds calls on aliased receiver type`() {
+        val ast = analyzeKotlinSources(aliasSources)
+        val result = ast.callsOnReceiverAlias("com.example.MyDog")
+        assertEquals(1, result.size)
+        assertEquals("com.example.Dog.bark", result.single().calleeFqName)
+    }
+
+    @Test
+    fun `callsOnReceiverSubtypeAlias finds calls on receiver matching expanded alias`() {
+        // MyDog expands to Dog; callsOnReceiverSubtypeAlias("MyDog") == callsOnReceiverSubtype("Dog")
+        val ast = analyzeKotlinSources(aliasSources)
+        val result = ast.callsOnReceiverSubtypeAlias("com.example.MyDog")
+        assertEquals(1, result.size)
+        assertEquals("com.example.Dog.bark", result.single().calleeFqName)
+    }
+
+    @Test
+    fun `callsReturningAlias finds calls whose return type matches expanded alias`() {
+        val ast = analyzeKotlinSources(aliasSources)
+        val result = ast.callsReturningAlias("com.example.MyDog")
+        assertTrue(result.any { it.calleeFqName.endsWith("Dog.<init>") },
+            "Constructor call returning Dog must be found via MyDog alias")
+    }
+
+    @Test
+    fun `constructorCallsOfAlias finds constructor calls for aliased type`() {
+        val ast = analyzeKotlinSources(aliasSources)
+        val result = ast.constructorCallsOfAlias("com.example.MyDog")
+        assertEquals(1, result.size)
+        assertTrue(result.single().calleeFqName.endsWith("Dog.<init>"))
     }
 
     @Test
