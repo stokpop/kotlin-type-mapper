@@ -301,6 +301,26 @@ class AnalyzeKotlinSourcesTest {
     }
 
     @Test
+    fun `operator calls are not captured as call sites`() {
+        // Known gap: K1 does not emit a resolved call for operator expressions (a + b, a == b, etc.)
+        // so operator-overloaded methods are absent from TypedAst.calls().
+        val sources = mapOf(
+            "Foo.kt" to """
+                package com.example
+
+                class Dog { operator fun plus(other: Dog): Dog = Dog() }
+
+                fun test(a: Dog, b: Dog): Dog = a + b
+            """.trimIndent()
+        )
+
+        val ast = analyzeKotlinSources(sources)
+        val plusCall = ast.calls().find { it.calleeFqName.contains("plus") }
+
+        assertNull(plusCall, "Operator plus must not appear in calls() — known K1 gap")
+    }
+
+    @Test
     fun `call on implicit lambda it parameter has typed dispatch receiver`() {
         val sources = mapOf(
             "Foo.kt" to """
