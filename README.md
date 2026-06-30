@@ -120,9 +120,9 @@ All query commands accept `--context/-C <N>` to show ±N source lines around eac
 
 ### Nullable types
 
-K1 preserves the nullable marker (`?`) in stored receiver and return types. The standard query functions strip it before comparison so `callsOnReceiver("p.Dog")` matches both `Dog` and `Dog?` receivers.
+K1 preserves the nullable marker (`?`) in stored receiver and return types. The standard query functions strip it before comparison, so `callsOnReceiver("com.example.Dog")` matches both `Dog` and `Dog?` receivers.
 
-Use the nullable predicates to distinguish them:
+Use `--nullable-receiver` / `--non-null-receiver` to distinguish them:
 
 ```bash
 # only calls where the receiver was nullable (safe-call sites: dog?.bark())
@@ -219,13 +219,21 @@ ast.callsMatchingPolymorphic("kotlin.collections.Collection#size()").forEach { p
 ast.implementorsOf("java.io.Closeable").forEach { println(it) }
 ast.declarationsAnnotatedWith("kotlin.Deprecated").forEach { println(it) }
 
-// Nullable types — K1 preserves ? in stored types; standard queries strip it (match both)
-// dispatchReceiverType = type of the object a member is called ON (dog.bark() → "Dog")
-// extensionReceiverType = type for extension functions (dog.ext() → "Dog", dispatchReceiver = null)
-// returnType = type the callee declares as its return value
-ast.callsOnReceiver("p.Dog")
-    .filter { it.dispatchReceiverIsNullable() }   // only dog?.bark() sites
-    .filter { it.returnTypeIsNullable() }          // only calls returning Dog?
+// Receiver types explained:
+//   dispatchReceiverType  — the object a *member* method is called on
+//                           dog.bark()        → dispatchReceiverType = "com.example.Dog"
+//                           dog?.bark()       → dispatchReceiverType = "com.example.Dog?"
+//   extensionReceiverType — the object an *extension* function is called on
+//                           dog.ext()         → extensionReceiverType = "com.example.Dog"
+//                                               dispatchReceiverType  = null
+//   returnType            — what the callee declares as its return type
+//                           fun bark(): Dog?  → returnType = "com.example.Dog?"
+//
+// Standard queries strip ? before comparison (match both nullable and non-null).
+// Use predicates to filter by nullability:
+ast.callsOnReceiver("com.example.Dog")
+    .filter { it.dispatchReceiverIsNullable() }   // only dog?.bark() safe-call sites
+    .filter { it.returnTypeIsNullable() }          // only calls that may return null
 
 // Type aliases — K1 expands aliases in call site types; use alias-aware variants or expandAlias()
 // typealias MyDog = Dog  →  dispatchReceiverType is "com.example.Dog", not "com.example.MyDog"
