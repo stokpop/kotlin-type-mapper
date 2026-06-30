@@ -28,6 +28,7 @@ fun main(args: Array<String>) {
                 CallsPolymorphicCommand(),
                 ImplementorsCommand(),
                 AnnotatedWithCommand(),
+                ResolveAliasCommand(),
                 UnresolvedReferencesCommand(),
             )
         )

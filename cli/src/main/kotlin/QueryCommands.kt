@@ -30,7 +30,10 @@ import nl.stokpop.typemapper.model.TypedAstJson
 import nl.stokpop.typemapper.model.callsMatchingLocated
 import nl.stokpop.typemapper.model.callsMatchingPolymorphicLocated
 import nl.stokpop.typemapper.model.declarationsAnnotatedWith
+import nl.stokpop.typemapper.model.expandAlias
 import nl.stokpop.typemapper.model.implementorsOf
+import nl.stokpop.typemapper.model.resolveTypeAlias
+import nl.stokpop.typemapper.model.typeAliasChainOf
 import java.io.File
 
 class QueryCommand : CliktCommand("query") {
@@ -105,6 +108,24 @@ class AnnotatedWithCommand : CliktCommand("annotated-with") {
         val path = ast.files.firstOrNull { f -> f.declarations.any { it.fqName == decl.fqName } }?.relativePath ?: ""
         echo(decl.format(path))
         echoContext(ast.sourceRoot, path, decl.line, ctx ?: 3)
+    }
+}
+
+class ResolveAliasCommand : CliktCommand("resolve-alias") {
+    override fun help(context: Context) =
+        "Show the concrete type that TYPE_ALIAS_FQN expands to, or report if it is not a known alias."
+
+    val ast by requireObject<TypedAst>()
+    val fqn by argument("TYPE_ALIAS_FQN", help = "Fully-qualified typealias name, e.g. 'com.example.MyDog'")
+
+    override fun run() {
+        val chain = ast.typeAliasChainOf(fqn)
+        if (chain.isEmpty()) {
+            echo("$fqn is not a known typealias in this AST.")
+            return
+        }
+        echo(chain.joinToString(" -> "))
+        echo("Expanded: ${ast.expandAlias(fqn)}")
     }
 }
 
