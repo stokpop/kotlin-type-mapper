@@ -68,6 +68,49 @@ fun analyzeKotlinProject(files: List<File>, sourceRoot: File, extraClasspath: Li
     )
 }
 
+/**
+ * Analyses an explicit list of Kotlin source [files] on disk without requiring a common source
+ * root directory. `FileAst.relativePath` holds each file's absolute path minus the filesystem
+ * root prefix (e.g. on Linux/Mac the leading `/` is stripped). Use
+ * `TypedAst.resolveAbsolutePath` to reconstruct the full absolute path. All source files must
+ * reside on the same filesystem root (always true on Linux/Mac; on Windows all files must be on
+ * the same drive).
+ *
+ * Each file is added to the K2 source module individually, so scattered files are analysed
+ * without scanning the whole filesystem root.
+ *
+ * Use [analyzeKotlinProject] when all files share a known source root and relative paths matter.
+ * Use [analyzeKotlinSources] for in-memory / test use cases.
+ */
+fun analyzeKotlinFileList(files: List<File>, extraClasspath: List<File> = emptyList()): TypedAst {
+    val fsRoot = files.firstOrNull()?.canonicalFile?.toPath()?.root?.toString() ?: "/"
+    require(files.all { it.canonicalFile.toPath().root.toString() == fsRoot }) {
+        "All source files must share the same filesystem root; found: ${files.map { it.canonicalFile.toPath().root }.toSet()}"
+    }
+    val namedSources = files.map { file ->
+        val canonical = file.canonicalFile
+        val content = canonical.readText().normalizeLf()
+        NamedSource(
+            // Strip the filesystem root prefix so resolveAbsolutePath(fsRoot + sep + rel) == canonical path.
+            relativePath = canonical.absolutePath.removePrefix(fsRoot),
+            content = content,
+            contentHash = sha256(content.toByteArray(Charsets.UTF_8)),
+        )
+    }
+    return analyzeNamedSources(
+        namedSources = namedSources,
+        sourceRoot = File(fsRoot),
+        sourceRootPath = fsRoot,
+        extraClasspath = extraClasspath,
+        explicitSourceFiles = files.map { it.canonicalFile.toPath() },
+    )
+}
+
+/**
+ * Analyses Kotlin source code provided entirely in memory as a map of relative file name to
+ * source content (e.g. `mapOf("Foo.kt" to "class Foo")`). No files are written to disk.
+ * Content is LF-normalized automatically before analysis.
+ */
 fun analyzeKotlinSources(sources: Map<String, String>, extraClasspath: List<File> = emptyList()): TypedAst {
     val namedSources = sources.map { (name, content) ->
         val normalizedContent = content.normalizeLf()
@@ -101,6 +144,7 @@ private fun analyzeNamedSources(
     sourceRoot: File,
     sourceRootPath: String,
     extraClasspath: List<File>,
+    explicitSourceFiles: List<Path>? = null,
 ): TypedAst {
     val contentHashes = namedSources.associateBy({ it.relativePath }, { it.contentHash })
     val selectedPaths = contentHashes.keys
@@ -137,7 +181,13 @@ private fun analyzeNamedSources(
                 addModule(buildKtSourceModule {
                     moduleName = "typemapper"
                     platform = JvmPlatforms.defaultJvmPlatform
-                    addSourceRoot(sourceRoot.toPath())
+                    // Add each listed file individually when given an explicit file list (scattered
+                    // files with no common dir); otherwise add the single source root directory.
+                    if (explicitSourceFiles != null) {
+                        explicitSourceFiles.forEach { addSourceRoot(it) }
+                    } else {
+                        addSourceRoot(sourceRoot.toPath())
+                    }
                     addRegularDependency(jdkModule)
                     stdlibModule?.let { addRegularDependency(it) }
                     extraModules.forEach { addRegularDependency(it) }
@@ -152,6 +202,9 @@ private fun analyzeNamedSources(
             .mapNotNull { ktFile ->
                 val relativePath = relativePathOf(ktFile, sourceRootPathCanonical)
                 val contentHash = contentHashes[relativePath] ?: return@mapNotNull null
+                val imports = ktFile.importDirectives
+                    .filter { !it.isAllUnder }
+                    .mapNotNull { it.importedFqName?.asString() }
                 analyze(ktFile) {
                     FileAst(
                         relativePath = relativePath,
@@ -160,6 +213,7 @@ private fun analyzeNamedSources(
                         calls = extractCallSites(ktFile),
                         unresolvedReferences = extractUnresolvedReferences(ktFile),
                         contentHash = contentHash,
+                        imports = imports,
                     )
                 }
             }

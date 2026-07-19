@@ -155,8 +155,7 @@ fun CallSiteAst.matchesSig(sig: String): Boolean {
     // For static Java method calls (dispatch=null, extension=null), the class is the
     // package-qualified prefix of calleeFqName (everything before the last dot).
     if (parsed.receiverType != null) {
-        val constructorClass = if (calleeFqName.endsWith(".<init>"))
-            calleeFqName.removeSuffix(".<init>") else null
+        val constructorClass = constructorClassFqn()
         val calleeClass = if (dispatchReceiverType == null && extensionReceiverType == null && constructorClass == null)
             calleeFqName.substringBeforeLast('.') else null
         val matches = typeMatches(parsed.receiverType, dispatchReceiverType)
@@ -211,8 +210,7 @@ fun CallSiteAst.matchesSigEquivalent(sig: String): Boolean {
     }
 
     if (parsed.receiverType != null) {
-        val constructorClass = if (calleeFqName.endsWith(".<init>"))
-            calleeFqName.removeSuffix(".<init>") else null
+        val constructorClass = constructorClassFqn()
         val calleeClass = if (dispatchReceiverType == null && extensionReceiverType == null && constructorClass == null)
             calleeFqName.substringBeforeLast('.') else null
         val matches = typeMatchesEquivalent(parsed.receiverType, dispatchReceiverType)
@@ -267,8 +265,7 @@ fun CallSiteAst.matchesSigPolymorphic(sig: String, isSubtype: java.util.function
 
     // Receiver — polymorphic check
     if (parsed.receiverType != null) {
-        val constructorClass = if (calleeFqName.endsWith(".<init>"))
-            calleeFqName.removeSuffix(".<init>") else null
+        val constructorClass = constructorClassFqn()
         val calleeClass = if (dispatchReceiverType == null && extensionReceiverType == null && constructorClass == null)
             calleeFqName.substringBeforeLast('.') else null
         val recv = parsed.receiverType

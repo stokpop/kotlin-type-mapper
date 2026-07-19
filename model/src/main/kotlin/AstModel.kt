@@ -68,8 +68,17 @@ data class CallSiteAst(
     val extensionReceiverType: String? = null,   // non-null for extension function calls
     val returnType: String,
     val argumentTypes: List<String> = emptyList(),
+    /** 1-based line of the start of the call expression node.
+     *  For method calls (`foo.bar()`) this is the line of the callee name `bar`, not the receiver `foo`.
+     *  For property reads (`foo.size`) this is the line of the property name `size`. */
     val line: Int,
     val column: Int,
+    /** 1-based line of the end of the call expression node.
+     *  For function calls this is the closing `)`. For property reads it is the end of the property name.
+     *  Equal to [line] for single-line expressions. Defaults to 0 for ASTs loaded from
+     *  older JSON (schema < 1.5) that did not record this field. */
+    val endLine: Int = 0,
+    val endColumn: Int = 0,
 )
 
 @Serializable
@@ -86,8 +95,27 @@ data class DeclarationAst(
      *  extracted from K1 source analysis. Empty for non-class kinds.
      *  Populated regardless of whether compiled classes are available. */
     val superTypes: List<String> = emptyList(),
+    /** Source-text of super-type references as written in the file (e.g. ["HttpClient"] when the
+     *  jar is absent and K1 cannot resolve the FQN). Populated only for class-kind declarations.
+     *  Used together with file imports for lenient type-resolution mode. */
+    val textualSuperTypes: List<String> = emptyList(),
+    /** 1-based line of the first token of the declaration, skipping any leading KDoc comment.
+     *  Points to the first modifier or keyword (e.g. `fun`, `class`, `val`, `@Annotation`).
+     *  For annotated declarations this is the annotation line, not the keyword line. */
     val line: Int,
     val column: Int,
+    /** 1-based line of the last token of the declaration (closing `}` for block declarations,
+     *  end of expression for single-expression properties). Equal to [line] for one-liners.
+     *  Defaults to 0 for ASTs loaded from older JSON (schema < 1.5). */
+    val endLine: Int = 0,
+    val endColumn: Int = 0,
+    /** For TYPEALIAS declarations: ordered list starting with this alias FQN, followed by each
+     *  intermediate alias FQN, and ending with the concrete (non-alias) expanded type string.
+     *  The last element is the analyzer's rendered type and may include generic arguments
+     *  (e.g. `"kotlin.collections.List<kotlin.String>"` for `typealias A = List<String>`).
+     *  Example: `["com.example.A", "com.example.B", "kotlin.String"]` for `typealias A = B`
+     *  where `typealias B = String`. Empty for all other declaration kinds. */
+    val typeAliasChain: List<String> = emptyList(),
 ) {
     /** Returns true if this declaration represents a class-like type (class, interface, object, etc.). */
     fun isClassLike(): Boolean = kind in CLASS_KINDS
@@ -108,16 +136,56 @@ data class FileAst(
     val calls: List<CallSiteAst> = emptyList(),
     val unresolvedReferences: List<UnresolvedReferenceAst> = emptyList(),
     val contentHash: String = "",              // SHA-256 of source file content
+    /** Explicit import FQNs from the source file (star-imports excluded). */
+    val imports: List<String> = emptyList(),
 )
+
+/** Controls how type names are resolved when a dependency jar is absent from the classpath. */
+enum class TypeResolutionMode {
+    /** Require a full hierarchy entry; return no match for unresolved simple names. Default. */
+    STRICT,
+    /** Resolve simple names via file imports for exact-match; emit a warning when fallback fires. */
+    LENIENT_WARN,
+    /** Resolve simple names via file imports for exact-match; suppress the warning. */
+    LENIENT_QUIET,
+}
 
 @Serializable
 data class TypedAst(
-    val schemaVersion: String = "1.3",
+    val schemaVersion: String = "1.6",
     val generatedBy: String = "kotlin-type-mapper",
+    /** Absolute path of the common source-root directory used during analysis.
+     *  **Never null.** Empty string (`""`) when analysis was performed in-memory
+     *  (e.g. via `KotlinTypeMapper.fromSources`); a non-empty path otherwise.
+     *  Use [hasSourceRoot] to distinguish the two cases, and
+     *  [resolveAbsolutePath] to safely construct absolute file paths. */
     val sourceRoot: String,
     val files: List<FileAst>,
     /** Direct supertypes per type FQN, built via reflection at analysis time.
      *  Key: raw type FQN (no generics). Value: list of direct supertype FQNs.
      *  Kotlin-mapped names are used (e.g. kotlin.Any, kotlin.collections.List). */
     val typeHierarchy: Map<String, List<String>> = emptyMap(),
-)
+) {
+    /**
+     * Returns true when this AST was produced from files on disk (i.e. [sourceRoot] is
+     * non-empty). Returns false for in-memory analyses created via
+     * `KotlinTypeMapper.fromSources`.
+     */
+    fun hasSourceRoot(): Boolean = sourceRoot.isNotEmpty()
+
+    /**
+     * Resolves the absolute path of [file] by joining [sourceRoot] with [FileAst.relativePath].
+     * Returns `null` when [sourceRoot] is empty, which happens for in-memory analyses where
+     * no files exist on disk.
+     *
+     * Prefer this helper over manual string concatenation: when [sourceRoot] is empty,
+     * naive concatenation produces a root-relative path (e.g. `/Foo.kt`) instead of a
+     * proper absolute path, which is almost certainly wrong.
+     */
+    fun resolveAbsolutePath(file: FileAst): String? {
+        if (sourceRoot.isEmpty()) {
+            return null
+        }
+        return sourceRoot.trimEnd('/', '\\') + java.io.File.separator + file.relativePath
+    }
+}

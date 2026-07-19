@@ -18,6 +18,7 @@ package nl.stokpop.typemapper.analyzer
 import nl.stokpop.typemapper.model.*
 
 import java.io.File
+import java.nio.file.Path
 
 /**
  * Main entry point for programmatic use of the Kotlin type mapper.
@@ -108,5 +109,26 @@ class KotlinTypeMapper(
         @JvmOverloads
         fun fromSources(sources: Map<String, String>, classpathJars: List<File> = emptyList()): TypedAst =
             analyzeKotlinSources(sources, classpathJars)
+
+        /**
+         * Analyses the Kotlin source files at the given [sourceFiles] paths without requiring the
+         * caller to pre-load file contents into memory. KTM reads each file itself, so source
+         * strings are not duplicated between caller and analyser.
+         *
+         * `FileAst.relativePath` holds the absolute path minus the filesystem root prefix;
+         * use `TypedAst.resolveAbsolutePath` to reconstruct the full absolute path. All files
+         * must reside on the same filesystem root (same drive on Windows). Use [fromSources]
+         * when source is already available as strings (e.g. in tests).
+         *
+         * @param sourceFiles Paths to the `.kt` source files to analyse.
+         * @param classpathJars Dependency jars / class directories for type resolution.
+         */
+        @JvmStatic
+        @JvmOverloads
+        fun fromPaths(sourceFiles: List<Path>, classpathJars: List<Path> = emptyList()): TypedAst =
+            analyzeKotlinFileList(
+                sourceFiles.map { it.toFile() },
+                classpathJars.map { it.toFile() },
+            )
     }
 }

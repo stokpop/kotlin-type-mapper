@@ -75,3 +75,116 @@ fun TypedAst.callsMatchingPolymorphicLocated(sig: String): List<Pair<String, Cal
     val matchingCalls = callsMatchingPolymorphic(sig).toHashSet()
     return files.flatMap { f -> f.calls.filter { it in matchingCalls }.map { f.relativePath to it } }
 }
+
+/**
+ * Returns all call sites where the dispatch or extension receiver type matches [fqn]
+ * after Kotlin/Java name mapping (e.g. `kotlin.String` matches `java.lang.String`).
+ * Generics and the nullable marker (`?`) are stripped before comparison.
+ */
+fun TypedAst.callsOnReceiver(fqn: String): List<CallSiteAst> {
+    val raw = fqn.rawTypeName()
+    return calls().filter { call ->
+        listOfNotNull(call.dispatchReceiverType, call.extensionReceiverType).any { recv ->
+            typeNamesEquivalent(raw, recv.rawTypeName())
+        }
+    }
+}
+
+/**
+ * Returns all call sites where the dispatch or extension receiver type is [fqn] or a subtype of
+ * [fqn] according to [TypedAst.typeHierarchy]. Uses [isSubtypeOf] for equivalence and hierarchy.
+ * The subtype set is precomputed once per call to avoid O(calls * hierarchy) overhead.
+ */
+fun TypedAst.callsOnReceiverSubtype(fqn: String): List<CallSiteAst> {
+    val rawFqn = fqn.rawTypeName()
+    val subtypes = allSubtypesOf(rawFqn)
+    return calls().filter { call ->
+        listOfNotNull(call.dispatchReceiverType, call.extensionReceiverType).any { recv ->
+            val rawRecv = recv.rawTypeName()
+            typeNamesEquivalent(rawFqn, rawRecv) || typeEquivalents(rawRecv).any { it in subtypes }
+        }
+    }
+}
+
+/**
+ * Returns all call sites whose return type matches [fqn] after Kotlin/Java name mapping.
+ * Generics and the nullable marker (`?`) are stripped before comparison.
+ */
+fun TypedAst.callsReturning(fqn: String): List<CallSiteAst> {
+    val raw = fqn.rawTypeName()
+    return calls().filter { typeNamesEquivalent(raw, it.returnType.rawTypeName()) }
+}
+
+/**
+ * Returns all call sites whose return type is [fqn] or a subtype of [fqn]
+ * according to [TypedAst.typeHierarchy]. Uses [isSubtypeOf] for equivalence and hierarchy.
+ * The subtype set is precomputed once per call to avoid O(calls * hierarchy) overhead.
+ */
+fun TypedAst.callsReturningSubtype(fqn: String): List<CallSiteAst> {
+    val rawFqn = fqn.rawTypeName()
+    val subtypes = allSubtypesOf(rawFqn)
+    return calls().filter { call ->
+        val rawReturn = call.returnType.rawTypeName()
+        typeNamesEquivalent(rawFqn, rawReturn) || typeEquivalents(rawReturn).any { it in subtypes }
+    }
+}
+
+/**
+ * Returns true if the dispatch receiver type of this call site is marked nullable (`?`).
+ * Returns false when there is no dispatch receiver or it is non-nullable.
+ * Compose with any call query: `ast.callsOnReceiver("p.Dog").filter { it.dispatchReceiverIsNullable() }`
+ */
+fun CallSiteAst.dispatchReceiverIsNullable(): Boolean =
+    dispatchReceiverType?.endsWith('?') == true
+
+/**
+ * Returns true if the extension receiver type of this call site is marked nullable (`?`).
+ * Returns false when there is no extension receiver or it is non-nullable.
+ */
+fun CallSiteAst.extensionReceiverIsNullable(): Boolean =
+    extensionReceiverType?.endsWith('?') == true
+
+/**
+ * Returns true if the return type of this call site is marked nullable (`?`).
+ */
+fun CallSiteAst.returnTypeIsNullable(): Boolean =
+    returnType.endsWith('?')
+
+/**
+ * Returns the FQN of the class being constructed when this is a constructor call site
+ * (i.e. [CallSiteAst.calleeFqName] ends with `.<init>`), or `null` otherwise.
+ * Shared with [matchesSig] and [matchesSigEquivalent] to avoid duplicating the `.<init>` detection logic.
+ */
+internal fun CallSiteAst.constructorClassFqn(): String? {
+    if (!calleeFqName.endsWith(".<init>")) {
+        return null
+    }
+    return calleeFqName.removeSuffix(".<init>")
+}
+
+/**
+ * Returns all call sites that are constructor invocations of [fqn].
+ * Handles Kotlin/Java name mapping (e.g. `kotlin.String` matches `java.lang.String.<init>`).
+ * Generics and nullability are stripped before comparison.
+ */
+fun TypedAst.constructorCallsOf(fqn: String): List<CallSiteAst> {
+    val raw = fqn.rawTypeName()
+    return calls().filter { call ->
+        val constructed = call.constructorClassFqn()?.rawTypeName() ?: return@filter false
+        typeNamesEquivalent(raw, constructed)
+    }
+}
+
+/**
+ * Returns all call sites that are constructor invocations of [fqn] or any of its subtypes
+ * according to [TypedAst.typeHierarchy].
+ * The subtype set is precomputed once per call to avoid O(calls * hierarchy) overhead.
+ */
+fun TypedAst.constructorCallsOfSubtype(fqn: String): List<CallSiteAst> {
+    val rawFqn = fqn.rawTypeName()
+    val subtypes = allSubtypesOf(rawFqn)
+    return calls().filter { call ->
+        val constructed = call.constructorClassFqn()?.rawTypeName() ?: return@filter false
+        typeNamesEquivalent(rawFqn, constructed) || typeEquivalents(constructed).any { it in subtypes }
+    }
+}

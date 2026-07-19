@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtClass
@@ -51,10 +52,49 @@ import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
+/**
+ * Returns the start offset of a declaration, skipping any leading KDoc comment.
+ * Uses [KtDeclaration.modifierList] when present, otherwise the first non-KDoc
+ * non-blank child, then [KtNamedDeclaration.nameIdentifier] as a final fallback
+ * (needed for KtEnumEntry: its identifier is not a direct PSI child, so only
+ * KDoc appears in children, and textRange.startOffset would include the KDoc).
+ */
 private fun KtDeclaration.startOffsetSkippingKdoc(): Int =
     modifierList?.textRange?.startOffset
-        ?: children.firstOrNull { it !is KDoc }?.textRange?.startOffset
+        ?: children.firstOrNull { it !is KDoc && it.text.isNotBlank() }?.textRange?.startOffset
+        ?: (this as? org.jetbrains.kotlin.psi.KtNamedDeclaration)?.nameIdentifier?.textRange?.startOffset
         ?: textRange.startOffset
+
+private fun KaTypeAliasSymbol.aliasFqn(): String =
+    classId?.asSingleFqName()?.asString() ?: name?.asString() ?: "<anonymous>"
+
+/**
+ * Builds the typealias resolution chain starting from [symbol].
+ * Returns a list: [aliasFqn, ..., concreteFqn], walking one abbreviation step at a time
+ * via [KaType.abbreviation] to capture intermediate aliases (e.g. A -> B -> kotlin.String).
+ */
+@OptIn(KaExperimentalApi::class)
+private fun KaSession.buildAliasChain(symbol: KaTypeAliasSymbol): List<String> {
+    val startFqn = symbol.aliasFqn()
+    val chain = mutableListOf(startFqn)
+    val seen = hashSetOf(startFqn)
+    var expanded: KaType = symbol.expandedType
+    while (true) {
+        val nextAlias = expanded.abbreviation?.symbol as? KaTypeAliasSymbol
+        if (nextAlias == null) {
+            chain.add(renderType(expanded))
+            break
+        }
+        val fqn = nextAlias.aliasFqn()
+        if (!seen.add(fqn)) {
+            chain.add(renderType(expanded))
+            break
+        }
+        chain.add(fqn)
+        expanded = nextAlias.expandedType
+    }
+    return chain
+}
 
 @OptIn(KaExperimentalApi::class)
 internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst> {
@@ -66,6 +106,9 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
         val line = doc?.getLineNumber(offset) ?: return 1
         return offset - (doc.getLineStartOffset(line)) + 1
     }
+    // endOffset is exclusive; clamp to the last actual character so line calc is correct.
+    fun endLineOf(endOffset: Int) = lineOf((endOffset - 1).coerceAtLeast(0))
+    fun endColOf(endOffset: Int) = colOf((endOffset - 1).coerceAtLeast(0))
 
     fun callableFqName(symbol: KaCallableSymbol): String =
         symbol.callableId?.asSingleFqName()?.asString()
@@ -77,6 +120,7 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
         name: String,
         symbol: KaVariableSymbol,
         offset: Int,
+        endOffset: Int,
     ): DeclarationAst = DeclarationAst(
         kind = kind,
         name = name,
@@ -85,13 +129,15 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
         type = renderType(symbol.returnType),
         line = lineOf(offset),
         column = colOf(offset),
+        endLine = endLineOf(endOffset),
+        endColumn = endColOf(endOffset),
     )
 
     ktFile.accept(object : KtTreeVisitorVoid() {
         override fun visitEnumEntry(enumEntry: KtEnumEntry) {
             super.visitEnumEntry(enumEntry)
             val symbol = enumEntry.symbol as? KaEnumEntrySymbol ?: return
-            val offset = enumEntry.textRange.startOffset
+            val offset = enumEntry.startOffsetSkippingKdoc()
             val containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: ""
             val fqName = symbol.callableId?.asSingleFqName()?.asString()
                 ?: listOf(containingDeclaration, enumEntry.name ?: "<anonymous>")
@@ -105,8 +151,9 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
                     containingDeclaration = containingDeclaration,
                     type = containingDeclaration,
                     annotations = symbol.annotations.toAstList(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(enumEntry.textRange.endOffset),
+                    endColumn = endColOf(enumEntry.textRange.endOffset),
                 )
             )
         }
@@ -126,6 +173,8 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
                 else -> DeclarationKind.CLASS
             }
             val superTypes = symbol.superTypes.map { renderType(it).substringBefore('?') }
+            val textualSuperTypes = klass.superTypeListEntries
+                .mapNotNull { it.typeReference?.text?.substringBefore('<')?.trim() }
             declarations.add(
                 DeclarationAst(
                     kind = kind,
@@ -134,8 +183,10 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
                     containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
                     annotations = symbol.annotations.toAstList(),
                     superTypes = superTypes,
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    textualSuperTypes = textualSuperTypes,
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(klass.textRange.endOffset),
+                    endColumn = endColOf(klass.textRange.endOffset),
                 )
             )
         }
@@ -144,6 +195,8 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
             super.visitObjectDeclaration(declaration)
             val symbol = declaration.symbol as? KaClassSymbol ?: return
             val offset = declaration.startOffsetSkippingKdoc()
+            val textualSuperTypes = declaration.superTypeListEntries
+                .mapNotNull { it.typeReference?.text?.substringBefore('<')?.trim() }
             declarations.add(
                 DeclarationAst(
                     kind = when {
@@ -156,8 +209,10 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
                     containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
                     annotations = symbol.annotations.toAstList(),
                     superTypes = symbol.superTypes.map { renderType(it).substringBefore('?') },
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    textualSuperTypes = textualSuperTypes,
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(declaration.textRange.endOffset),
+                    endColumn = endColOf(declaration.textRange.endOffset),
                 )
             )
         }
@@ -184,8 +239,9 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
                             fqName = callableFqName(symbol),
                             containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
                             type = renderType(symbol.returnType),
-                            line = lineOf(offset),
-                            column = colOf(offset),
+                            line = lineOf(offset), column = colOf(offset),
+                            endLine = endLineOf(parameter.textRange.endOffset),
+                            endColumn = endColOf(parameter.textRange.endOffset),
                         )
                     )
                 }
@@ -198,8 +254,9 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
                             fqName = callableFqName(symbol),
                             containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
                             type = renderType(symbol.returnType),
-                            line = lineOf(offset),
-                            column = colOf(offset),
+                            line = lineOf(offset), column = colOf(offset),
+                            endLine = endLineOf(parameter.textRange.endOffset),
+                            endColumn = endColOf(parameter.textRange.endOffset),
                         )
                     )
                 }
@@ -222,6 +279,8 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
                     type = renderType(symbol.returnType),
                     line = lineOf(param.textRange.startOffset),
                     column = colOf(param.textRange.startOffset),
+                    endLine = endLineOf(param.textRange.endOffset),
+                    endColumn = endColOf(param.textRange.endOffset),
                 )
             )
         }
@@ -241,6 +300,8 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
                     type = renderType(symbol.returnType),
                     line = lineOf(param.textRange.startOffset),
                     column = colOf(param.textRange.startOffset),
+                    endLine = endLineOf(param.textRange.endOffset),
+                    endColumn = endColOf(param.textRange.endOffset),
                 )
             )
         }
@@ -254,6 +315,7 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
                 name = entry.name ?: "<anonymous>",
                 symbol = symbol,
                 offset = entry.textRange.startOffset,
+                endOffset = entry.textRange.endOffset,
             ))
         }
 
@@ -270,8 +332,10 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
                         ?: (symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "") + "." + ((symbol as? KaNamedSymbol)?.name?.asString() ?: "<anonymous>"),
                     containingDeclaration = symbol.containingDeclaration?.let { containingSymbolFqName(it) } ?: "",
                     type = renderType(symbol.expandedType),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    typeAliasChain = buildAliasChain(symbol),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(typeAlias.textRange.endOffset),
+                    endColumn = endColOf(typeAlias.textRange.endOffset),
                 )
             )
         }
@@ -290,8 +354,9 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
                     returnType = renderType(symbol.returnType),
                     parameters = symbol.valueParameters.map { ParameterAst(name = it.name.asString(), type = renderType(it.returnType)) },
                     annotations = symbol.annotations.toAstList(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(constructor.textRange.endOffset),
+                    endColumn = endColOf(constructor.textRange.endOffset),
                 )
             )
         }
@@ -309,8 +374,9 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
                     returnType = renderType(symbol.returnType),
                     parameters = symbol.valueParameters.map { ParameterAst(name = it.name.asString(), type = renderType(it.returnType)) },
                     annotations = symbol.annotations.toAstList(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(function.textRange.endOffset),
+                    endColumn = endColOf(function.textRange.endOffset),
                 )
             )
         }
@@ -323,6 +389,7 @@ internal fun KaSession.extractDeclarations(ktFile: KtFile): List<DeclarationAst>
                 name = property.name ?: "<anonymous>",
                 symbol = symbol,
                 offset = property.startOffsetSkippingKdoc(),
+                endOffset = property.textRange.endOffset,
             ))
         }
     })

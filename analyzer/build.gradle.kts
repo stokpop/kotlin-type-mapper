@@ -5,19 +5,11 @@ plugins {
     id("com.vanniktech.maven.publish")
 }
 
-val kotlinVersion = "2.3.21" // TODO: bump to 2.4.0 once -for-ide repo resolution is fixed
+val kotlinVersion = "2.4.10"
 
-repositories {
-    exclusiveContent {
-        forRepository {
-            maven("https://redirector.kotlinlang.org/maven/intellij-dependencies")
-        }
-        filter {
-            includeModuleByRegex("org\\.jetbrains\\.kotlin", ".*-for-ide")
-        }
-    }
-    mavenCentral()
-}
+// Repositories (redirector for -for-ide artifacts + mavenCentral) come from the root
+// build's allprojects block. Declaring exclusiveContent for the same redirector URL here
+// too makes Gradle 9.6 fail to resolve the -for-ide modules (duplicate exclusive claim).
 
 dependencies {
     implementation(kotlin("stdlib"))

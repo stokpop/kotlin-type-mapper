@@ -130,16 +130,35 @@ fun kotlinToJavaName(kotlinFqn: String): String =
     KOTLIN_TO_JAVA[kotlinFqn] ?: kotlinFqnToJavaBinaryName(kotlinFqn)
 
 /**
- * Returns true if two type names refer to the same type after Java↔Kotlin mapping.
- * Both names are first stripped of generics before comparison.
+ * Returns the raw type FQN: strips generic type parameters and the nullable marker.
+ * `"java.util.List<kotlin.String>"` → `"java.util.List"`, `"kotlin.String?"` → `"kotlin.String"`.
+ */
+internal fun String.rawTypeName(): String = substringBefore('<').trimEnd('?')
+
+/**
+ * Returns true if [name] is a simple (unqualified) type name — i.e. contains no dot
+ * after stripping generics. Examples: `"HttpClient"` → true, `"org.example.Foo"` → false.
+ */
+fun isSimpleName(name: String): Boolean = '.' !in name.substringBefore('<')
+
+/**
+ * Given a simple type name (no package), returns the first matching FQN found in [importedFqns],
+ * or null if none match. Only explicit single-type imports are considered; star-imports are skipped.
  *
- * Examples:
- * ```
- * typeNamesEquivalent("java.lang.String",        "kotlin.String")           == true
- * typeNamesEquivalent("java.util.List",           "kotlin.collections.List") == true
- * typeNamesEquivalent("java.util.regex.Pattern",  "java.util.regex.Pattern") == true
- * typeNamesEquivalent("java.util.regex.Pattern",  "kotlin.String")           == false
- * ```
+ * Example: `resolveSimpleName("HttpClient", listOf("org.apache.http.client.HttpClient"))` → `"org.apache.http.client.HttpClient"`
+ */
+fun resolveSimpleName(simpleName: String, importedFqns: Collection<String>): String? =
+    importedFqns.firstOrNull { it.endsWith(".$simpleName") }
+
+/**
+ * Returns true if [fqn1] and [fqn2] refer to the same type after Java/Kotlin name mapping.
+ * Generics are stripped before comparison (e.g. kotlin.String and java.lang.String are equivalent).
+ */
+fun isTypeEquivalent(fqn1: String, fqn2: String): Boolean = typeNamesEquivalent(fqn1, fqn2)
+
+/**
+ * Returns true if two type names refer to the same type after Java↔Kotlin mapping.
+ * Both names are stripped of generics before comparison.
  */
 fun typeNamesEquivalent(nameA: String, nameB: String): Boolean {
     val rawA = nameA.substringBefore('<')

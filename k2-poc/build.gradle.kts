@@ -18,21 +18,11 @@ plugins {
     kotlin("jvm")
 }
 
-val kotlinVersion = "2.3.21" // TODO: bump to 2.4.0 once -for-ide repo resolution is fixed
+val kotlinVersion = "2.4.10"
 
-repositories {
-    // K2 Analysis API fat JARs (`*-for-ide`) are not on Maven Central (KT-56203).
-    // Route only those artifacts to the JetBrains intellij-dependencies repo.
-    exclusiveContent {
-        forRepository {
-            maven("https://redirector.kotlinlang.org/maven/intellij-dependencies")
-        }
-        filter {
-            includeModuleByRegex("org\\.jetbrains\\.kotlin", ".*-for-ide")
-        }
-    }
-    mavenCentral()
-}
+// Repositories (redirector for the -for-ide fat JARs + mavenCentral) come from the root
+// build's allprojects block. Re-declaring exclusiveContent for the same redirector URL here
+// makes Gradle 9.6 fail to resolve the -for-ide modules (duplicate exclusive claim).
 
 dependencies {
     // Non-embeddable compiler: provides `com.intellij.*` classes at their original

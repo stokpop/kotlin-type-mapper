@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -60,15 +61,25 @@ internal fun KaSession.extractCallSites(ktFile: KtFile): List<CallSiteAst> {
         val line = doc?.getLineNumber(offset) ?: return 1
         return offset - (doc.getLineStartOffset(line)) + 1
     }
+    fun endLineOf(endOffset: Int) = lineOf((endOffset - 1).coerceAtLeast(0))
+    fun endColOf(endOffset: Int) = colOf((endOffset - 1).coerceAtLeast(0))
 
     ktFile.accept(object : KtTreeVisitorVoid() {
         override fun visitCallExpression(expression: KtCallExpression) {
             super.visitCallExpression(expression)
             val call = expression.resolveToCall()?.successfulCallOrNull<KaFunctionCall<*>>() ?: return
-            val calleeFqName = call.symbol.callableId?.asSingleFqName()?.asString() ?: return
+            // Constructor symbols have no callableId; derive "<class>.<init>" from the containing class
+            // so constructor call sites are captured (matches the K1 ".<init>" convention).
+            val symbol = call.symbol
+            val calleeFqName = when (symbol) {
+                is KaConstructorSymbol ->
+                    symbol.containingClassId?.asSingleFqName()?.asString()?.let { "$it.<init>" } ?: return
+                else -> symbol.callableId?.asSingleFqName()?.asString() ?: return
+            }
             val offset = expression.textRange.startOffset
             val extReceiverType = call.partiallyAppliedSymbol.extensionReceiver?.type?.let { renderType(it) }
             val allArgTypes = call.symbol.valueParameters.map { renderType(it.returnType) }
+            val endOffset = expression.textRange.endOffset
             calls.add(
                 CallSiteAst(
                     calleeFqName = calleeFqName,
@@ -76,8 +87,8 @@ internal fun KaSession.extractCallSites(ktFile: KtFile): List<CallSiteAst> {
                     extensionReceiverType = extReceiverType,
                     returnType = renderType(call.symbol.returnType),
                     argumentTypes = allArgTypes,
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(endOffset), endColumn = endColOf(endOffset),
                 )
             )
             // For Kotlin stdlib extension functions on Java-mapped types (e.g. kotlin.text.indexOf
@@ -96,8 +107,9 @@ internal fun KaSession.extractCallSites(ktFile: KtFile): List<CallSiteAst> {
                         extensionReceiverType = null,
                         returnType = renderType(call.symbol.returnType),
                         argumentTypes = requiredArgTypes,
-                        line = lineOf(offset),
-                        column = colOf(offset),
+                        line = lineOf(offset), column = colOf(offset),
+                        endLine = endLineOf(expression.textRange.endOffset),
+                        endColumn = endColOf(expression.textRange.endOffset),
                     )
                 )
             }
@@ -125,8 +137,9 @@ internal fun KaSession.extractCallSites(ktFile: KtFile): List<CallSiteAst> {
                     extensionReceiverType = extension,
                     returnType = renderType(symbol.returnType),
                     argumentTypes = emptyList(),
-                    line = lineOf(offset),
-                    column = colOf(offset),
+                    line = lineOf(offset), column = colOf(offset),
+                    endLine = endLineOf(expression.textRange.endOffset),
+                    endColumn = endColOf(expression.textRange.endOffset),
                 )
             )
         }

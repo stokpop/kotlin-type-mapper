@@ -1,0 +1,219 @@
+/**
+ * Copyright (C) 2026 Peter Paul Bakker, Stokpop Software Solutions
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import nl.stokpop.typemapper.model.TypedAst
+import nl.stokpop.typemapper.model.isSubtypeOf
+import nl.stokpop.typemapper.model.isSubtypeOfUpward
+import nl.stokpop.typemapper.model.isTypeEquivalent
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+
+class IsSubtypeOfTest {
+
+    private fun astWithHierarchy(vararg pairs: Pair<String, List<String>>): TypedAst =
+        TypedAst(
+            sourceRoot = "",
+            files = emptyList(),
+            typeHierarchy = mapOf(*pairs),
+        )
+
+    @Test
+    fun `isSubtypeOf same type returns true`() {
+        val ast = astWithHierarchy()
+        assertTrue(ast.isSubtypeOf("java.util.List", "java.util.List"))
+    }
+
+    @Test
+    fun `isSubtypeOf kotlin-java equivalent returns true`() {
+        val ast = astWithHierarchy()
+        assertTrue(ast.isSubtypeOf("java.lang.String", "kotlin.String"))
+        assertTrue(ast.isSubtypeOf("kotlin.String", "java.lang.String"))
+        assertTrue(ast.isSubtypeOf("java.util.List", "kotlin.collections.List"))
+    }
+
+    @Test
+    fun `isSubtypeOf direct parent returns true`() {
+        val ast = astWithHierarchy(
+            "com.example.Dog" to listOf("com.example.Animal"),
+        )
+        assertTrue(ast.isSubtypeOf("com.example.Animal", "com.example.Dog"))
+    }
+
+    @Test
+    fun `isSubtypeOf transitive parent returns true`() {
+        val ast = astWithHierarchy(
+            "com.example.Poodle" to listOf("com.example.Dog"),
+            "com.example.Dog"    to listOf("com.example.Animal"),
+        )
+        assertTrue(ast.isSubtypeOf("com.example.Animal", "com.example.Poodle"))
+    }
+
+    @Test
+    fun `isSubtypeOf unrelated type returns false`() {
+        val ast = astWithHierarchy(
+            "com.example.Dog" to listOf("com.example.Animal"),
+        )
+        assertFalse(ast.isSubtypeOf("com.example.Dog", "com.example.Animal"))
+        assertFalse(ast.isSubtypeOf("com.example.Cat", "com.example.Dog"))
+    }
+
+    @Test
+    fun `isSubtypeOf strips generics before lookup`() {
+        val ast = astWithHierarchy(
+            "com.example.MyList" to listOf("java.util.List"),
+        )
+        assertTrue(ast.isSubtypeOf("java.util.List<kotlin.String>", "com.example.MyList<kotlin.Int>"))
+    }
+
+    @Test
+    fun `isSubtypeOf hierarchy value with generics still matches raw target`() {
+        // typeHierarchy stores supertype with type param (source-derived); must still match raw lookup
+        val ast = astWithHierarchy(
+            "com.example.MyList" to listOf("java.util.List<kotlin.String>"),
+        )
+        assertTrue(ast.isSubtypeOf("java.util.List", "com.example.MyList"))
+    }
+
+    @Test
+    fun `isSubtypeOf strips nullable marker from inputs`() {
+        val ast = astWithHierarchy(
+            "com.example.Dog" to listOf("com.example.Animal"),
+        )
+        assertTrue(ast.isSubtypeOf("com.example.Animal", "com.example.Dog?"))
+        assertTrue(ast.isSubtypeOf("com.example.Animal?", "com.example.Dog"))
+    }
+
+    @Test
+    fun `isSubtypeOf different generic params treated equal - generics erased for structural checks`() {
+        // List<String> and List<Integer> are the same raw type; generics erased at JVM level.
+        // isSubtypeOf checks structural inheritance only, not generic instantiation.
+        val ast = astWithHierarchy()
+        assertTrue(ast.isSubtypeOf("java.util.List<kotlin.String>", "java.util.List<kotlin.Int>"))
+    }
+
+    @Test
+    fun `isSubtypeOf MutableList equivalent to java List via direct KOTLIN-TO-JAVA mapping`() {
+        // kotlin.collections.MutableList maps to java.util.List, so isSubtypeOf("java.util.List", ...) is true.
+        // kotlin.collections.List vs kotlin.collections.MutableList are NOT treated as equivalent:
+        // both happen to map to java.util.List, but the check is pairwise, not transitive-via-java.
+        val ast = astWithHierarchy()
+        assertTrue(ast.isSubtypeOf("java.util.List", "kotlin.collections.MutableList"))
+        assertFalse(ast.isSubtypeOf("kotlin.collections.List", "kotlin.collections.MutableList"))
+    }
+
+    @Test
+    fun `isSubtypeOf unknown types with empty hierarchy returns false`() {
+        val ast = astWithHierarchy()
+        assertFalse(ast.isSubtypeOf("com.example.Foo", "com.example.Bar"))
+    }
+
+    @Test
+    fun `isTypeEquivalent kotlin-java pairs`() {
+        assertTrue(isTypeEquivalent("java.lang.String", "kotlin.String"))
+        assertTrue(isTypeEquivalent("kotlin.String", "java.lang.String"))
+        assertTrue(isTypeEquivalent("java.util.List", "kotlin.collections.List"))
+        assertFalse(isTypeEquivalent("java.util.List", "java.util.Set"))
+    }
+
+    @Test
+    fun `isTypeEquivalent same name is true`() {
+        assertTrue(isTypeEquivalent("com.example.Foo", "com.example.Foo"))
+    }
+
+    // --- isSubtypeOf Object/Any short-circuit ---
+
+    @Test
+    fun `isSubtypeOf short-circuits for java lang Object with empty hierarchy`() {
+        val ast = astWithHierarchy()
+        assertTrue(ast.isSubtypeOf("java.lang.Object", "com.example.Anything"))
+    }
+
+    @Test
+    fun `isSubtypeOf short-circuits for kotlin Any with empty hierarchy`() {
+        val ast = astWithHierarchy()
+        assertTrue(ast.isSubtypeOf("kotlin.Any", "com.example.Anything"))
+    }
+
+    // --- isSubtypeOfUpward ---
+
+    @Test
+    fun `isSubtypeOfUpward returns true for direct subtype`() {
+        val ast = astWithHierarchy(
+            "com.example.Dog" to listOf("com.example.Animal"),
+        )
+        assertTrue(ast.isSubtypeOfUpward("com.example.Animal", "com.example.Dog"))
+    }
+
+    @Test
+    fun `isSubtypeOfUpward returns true for transitive subtype`() {
+        val ast = astWithHierarchy(
+            "com.example.Poodle" to listOf("com.example.Dog"),
+            "com.example.Dog"    to listOf("com.example.Animal"),
+        )
+        assertTrue(ast.isSubtypeOfUpward("com.example.Animal", "com.example.Poodle"))
+    }
+
+    @Test
+    fun `isSubtypeOfUpward returns false for unrelated type`() {
+        val ast = astWithHierarchy(
+            "com.example.Dog" to listOf("com.example.Animal"),
+        )
+        assertFalse(ast.isSubtypeOfUpward("com.example.Dog", "com.example.Animal"))
+        assertFalse(ast.isSubtypeOfUpward("com.example.Cat", "com.example.Dog"))
+    }
+
+    @Test
+    fun `isSubtypeOfUpward short-circuits for java lang Object with empty hierarchy`() {
+        val ast = astWithHierarchy()
+        assertTrue(ast.isSubtypeOfUpward("java.lang.Object", "com.example.Anything"))
+    }
+
+    @Test
+    fun `isSubtypeOfUpward short-circuits for kotlin Any with empty hierarchy`() {
+        val ast = astWithHierarchy()
+        assertTrue(ast.isSubtypeOfUpward("kotlin.Any", "com.example.Anything"))
+    }
+
+    @Test
+    fun `isSubtypeOfUpward handles kotlin-java equivalence on expected`() {
+        val ast = astWithHierarchy(
+            "com.example.Dog" to listOf("java.lang.Object"),
+        )
+        // kotlin.Any == java.lang.Object via short-circuit
+        assertTrue(ast.isSubtypeOfUpward("kotlin.Any", "com.example.Dog"))
+    }
+
+    @Test
+    fun `isSubtypeOfUpward same type returns true`() {
+        val ast = astWithHierarchy()
+        assertTrue(ast.isSubtypeOfUpward("com.example.Foo", "com.example.Foo"))
+    }
+
+    @Test
+    fun `isSubtypeOfUpward returns false when hierarchy empty and types differ`() {
+        val ast = astWithHierarchy()
+        assertFalse(ast.isSubtypeOfUpward("com.example.Foo", "com.example.Bar"))
+    }
+
+    @Test
+    fun `isSubtypeOfUpward handles kotlin-java equivalent actual`() {
+        val ast = astWithHierarchy(
+            "java.lang.String" to listOf("java.io.Serializable"),
+        )
+        // kotlin.String == java.lang.String, so upward walk finds java.io.Serializable
+        assertTrue(ast.isSubtypeOfUpward("java.io.Serializable", "kotlin.String"))
+    }
+}

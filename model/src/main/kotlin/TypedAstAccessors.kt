@@ -22,3 +22,4 @@ fun TypedAst.classes(): List<DeclarationAst> = declarations().filter { it.isClas
 fun TypedAst.properties(): List<DeclarationAst> = declarations().filter { it.kind == DeclarationKind.PROPERTY }
 fun TypedAst.fileByPath(relativePath: String): FileAst? =
     files.firstOrNull { it.relativePath == relativePath }
+

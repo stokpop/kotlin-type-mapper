@@ -118,6 +118,36 @@ ktm query result.json unresolved-references
 
 All query commands accept `--context/-C <N>` to show ±N source lines around each match (default 3, pass `0` to suppress). `unresolved-references` defaults to `0`.
 
+### Nullable types
+
+K1 preserves the nullable marker (`?`) in stored receiver and return types. The standard query functions strip it before comparison, so `callsOnReceiver("com.example.Dog")` matches both `Dog` and `Dog?` receivers.
+
+Use `--nullable-receiver` / `--non-null-receiver` to distinguish them:
+
+```bash
+# only calls where the receiver was nullable (safe-call sites: dog?.bark())
+ktm query result.json calls "com.example.Dog#bark()" --nullable-receiver
+
+# only calls where the receiver was non-null
+ktm query result.json calls "com.example.Dog#bark()" --non-null-receiver
+```
+
+Both flags are also available on `calls-polymorphic`.
+
+### Type aliases
+
+K1 always expands type aliases when recording call site receiver and return types. If your codebase defines `typealias MyDog = Dog`, call sites with a `MyDog` receiver are stored with `dispatchReceiverType = "com.example.Dog"` — not `"com.example.MyDog"`.
+
+Use `resolve-alias` to find the concrete type, then query by it:
+
+```bash
+ktm query result.json resolve-alias com.example.MyDog
+# com.example.MyDog -> com.example.Dog
+# Expanded: com.example.Dog
+
+ktm query result.json calls "com.example.Dog#bark()"
+```
+
 `unresolved-references` lists all names the Kotlin compiler could not resolve, including wildcard imports from packages absent on the classpath (e.g. `import com.example.*` when `com.example` is not on the classpath).
 
 ```
@@ -157,6 +187,20 @@ kotlin.String#_()          any method on String
 kotlin.String#_(*)         any method, any params
 ```
 
+Extension functions are matched by their **extension receiver type**, not by a type-prefixed name. For `fun Dog.fetch()` called as `dog.fetch()`:
+
+- `calleeFqName` = `"com.example.fetch"` (package + function name, no `Dog` in it)
+- `extensionReceiverType` = `"com.example.Dog"`
+
+Use the receiver-prefixed signature form — it matches against the extension receiver:
+
+```
+com.example.Dog#fetch()    ✓ matches extension fn via extensionReceiverType
+com.example.Dog.fetch()    ✗ no match — calleeFqName is com.example.fetch
+```
+
+`callsOnReceiver("com.example.Dog")` also finds extension calls since it checks both dispatch and extension receiver fields.
+
 ## Library usage
 
 Publish to local Maven and add `:model` + `:analyzer` as dependencies:
@@ -188,6 +232,31 @@ ast.callsMatching("_#size()").forEach { println(it) }
 ast.callsMatchingPolymorphic("kotlin.collections.Collection#size()").forEach { println(it) }
 ast.implementorsOf("java.io.Closeable").forEach { println(it) }
 ast.declarationsAnnotatedWith("kotlin.Deprecated").forEach { println(it) }
+
+// Receiver types explained:
+//   dispatchReceiverType  — the object a *member* method is called on
+//                           dog.bark()        → dispatchReceiverType = "com.example.Dog"
+//                           dog?.bark()       → dispatchReceiverType = "com.example.Dog?"
+//   extensionReceiverType — the object an *extension* function is called on
+//                           dog.ext()         → extensionReceiverType = "com.example.Dog"
+//                                               dispatchReceiverType  = null
+//   returnType            — what the callee declares as its return type
+//                           fun bark(): Dog?  → returnType = "com.example.Dog?"
+//
+// Standard queries strip ? before comparison (match both nullable and non-null).
+// Use predicates to filter by nullability:
+ast.callsOnReceiver("com.example.Dog")
+    .filter { it.dispatchReceiverIsNullable() }   // only dog?.bark() safe-call sites
+    .filter { it.returnTypeIsNullable() }          // only calls that may return null
+
+// Type aliases — K1 expands aliases in call site types; use alias-aware variants or expandAlias()
+// typealias MyDog = Dog  →  dispatchReceiverType is "com.example.Dog", not "com.example.MyDog"
+ast.callsOnReceiverAlias("com.example.MyDog")          // expands alias, then matches receiver
+ast.callsReturningAlias("com.example.MyDog")           // expands alias, then matches return type
+ast.constructorCallsOfAlias("com.example.MyDog")       // expands alias, then matches constructor
+ast.callsOnReceiverSubtype(ast.expandAlias("com.example.MyDog"))  // compose for subtype variant
+ast.resolveTypeAlias("com.example.MyDog")              // -> "com.example.Dog" (or null if not an alias)
+ast.typeAliasChainOf("com.example.A")                  // -> ["com.example.A", "com.example.B", "kotlin.String"]
 ```
 
 ## Output format
