@@ -2,9 +2,9 @@
 
 Scans Kotlin source files in a Gradle or Maven project and extracts a semantic AST — all declarations (functions, classes, properties, etc.), resolved call sites with full type information, and unresolved references (names the compiler could not bind, typically due to missing classpath dependencies) — serialised to JSON.
 
-Analysis uses the Kotlin **K1 analysis API** (embedded compiler internals: `KotlinCoreEnvironment`, `TopDownAnalyzerFacadeForJVM`) so types are fully resolved, including generics and nullability. A reflection-based type hierarchy is built at analysis time so polymorphic queries work correctly.
+Analysis uses the Kotlin **K2 Analysis API** ([`KaSession`/`analyze{}`](https://kotlin.github.io/analysis-api/), standalone session) so types are fully resolved, including generics and nullability. A reflection-based type hierarchy is built at analysis time so polymorphic queries work correctly.
 
-> **K1 vs K2 note:** The project compiles with Kotlin 2.x (K2 compiler) but the *analysis pipeline* used internally is the K1 API, which is deprecated in 2.x in favour of the [K2 Analysis API](https://kotlin.github.io/analysis-api/) (`KaSession`/`analyze{}`). The K1 API still ships in `kotlin-compiler-embeddable` 2.x and is intentionally kept until a dedicated migration is done.
+> **K2 note:** This is a drop-in replacement for the earlier K1 (`KotlinCoreEnvironment`/`TopDownAnalyzerFacadeForJVM`) implementation — the public API and `TypedAst` output are unchanged. The K2 standalone session depends on Kotlin `-for-ide` artifacts (not on Maven Central; served from the `redirector.kotlinlang.org/maven/intellij-dependencies` repo). See [DESIGN.md](DESIGN.md) section 4 for details.
 
 ## Subprojects
 
@@ -120,7 +120,7 @@ All query commands accept `--context/-C <N>` to show ±N source lines around eac
 
 ### Nullable types
 
-K1 preserves the nullable marker (`?`) in stored receiver and return types. The standard query functions strip it before comparison, so `callsOnReceiver("com.example.Dog")` matches both `Dog` and `Dog?` receivers.
+The analyzer preserves the nullable marker (`?`) in stored receiver and return types. The standard query functions strip it before comparison, so `callsOnReceiver("com.example.Dog")` matches both `Dog` and `Dog?` receivers.
 
 Use `--nullable-receiver` / `--non-null-receiver` to distinguish them:
 
@@ -136,7 +136,7 @@ Both flags are also available on `calls-polymorphic`.
 
 ### Type aliases
 
-K1 always expands type aliases when recording call site receiver and return types. If your codebase defines `typealias MyDog = Dog`, call sites with a `MyDog` receiver are stored with `dispatchReceiverType = "com.example.Dog"` — not `"com.example.MyDog"`.
+The analyzer always expands type aliases when recording call site receiver and return types. If your codebase defines `typealias MyDog = Dog`, call sites with a `MyDog` receiver are stored with `dispatchReceiverType = "com.example.Dog"` — not `"com.example.MyDog"`.
 
 Use `resolve-alias` to find the concrete type, then query by it:
 
@@ -249,7 +249,7 @@ ast.callsOnReceiver("com.example.Dog")
     .filter { it.dispatchReceiverIsNullable() }   // only dog?.bark() safe-call sites
     .filter { it.returnTypeIsNullable() }          // only calls that may return null
 
-// Type aliases — K1 expands aliases in call site types; use alias-aware variants or expandAlias()
+// Type aliases — the analyzer expands aliases in call site types; use alias-aware variants or expandAlias()
 // typealias MyDog = Dog  →  dispatchReceiverType is "com.example.Dog", not "com.example.MyDog"
 ast.callsOnReceiverAlias("com.example.MyDog")          // expands alias, then matches receiver
 ast.callsReturningAlias("com.example.MyDog")           // expands alias, then matches return type

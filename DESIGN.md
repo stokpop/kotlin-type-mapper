@@ -75,31 +75,37 @@ used as a map key:
 Without stripping `?`, `typeHierarchy["kotlin.collections.List?"]` would be `null` and BFS
 would find no supertypes for nullable types.
 
-## 4. K1 vs K2 analysis API
+## 4. K2 analysis API
 
-### Why K1 is used
+### What is used
 
-The analyzer uses the **K1 analysis API** (`KotlinCoreEnvironment`, `TopDownAnalyzerFacadeForJVM`,
-`CliBindingTrace`) — the programmatic compiler internals from the pre-2.x Kotlin compiler.
+The analyzer uses the **K2 Analysis API** (`buildStandaloneAnalysisAPISession`, `KaSession`,
+`analyze {}` with symbol APIs like `KaNamedFunctionSymbol`, `KaConstructorSymbol`,
+`KaTypeAliasSymbol`). Types are fully resolved — generics, nullability, expanded type aliases.
 
-The project itself compiles with Kotlin 2.x (K2 compiler), but the *analysis pipeline* invoked
-at runtime is still K1.
+This is a drop-in replacement for the earlier K1 implementation: the public API and the
+`TypedAst` output model are unchanged, so callers need no changes.
 
-### Why not K2
+### Why K2
 
-The K2 Analysis API (`KaSession` / `analyze {}`) is a significantly different programming model:
-it is session-scoped, requires an IDE platform project context, and has a substantially
-different API surface. Migrating to K2 is a non-trivial task that can be done independently
-of the rest of the project.
+The K1 API (`KotlinCoreEnvironment`, `TopDownAnalyzerFacadeForJVM`, `BindingContext`) is marked
+`@K1Deprecation` in `kotlin-compiler` 2.x. K2 (`KaSession` / `analyze {}`) is the supported
+programmatic analysis surface going forward.
 
-The K1 API is marked `@K1Deprecation` (deprecated, not removed) in `kotlin-compiler-embeddable`
-2.x and continues to work correctly. It is intentionally retained until a dedicated K2
-migration is done.
+### K2-specific implementation notes
 
-### Migration path
-
-When migrating to K2:
-- Replace `KotlinCoreEnvironment` + `TopDownAnalyzerFacadeForJVM` with `KtAnalysisSession` / `analyze {}`.
-- Replace `BindingContext` lookups with `KaSession` symbol APIs.
-- The rest of the model (`TypedAst`, `TypeHierarchy`, `SignatureMatcher`) is independent and
-  should not need changes.
+- **Dependencies:** the K2 standalone session needs the `-for-ide` artifacts
+  (`analysis-api-standalone-for-ide`, `analysis-api-k2-for-ide`, `low-level-api-fir-for-ide`,
+  `symbol-light-classes-for-ide`, ...), all with `isTransitive = false`. They are not on Maven
+  Central; they come from the `redirector.kotlinlang.org/maven/intellij-dependencies` repo,
+  declared once in the root `allprojects` block (declaring it per-module too breaks resolution).
+  Uses the non-embeddable `kotlin-compiler` (not `-embeddable`, which relocates `com.intellij.*`).
+- **Constructor calls:** `KaConstructorSymbol` has no `callableId`; calleeFqName is derived as
+  `<containingClassId>.<init>` so the `.<init>` convention the model/queries expect is preserved.
+- **Type alias chain:** built by walking `KaType.abbreviation` one step at a time
+  (`buildAliasChain`) to capture intermediate aliases (e.g. `A -> B -> kotlin.String`).
+- **File lists:** `analyzeKotlinFileList` adds each `.kt` file as its own source root
+  (`addSourceRoot` accepts file paths, not just directories) so scattered files are analysed
+  without scanning the whole filesystem root.
+- The rest of the model (`TypedAst`, `TypeHierarchy`, `SignatureMatcher`) is analysis-engine
+  independent.
