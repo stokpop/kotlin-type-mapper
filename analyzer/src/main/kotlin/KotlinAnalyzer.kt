@@ -164,8 +164,10 @@ private fun analyzeNamedSources(namedSources: List<NamedSource>, sourceRootPath:
 
         val fileAsts = namedSources.zip(ktFiles).map { (src, ktFile) ->
             val imports = ktFile.importDirectives
-                .filter { !it.isAllUnder }
-                .mapNotNull { it.importedFqName?.asString() }
+                .mapNotNull { d ->
+                    val fqn = d.importedFqName?.asString() ?: return@mapNotNull null
+                    if (d.isAllUnder) "$fqn.*" else fqn
+                }
             FileAst(
                 relativePath = src.relativePath,
                 packageFqName = ktFile.packageFqName.asString(),

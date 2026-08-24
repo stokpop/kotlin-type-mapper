@@ -245,6 +245,43 @@ class TypeAstTest {
     }
 
     @Test
+    fun `unresolved type with single wildcard import reconstructs FQN`() {
+        val ast = analyzeKotlinSources(mapOf(
+            "Client.kt" to """
+                package com.example
+                import org.apache.http.client.*
+                val client: HttpClient = TODO()
+            """.trimIndent()
+        ))
+
+        val prop = ast.files.flatMap { it.declarations }.first { it.name == "client" }
+        val type = prop.type!!
+        assertTrue(type.isUnresolved)
+        assertEquals("HttpClient", type.simpleName)
+        assertEquals("org.apache.http.client.HttpClient", type.fqName,
+            "Single wildcard import should allow FQN reconstruction")
+    }
+
+    @Test
+    fun `unresolved type with multiple wildcard imports falls back to simpleName`() {
+        val ast = analyzeKotlinSources(mapOf(
+            "Client.kt" to """
+                package com.example
+                import org.apache.http.client.*
+                import io.ktor.client.*
+                val client: HttpClient = TODO()
+            """.trimIndent()
+        ))
+
+        val prop = ast.files.flatMap { it.declarations }.first { it.name == "client" }
+        val type = prop.type!!
+        assertTrue(type.isUnresolved)
+        assertEquals("HttpClient", type.simpleName)
+        assertEquals("HttpClient", type.fqName,
+            "Multiple wildcard imports are ambiguous — fall back to simpleName")
+    }
+
+    @Test
     fun `call site types are TypeAst`() {
         val ast = analyzeKotlinSources(mapOf(
             "Foo.kt" to """

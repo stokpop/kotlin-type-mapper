@@ -68,8 +68,18 @@ fun KotlinType.toTypeAst(imports: List<String> = emptyList()): TypeAst {
         val fqName = if ('.' in simpleName) {
             simpleName // already qualified
         } else {
-            // Attempt FQN reconstruction from imports
-            imports.firstOrNull { it.endsWith(".$simpleName") } ?: simpleName
+            // Attempt FQN reconstruction from imports:
+            // 1. Try explicit import match (e.g. "my.package.HttpClient")
+            // 2. If none, try single wildcard import (e.g. "my.package.*" → "my.package.HttpClient")
+            imports.firstOrNull { it.endsWith(".$simpleName") }
+                ?: run {
+                    val wildcards = imports.filter { it.endsWith(".*") }
+                    if (wildcards.size == 1) {
+                        wildcards[0].removeSuffix("*") + simpleName
+                    } else {
+                        simpleName
+                    }
+                }
         }
         return TypeAst(
             fqName = fqName,
