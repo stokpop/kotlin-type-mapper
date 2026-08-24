@@ -55,19 +55,90 @@ data class AnnotationAst(
     val arguments: List<String> = emptyList(),
 )
 
+/** Variance of a type argument (Kotlin projection / Java wildcard). */
+@Serializable
+enum class TypeVariance {
+    /** No variance annotation — plain `T`. */
+    @SerialName("invariant") INVARIANT,
+    /** `out T` — covariant (Java `? extends T`). */
+    @SerialName("out")       OUT,
+    /** `in T` — contravariant (Java `? super T`). */
+    @SerialName("in")        IN,
+    /** `*` — star projection (Java `?`). */
+    @SerialName("star")      STAR,
+}
+
+/**
+ * A single type argument in a generic type, e.g. the `String` in `List<String>`
+ * or the `*` in `List<*>`.
+ */
+@Serializable
+data class TypeArgumentAst(
+    val variance: TypeVariance = TypeVariance.INVARIANT,
+    /** The projected type.  Null only for [TypeVariance.STAR] projections. */
+    val type: TypeAst? = null,
+)
+
+/**
+ * Structured representation of a Kotlin type, carrying both a fully-qualified name and
+ * metadata such as nullability, generic arguments, and resolution status.
+ *
+ * When a type cannot be resolved (e.g. missing dependency jar), [isUnresolved] is `true`
+ * and [fqName] / [simpleName] contain the best-effort name extracted from the source code
+ * and file imports.
+ */
+@Serializable
+data class TypeAst(
+    /** Fully-qualified name when resolved; best-effort FQN from imports when unresolved;
+     *  simple name as last resort. */
+    val fqName: String,
+    /** Short class name as it appears in source (e.g. `"List"`, `"HttpClient"`). */
+    val simpleName: String,
+    /** True when the type is marked nullable (`?`) in source. */
+    val isNullable: Boolean = false,
+    /** True when the compiler could not resolve this type (missing classpath dependency). */
+    val isUnresolved: Boolean = false,
+    /** Generic type arguments, in declaration order. Empty for non-generic types. */
+    val typeArguments: List<TypeArgumentAst> = emptyList(),
+) {
+    /**
+     * Renders this type as a fully-qualified string, matching the legacy `String` representation.
+     * Includes generic arguments and nullable marker.
+     * Example: `"kotlin.collections.List<kotlin.String>?"`.
+     */
+    fun toFqString(): String = buildString {
+        append(fqName)
+        if (typeArguments.isNotEmpty()) {
+            append('<')
+            typeArguments.joinTo(this, ", ") { arg ->
+                when (arg.variance) {
+                    TypeVariance.STAR      -> "*"
+                    TypeVariance.INVARIANT -> arg.type?.toFqString() ?: "?"
+                    TypeVariance.OUT       -> "out ${arg.type?.toFqString() ?: "?"}"
+                    TypeVariance.IN        -> "in ${arg.type?.toFqString() ?: "?"}"
+                }
+            }
+            append('>')
+        }
+        if (isNullable) append('?')
+    }
+
+    override fun toString(): String = toFqString()
+}
+
 @Serializable
 data class ParameterAst(
     val name: String,
-    val type: String,
+    val type: TypeAst,
 )
 
 @Serializable
 data class CallSiteAst(
     val calleeFqName: String,
-    val dispatchReceiverType: String? = null,    // non-null for regular method calls
-    val extensionReceiverType: String? = null,   // non-null for extension function calls
-    val returnType: String,
-    val argumentTypes: List<String> = emptyList(),
+    val dispatchReceiverType: TypeAst? = null,    // non-null for regular method calls
+    val extensionReceiverType: TypeAst? = null,   // non-null for extension function calls
+    val returnType: TypeAst,
+    val argumentTypes: List<TypeAst> = emptyList(),
     /** 1-based line of the start of the call expression node.
      *  For method calls (`foo.bar()`) this is the line of the callee name `bar`, not the receiver `foo`.
      *  For property reads (`foo.size`) this is the line of the property name `size`. */
@@ -87,8 +158,8 @@ data class DeclarationAst(
     val name: String,
     val fqName: String,
     val containingDeclaration: String,
-    val returnType: String? = null,            // function only
-    val type: String? = null,                  // property / variable only
+    val returnType: TypeAst? = null,            // function only
+    val type: TypeAst? = null,                  // property / variable only
     val parameters: List<ParameterAst> = emptyList(),
     val annotations: List<AnnotationAst> = emptyList(),
     /** Direct supertypes (Java canonical FQNs, e.g. java.lang.Exception) for class-kind declarations,
@@ -152,7 +223,7 @@ enum class TypeResolutionMode {
 
 @Serializable
 data class TypedAst(
-    val schemaVersion: String = "1.6",
+    val schemaVersion: String = "2.0",
     val generatedBy: String = "kotlin-type-mapper",
     /** Absolute path of the common source-root directory used during analysis.
      *  **Never null.** Empty string (`""`) when analysis was performed in-memory

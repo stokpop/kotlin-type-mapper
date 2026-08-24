@@ -169,8 +169,8 @@ private fun analyzeNamedSources(namedSources: List<NamedSource>, sourceRootPath:
             FileAst(
                 relativePath = src.relativePath,
                 packageFqName = ktFile.packageFqName.asString(),
-                declarations = extractDeclarations(ktFile, bindingContext),
-                calls = extractCallSites(ktFile, bindingContext),
+                declarations = extractDeclarations(ktFile, bindingContext, imports),
+                calls = extractCallSites(ktFile, bindingContext, imports),
                 unresolvedReferences = extractUnresolvedReferences(ktFile, bindingContext, moduleDescriptor),
                 contentHash = src.contentHash,
                 imports = imports,
@@ -183,14 +183,14 @@ private fun analyzeNamedSources(namedSources: List<NamedSource>, sourceRootPath:
         val seedTypes = mutableSetOf<String>()
         for (fileAst in fileAsts) {
             for (call in fileAst.calls) {
-                call.dispatchReceiverType?.let { seedTypes.add(rawTypeName(it)) }
-                call.extensionReceiverType?.let { seedTypes.add(rawTypeName(it)) }
+                call.dispatchReceiverType?.let { seedTypes.add(rawTypeName(it.fqName)) }
+                call.extensionReceiverType?.let { seedTypes.add(rawTypeName(it.fqName)) }
             }
             for (decl in fileAst.declarations) {
                 if (decl.isClassLike()) seedTypes.add(rawTypeName(decl.fqName))
-                decl.returnType?.let { seedTypes.add(rawTypeName(it)) }
-                decl.type?.let { seedTypes.add(rawTypeName(it)) }
-                decl.parameters.forEach { seedTypes.add(rawTypeName(it.type)) }
+                decl.returnType?.let { seedTypes.add(rawTypeName(it.fqName)) }
+                decl.type?.let { seedTypes.add(rawTypeName(it.fqName)) }
+                decl.parameters.forEach { seedTypes.add(rawTypeName(it.type.fqName)) }
                 decl.superTypes.forEach { seedTypes.add(rawTypeName(it)) }
             }
         }

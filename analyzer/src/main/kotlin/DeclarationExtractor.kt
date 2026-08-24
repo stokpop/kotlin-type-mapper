@@ -89,7 +89,7 @@ private fun Annotations.toAstList(): List<AnnotationAst> =
     }
 
 /** Extracts all typed declarations from a single [KtFile] via [BindingContext]. */
-fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<DeclarationAst> {
+fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext, imports: List<String> = emptyList()): List<DeclarationAst> {
     val declarations = mutableListOf<DeclarationAst>()
     val doc = ktFile.viewProvider.document
 
@@ -114,7 +114,10 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     name = enumEntry.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    type = descriptor.containingDeclaration.fqNameSafe.asString(),
+                    type = TypeAst(
+                        fqName = descriptor.containingDeclaration.fqNameSafe.asString(),
+                        simpleName = descriptor.containingDeclaration.name.asString(),
+                    ),
                     annotations = descriptor.annotations.toAstList(),
                     line = lineOf(offset), column = colOf(offset),
                     endLine = endLineOf(enumEntry.textRange.endOffset),
@@ -198,7 +201,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                         name = parameter.name ?: "<anonymous>",
                         fqName = descriptor.fqNameSafe.asString(),
                         containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                        type = descriptor.type.toFqString(),
+                        type = descriptor.type.toTypeAst(imports),
                         line = lineOf(offset), column = colOf(offset),
                         endLine = endLineOf(parameter.textRange.endOffset),
                         endColumn = endColOf(parameter.textRange.endOffset),
@@ -211,7 +214,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                         name = parameter.name ?: "<anonymous>",
                         fqName = descriptor.fqNameSafe.asString(),
                         containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                        type = descriptor.type.toFqString(),
+                        type = descriptor.type.toTypeAst(imports),
                         line = lineOf(offset), column = colOf(offset),
                         endLine = endLineOf(parameter.textRange.endOffset),
                         endColumn = endColOf(parameter.textRange.endOffset),
@@ -233,7 +236,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     name = param.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    type = descriptor.type.toFqString(),
+                    type = descriptor.type.toTypeAst(imports),
                     line = lineOf(offset), column = colOf(offset),
                     endLine = endLineOf(param.textRange.endOffset),
                     endColumn = endColOf(param.textRange.endOffset),
@@ -253,7 +256,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     name = param.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    type = descriptor.type.toFqString(),
+                    type = descriptor.type.toTypeAst(imports),
                     line = lineOf(offset), column = colOf(offset),
                     endLine = endLineOf(param.textRange.endOffset),
                     endColumn = endColOf(param.textRange.endOffset),
@@ -272,7 +275,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     name = entry.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    type = descriptor.type.toFqString(),
+                    type = descriptor.type.toTypeAst(imports),
                     line = lineOf(offset), column = colOf(offset),
                     endLine = endLineOf(entry.textRange.endOffset),
                     endColumn = endColOf(entry.textRange.endOffset),
@@ -291,7 +294,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     name = typeAlias.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    type = descriptor.expandedType.toFqString(),
+                    type = descriptor.expandedType.toTypeAst(imports),
                     typeAliasChain = buildAliasChain(descriptor),
                     line = lineOf(offset), column = colOf(offset),
                     endLine = endLineOf(typeAlias.textRange.endOffset),
@@ -311,9 +314,9 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     name = constructor.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    returnType = descriptor.returnType.toFqString(),
+                    returnType = descriptor.returnType.toTypeAst(imports),
                     parameters = descriptor.valueParameters.map { p ->
-                        ParameterAst(name = p.name.asString(), type = p.type.toFqString())
+                        ParameterAst(name = p.name.asString(), type = p.type.toTypeAst(imports))
                     },
                     annotations = descriptor.annotations.toAstList(),
                     line = lineOf(offset), column = colOf(offset),
@@ -333,9 +336,9 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     name = function.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    returnType = descriptor.returnType?.toFqString() ?: "?",
+                    returnType = descriptor.returnType?.toTypeAst(imports),
                     parameters = descriptor.valueParameters.map { p ->
-                        ParameterAst(name = p.name.asString(), type = p.type.toFqString())
+                        ParameterAst(name = p.name.asString(), type = p.type.toTypeAst(imports))
                     },
                     annotations = descriptor.annotations.toAstList(),
                     line = lineOf(offset), column = colOf(offset),
@@ -355,7 +358,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext): List<De
                     name = property.name ?: "<anonymous>",
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
-                    type = descriptor.type.toFqString(),
+                    type = descriptor.type.toTypeAst(imports),
                     line = lineOf(offset), column = colOf(offset),
                     endLine = endLineOf(property.textRange.endOffset),
                     endColumn = endColOf(property.textRange.endOffset),

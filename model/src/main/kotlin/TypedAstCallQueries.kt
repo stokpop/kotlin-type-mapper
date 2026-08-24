@@ -48,8 +48,8 @@ fun TypedAst.callsMatchingPolymorphic(sig: String): List<CallSiteAst> {
         if (call.matchesSig(sig)) return@filter true
 
         val actualReceivers = listOfNotNull(
-            call.dispatchReceiverType?.substringBefore('<'),
-            call.extensionReceiverType?.substringBefore('<'),
+            call.dispatchReceiverType?.fqName,
+            call.extensionReceiverType?.fqName,
         )
         val receiverIsSubtype = actualReceivers.any { it in subtypes || it == targetReceiver }
         if (!receiverIsSubtype) return@filter false
@@ -62,7 +62,7 @@ fun TypedAst.callsMatchingPolymorphic(sig: String): List<CallSiteAst> {
         if (parsed.paramTypes != null) {
             if (parsed.paramTypes.size != call.argumentTypes.size) return@filter false
             parsed.paramTypes.zip(call.argumentTypes).forEach { (exp, act) ->
-                if (!typeMatches(exp, act)) return@filter false
+                if (!typeMatches(exp, act.toFqString())) return@filter false
             }
         }
 
@@ -85,7 +85,7 @@ fun TypedAst.callsOnReceiver(fqn: String): List<CallSiteAst> {
     val raw = fqn.rawTypeName()
     return calls().filter { call ->
         listOfNotNull(call.dispatchReceiverType, call.extensionReceiverType).any { recv ->
-            typeNamesEquivalent(raw, recv.rawTypeName())
+            typeNamesEquivalent(raw, recv.fqName.rawTypeName())
         }
     }
 }
@@ -100,7 +100,7 @@ fun TypedAst.callsOnReceiverSubtype(fqn: String): List<CallSiteAst> {
     val subtypes = allSubtypesOf(rawFqn)
     return calls().filter { call ->
         listOfNotNull(call.dispatchReceiverType, call.extensionReceiverType).any { recv ->
-            val rawRecv = recv.rawTypeName()
+            val rawRecv = recv.fqName.rawTypeName()
             typeNamesEquivalent(rawFqn, rawRecv) || typeEquivalents(rawRecv).any { it in subtypes }
         }
     }
@@ -112,7 +112,7 @@ fun TypedAst.callsOnReceiverSubtype(fqn: String): List<CallSiteAst> {
  */
 fun TypedAst.callsReturning(fqn: String): List<CallSiteAst> {
     val raw = fqn.rawTypeName()
-    return calls().filter { typeNamesEquivalent(raw, it.returnType.rawTypeName()) }
+    return calls().filter { typeNamesEquivalent(raw, it.returnType.fqName.rawTypeName()) }
 }
 
 /**
@@ -124,7 +124,7 @@ fun TypedAst.callsReturningSubtype(fqn: String): List<CallSiteAst> {
     val rawFqn = fqn.rawTypeName()
     val subtypes = allSubtypesOf(rawFqn)
     return calls().filter { call ->
-        val rawReturn = call.returnType.rawTypeName()
+        val rawReturn = call.returnType.fqName.rawTypeName()
         typeNamesEquivalent(rawFqn, rawReturn) || typeEquivalents(rawReturn).any { it in subtypes }
     }
 }
@@ -135,20 +135,20 @@ fun TypedAst.callsReturningSubtype(fqn: String): List<CallSiteAst> {
  * Compose with any call query: `ast.callsOnReceiver("p.Dog").filter { it.dispatchReceiverIsNullable() }`
  */
 fun CallSiteAst.dispatchReceiverIsNullable(): Boolean =
-    dispatchReceiverType?.endsWith('?') == true
+    dispatchReceiverType?.isNullable == true
 
 /**
  * Returns true if the extension receiver type of this call site is marked nullable (`?`).
  * Returns false when there is no extension receiver or it is non-nullable.
  */
 fun CallSiteAst.extensionReceiverIsNullable(): Boolean =
-    extensionReceiverType?.endsWith('?') == true
+    extensionReceiverType?.isNullable == true
 
 /**
  * Returns true if the return type of this call site is marked nullable (`?`).
  */
 fun CallSiteAst.returnTypeIsNullable(): Boolean =
-    returnType.endsWith('?')
+    returnType.isNullable
 
 /**
  * Returns the FQN of the class being constructed when this is a constructor call site

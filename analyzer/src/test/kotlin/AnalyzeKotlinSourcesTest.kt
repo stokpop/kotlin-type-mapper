@@ -291,7 +291,7 @@ class AnalyzeKotlinSourcesTest {
         assertNotNull(barkCall, "Expected to find bark() call inside with block")
         assertEquals(
             "com.example.Dog",
-            barkCall!!.dispatchReceiverType,
+            barkCall!!.dispatchReceiverType?.toFqString(),
             "dispatchReceiverType must resolve for implicit this inside with block"
         )
         assertEquals(1, ast.callsOnReceiver("com.example.Dog").size,
@@ -340,7 +340,7 @@ class AnalyzeKotlinSourcesTest {
         assertNotNull(barkCall, "Expected to find bark() call inside lambda")
         assertEquals(
             "com.example.Dog",
-            barkCall!!.dispatchReceiverType,
+            barkCall!!.dispatchReceiverType?.toFqString(),
             "dispatchReceiverType for implicit it must resolve to the lambda parameter type"
         )
     }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import nl.stokpop.typemapper.model.CallSiteAst
+import nl.stokpop.typemapper.model.TypeAst
 import nl.stokpop.typemapper.model.matchesSig
 import nl.stokpop.typemapper.model.parseSig
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -21,6 +22,13 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+
+/** Creates a simple [TypeAst] from an FQN string for test convenience. */
+private fun typeOf(fqn: String): TypeAst {
+    val nullable = fqn.endsWith('?')
+    val raw = fqn.trimEnd('?')
+    return TypeAst(fqName = raw, simpleName = raw.substringAfterLast('.'), isNullable = nullable)
+}
 
 class SignatureMatcherTest {
 
@@ -36,10 +44,10 @@ class SignatureMatcherTest {
         column: Int = 1,
     ) = CallSiteAst(
         calleeFqName = calleeFqName,
-        dispatchReceiverType = dispatchReceiverType,
-        extensionReceiverType = extensionReceiverType,
-        returnType = returnType,
-        argumentTypes = argumentTypes,
+        dispatchReceiverType = dispatchReceiverType?.let { typeOf(it) },
+        extensionReceiverType = extensionReceiverType?.let { typeOf(it) },
+        returnType = typeOf(returnType),
+        argumentTypes = argumentTypes.map { typeOf(it) },
         line = line,
         column = column,
     )
