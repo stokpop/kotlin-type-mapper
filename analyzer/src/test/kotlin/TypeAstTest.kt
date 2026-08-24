@@ -245,6 +245,23 @@ class TypeAstTest {
     }
 
     @Test
+    fun `unresolved type using FQN in source preserves fully qualified name`() {
+        val ast = analyzeKotlinSources(mapOf(
+            "Client.kt" to """
+                package com.example
+                val client: org.apache.http.client.HttpClient = TODO()
+            """.trimIndent()
+        ))
+
+        val prop = ast.files.flatMap { it.declarations }.first { it.name == "client" }
+        val type = prop.type!!
+        assertTrue(type.isUnresolved)
+        assertEquals("org.apache.http.client.HttpClient", type.fqName,
+            "FQN used in source should be preserved as-is")
+        assertEquals("HttpClient", type.simpleName)
+    }
+
+    @Test
     fun `unresolved type with single wildcard import reconstructs FQN`() {
         val ast = analyzeKotlinSources(mapOf(
             "Client.kt" to """
