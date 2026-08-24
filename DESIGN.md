@@ -103,3 +103,54 @@ When migrating to K2:
 - Replace `BindingContext` lookups with `KaSession` symbol APIs.
 - The rest of the model (`TypedAst`, `TypeHierarchy`, `SignatureMatcher`) is independent and
   should not need changes.
+
+## 5. TypeAst: structured type representation
+
+### Motivation
+
+Prior to schema v2.0, all type fields were plain `String` values (e.g. `"kotlin.collections.List<kotlin.String>?"`).
+This made it impossible to programmatically distinguish:
+- Resolved from unresolved types
+- Nullable from non-nullable types (without string parsing)
+- Individual type arguments
+
+The `TypeAst` data class replaces all `String` type fields, carrying structured metadata alongside
+the FQN.
+
+### Error type detection and name extraction
+
+When K1 cannot resolve a type reference (missing classpath dependency), it produces an
+**error type** whose `declarationDescriptor` is a special error descriptor (`ErrorUtils.isError()`
+returns `true`). The type constructor's `toString()` varies by Kotlin version:
+
+| Format | Example |
+|--------|---------|
+| `[Error type: Unresolved type for HttpClient` | K2 embeddable 2.x |
+| `[ERROR : HttpClient]` | K1 classic |
+
+`TypeRenderer.extractErrorTypeName()` parses both formats to extract the simple name.
+
+### FQN reconstruction from imports
+
+When only a simple name is available (e.g. `HttpClient`), the renderer attempts to reconstruct
+the fully-qualified name by checking the file's import list. If `import org.apache.http.client.HttpClient`
+is present, the `fqName` is set to `org.apache.http.client.HttpClient`. Otherwise, the simple name
+is used as-is.
+
+### Variance modelling
+
+Kotlin type projections (`out T`, `in T`, `*`) are represented via `TypeArgumentAst.variance`:
+
+| Kotlin syntax | TypeVariance | type |
+|---|---|---|
+| `List<String>` | `INVARIANT` | `TypeAst("kotlin.String", ...)` |
+| `List<out Animal>` | `OUT` | `TypeAst("Animal", ...)` |
+| `MutableList<in String>` | `IN` | `TypeAst("kotlin.String", ...)` |
+| `List<*>` | `STAR` | `null` |
+
+### Backwards compatibility
+
+`TypeAst.toString()` is overridden to return `toFqString()`, which renders the same string
+format as the pre-v2.0 `String` fields. This means string interpolation (`"$returnType"`) and
+logging continue to work transparently. The query layer (`SignatureMatcher`, `CallQueries`)
+internally calls `.toFqString()` or `.fqName` when comparing against pattern strings.

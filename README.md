@@ -114,9 +114,38 @@ ktm query result.json calls-polymorphic "kotlin.collections.Collection#size()"
 ktm query result.json implementors "java.io.Closeable"
 ktm query result.json annotated-with "org.springframework.stereotype.Service"
 ktm query result.json unresolved-references
+ktm query result.json unresolved-types
+ktm query result.json type-arg-uses "com.example.MyEntity"
 ```
 
-All query commands accept `--context/-C <N>` to show ±N source lines around each match (default 3, pass `0` to suppress). `unresolved-references` defaults to `0`.
+All query commands accept `--context/-C <N>` to show ±N source lines around each match (default 3, pass `0` to suppress). `unresolved-references`, `unresolved-types`, and `type-arg-uses` default to `0`.
+
+### Unresolved types
+
+When a dependency jar is missing, K1 cannot resolve the type. The `TypeAst` still carries a best-effort name reconstructed from file imports:
+
+```bash
+# List declarations with unresolved types
+ktm query result.json unresolved-types
+# Client.kt:3:13  property  com.example.client  [HttpClient (fqName: org.apache.http.client.HttpClient)]
+```
+
+### Type argument queries
+
+Find all declarations and call sites where a specific type appears as a generic type argument:
+
+```bash
+# Find all uses of MyEntity in generics (List<MyEntity>, Map<String, MyEntity>, etc.)
+ktm query result.json type-arg-uses "com.example.MyEntity"
+```
+
+### Generic type matching in signatures
+
+Signature patterns support generics with two modes:
+- **Exact**: include type arguments for exact matching  
+  `calls "java.util.stream.Stream<com.example.Foo>#filter(*)"` — only matches `Stream<Foo>`
+- **Erasure**: omit type arguments to match any generic instantiation  
+  `calls "java.util.stream.Stream#filter(*)"` — matches `Stream<Foo>`, `Stream<Bar>`, etc.
 
 ### Nullable types
 
@@ -234,20 +263,31 @@ ast.implementorsOf("java.io.Closeable").forEach { println(it) }
 ast.declarationsAnnotatedWith("kotlin.Deprecated").forEach { println(it) }
 
 // Receiver types explained:
-//   dispatchReceiverType  — the object a *member* method is called on
-//                           dog.bark()        → dispatchReceiverType = "com.example.Dog"
-//                           dog?.bark()       → dispatchReceiverType = "com.example.Dog?"
-//   extensionReceiverType — the object an *extension* function is called on
-//                           dog.ext()         → extensionReceiverType = "com.example.Dog"
+//   dispatchReceiverType  — the object a *member* method is called on (TypeAst?)
+//                           dog.bark()        → dispatchReceiverType.fqName = "com.example.Dog"
+//                           dog?.bark()       → dispatchReceiverType.isNullable = true
+//   extensionReceiverType — the object an *extension* function is called on (TypeAst?)
+//                           dog.ext()         → extensionReceiverType.fqName = "com.example.Dog"
 //                                               dispatchReceiverType  = null
-//   returnType            — what the callee declares as its return type
-//                           fun bark(): Dog?  → returnType = "com.example.Dog?"
+//   returnType            — what the callee declares as its return type (TypeAst)
+//                           fun bark(): Dog?  → returnType.fqName = "com.example.Dog", isNullable = true
+//
+// TypeAst fields: fqName, simpleName, isNullable, isUnresolved, typeArguments
+// TypeAst.toFqString() renders back to the legacy string format (e.g. "kotlin.collections.List<kotlin.String>?")
 //
 // Standard queries strip ? before comparison (match both nullable and non-null).
 // Use predicates to filter by nullability:
 ast.callsOnReceiver("com.example.Dog")
     .filter { it.dispatchReceiverIsNullable() }   // only dog?.bark() safe-call sites
     .filter { it.returnTypeIsNullable() }          // only calls that may return null
+
+// Type-argument queries: find all uses of a type as a generic argument
+ast.declarationsWithTypeArgument("com.example.MyEntity")  // properties like List<MyEntity>
+ast.callsWithTypeArgument("com.example.MyEntity")         // calls returning/receiving List<MyEntity>
+
+// Unresolved types: access best-effort name for types the compiler couldn't resolve
+val unresolved = ast.declarations().filter { it.type?.isUnresolved == true }
+unresolved.forEach { println("${it.fqName}: ${it.type?.simpleName} (fqn: ${it.type?.fqName})") }
 
 // Type aliases — K1 expands aliases in call site types; use alias-aware variants or expandAlias()
 // typealias MyDog = Dog  →  dispatchReceiverType is "com.example.Dog", not "com.example.MyDog"
@@ -263,7 +303,7 @@ ast.typeAliasChainOf("com.example.A")                  // -> ["com.example.A", "
 
 ```json
 {
-  "schemaVersion": "1.3",
+  "schemaVersion": "2.0",
   "generatedBy": "kotlin-type-mapper",
   "sourceRoot": "/absolute/path/to/src/main/kotlin",
   "typeHierarchy": { "kotlin.collections.List": ["kotlin.collections.Collection", "kotlin.Any"] },
@@ -276,17 +316,38 @@ ast.typeAliasChainOf("com.example.A")                  // -> ["com.example.A", "
           "kind": "function",
           "name": "greet",
           "fqName": "com.example.greet",
-          "returnType": "kotlin.String",
+          "returnType": {
+            "fqName": "kotlin.String",
+            "simpleName": "String",
+            "isNullable": false,
+            "isUnresolved": false,
+            "typeArguments": []
+          },
           "annotations": [],
           "line": 5, "column": 1
+        },
+        {
+          "kind": "property",
+          "name": "items",
+          "fqName": "com.example.items",
+          "type": {
+            "fqName": "kotlin.collections.List",
+            "simpleName": "List",
+            "isNullable": false,
+            "isUnresolved": false,
+            "typeArguments": [
+              { "variance": "invariant", "type": { "fqName": "kotlin.String", "simpleName": "String", "isNullable": false, "isUnresolved": false, "typeArguments": [] } }
+            ]
+          },
+          "line": 7, "column": 1
         }
       ],
       "calls": [
         {
           "calleeFqName": "kotlin.text.trim",
-          "dispatchReceiverType": "kotlin.String",
-          "extensionReceiverType": null,
-          "returnType": "kotlin.String",
+          "dispatchReceiverType": null,
+          "extensionReceiverType": { "fqName": "kotlin.String", "simpleName": "String", "isNullable": false, "isUnresolved": false, "typeArguments": [] },
+          "returnType": { "fqName": "kotlin.String", "simpleName": "String", "isNullable": false, "isUnresolved": false, "typeArguments": [] },
           "argumentTypes": [],
           "line": 8, "column": 12
         }
@@ -301,6 +362,24 @@ ast.typeAliasChainOf("com.example.A")                  // -> ["com.example.A", "
   ]
 }
 ```
+
+### TypeAst structure
+
+All type fields (`returnType`, `type`, `dispatchReceiverType`, `extensionReceiverType`, `argumentTypes`, parameter types) use the structured `TypeAst` format:
+
+| Field | Type | Description |
+|---|---|---|
+| `fqName` | String | Fully-qualified name; best-effort from imports when unresolved |
+| `simpleName` | String | Short class name as written in source |
+| `isNullable` | Boolean | True when marked with `?` |
+| `isUnresolved` | Boolean | True when the type could not be resolved (missing jar) |
+| `typeArguments` | List | Generic type arguments with variance |
+
+Each type argument has:
+| Field | Type | Description |
+|---|---|---|
+| `variance` | Enum | `invariant`, `out`, `in`, or `star` |
+| `type` | TypeAst? | The projected type (null for star projections) |
 
 ## Architecture
 

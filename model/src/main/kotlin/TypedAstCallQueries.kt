@@ -188,3 +188,49 @@ fun TypedAst.constructorCallsOfSubtype(fqn: String): List<CallSiteAst> {
         typeNamesEquivalent(rawFqn, constructed) || typeEquivalents(constructed).any { it in subtypes }
     }
 }
+
+// ── Type-argument queries ─────────────────────────────────────────────────────
+
+/**
+ * Returns true if [typeAst] or any of its (nested) type arguments has an [TypeAst.fqName]
+ * that matches [fqn] (using Java↔Kotlin name equivalence).
+ */
+private fun typeContainsArgument(typeAst: TypeAst?, fqn: String): Boolean {
+    if (typeAst == null) return false
+    for (arg in typeAst.typeArguments) {
+        val argType = arg.type ?: continue
+        if (typeNamesEquivalent(fqn, argType.fqName)) return true
+        if (typeContainsArgument(argType, fqn)) return true
+    }
+    return false
+}
+
+/**
+ * Returns all declarations where [fqn] appears as a type argument in the declaration's
+ * `type`, `returnType`, or any parameter type. Searches type arguments recursively.
+ *
+ * Example: `declarationsWithTypeArgument("com.example.MyType")` finds properties of type
+ * `List<MyType>`, functions returning `Map<String, MyType>`, etc.
+ */
+fun TypedAst.declarationsWithTypeArgument(fqn: String): List<DeclarationAst> =
+    declarations().filter { decl ->
+        typeContainsArgument(decl.type, fqn)
+            || typeContainsArgument(decl.returnType, fqn)
+            || decl.parameters.any { typeContainsArgument(it.type, fqn) }
+    }
+
+/**
+ * Returns all call sites where [fqn] appears as a type argument in the call's
+ * `returnType`, `dispatchReceiverType`, `extensionReceiverType`, or any argument type.
+ * Searches type arguments recursively.
+ *
+ * Example: `callsWithTypeArgument("com.example.MyType")` finds calls returning `List<MyType>`,
+ * calls on `List<MyType>` receivers, etc.
+ */
+fun TypedAst.callsWithTypeArgument(fqn: String): List<CallSiteAst> =
+    calls().filter { call ->
+        typeContainsArgument(call.returnType, fqn)
+            || typeContainsArgument(call.dispatchReceiverType, fqn)
+            || typeContainsArgument(call.extensionReceiverType, fqn)
+            || call.argumentTypes.any { typeContainsArgument(it, fqn) }
+    }
