@@ -15,6 +15,7 @@
  */
 import nl.stokpop.typemapper.model.CallSiteAst
 import nl.stokpop.typemapper.model.FileAst
+import nl.stokpop.typemapper.model.TypeAst
 import nl.stokpop.typemapper.model.TypedAst
 import nl.stokpop.typemapper.model.callsMatching
 import nl.stokpop.typemapper.model.callsOnReceiver
@@ -31,6 +32,13 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
+/** Creates a simple [TypeAst] from an FQN string for test convenience. */
+private fun typeOf(fqn: String): TypeAst {
+    val nullable = fqn.endsWith('?')
+    val raw = fqn.trimEnd('?')
+    return TypeAst(fqName = raw, simpleName = raw.substringAfterLast('.'), isNullable = nullable)
+}
+
 class CallSiteQueriesTest {
 
     private fun call(
@@ -40,9 +48,9 @@ class CallSiteQueriesTest {
         returnType: String = "kotlin.Unit",
     ) = CallSiteAst(
         calleeFqName = callee,
-        dispatchReceiverType = dispatch,
-        extensionReceiverType = extension,
-        returnType = returnType,
+        dispatchReceiverType = dispatch?.let { typeOf(it) },
+        extensionReceiverType = extension?.let { typeOf(it) },
+        returnType = typeOf(returnType),
         line = 1, column = 1,
     )
 

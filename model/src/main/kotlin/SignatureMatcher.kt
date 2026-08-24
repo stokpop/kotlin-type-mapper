@@ -158,8 +158,8 @@ fun CallSiteAst.matchesSig(sig: String): Boolean {
         val constructorClass = constructorClassFqn()
         val calleeClass = if (dispatchReceiverType == null && extensionReceiverType == null && constructorClass == null)
             calleeFqName.substringBeforeLast('.') else null
-        val matches = typeMatches(parsed.receiverType, dispatchReceiverType)
-                   || typeMatches(parsed.receiverType, extensionReceiverType)
+        val matches = typeMatches(parsed.receiverType, dispatchReceiverType?.toFqString())
+                   || typeMatches(parsed.receiverType, extensionReceiverType?.toFqString())
                    || (constructorClass != null && typeMatches(parsed.receiverType, constructorClass))
                    || (calleeClass != null && typeMatches(parsed.receiverType, calleeClass))
         if (!matches) return false
@@ -169,7 +169,7 @@ fun CallSiteAst.matchesSig(sig: String): Boolean {
     if (parsed.paramTypes != null) {
         if (parsed.paramTypes.size != argumentTypes.size) return false
         for ((expected, actual) in parsed.paramTypes.zip(argumentTypes)) {
-            if (!typeMatches(expected, actual)) return false
+            if (!typeMatches(expected, actual.toFqString())) return false
         }
     }
 
@@ -213,8 +213,8 @@ fun CallSiteAst.matchesSigEquivalent(sig: String): Boolean {
         val constructorClass = constructorClassFqn()
         val calleeClass = if (dispatchReceiverType == null && extensionReceiverType == null && constructorClass == null)
             calleeFqName.substringBeforeLast('.') else null
-        val matches = typeMatchesEquivalent(parsed.receiverType, dispatchReceiverType)
-                   || typeMatchesEquivalent(parsed.receiverType, extensionReceiverType)
+        val matches = typeMatchesEquivalent(parsed.receiverType, dispatchReceiverType?.toFqString())
+                   || typeMatchesEquivalent(parsed.receiverType, extensionReceiverType?.toFqString())
                    || (constructorClass != null && typeMatchesEquivalent(parsed.receiverType, constructorClass))
                    || (calleeClass != null && typeMatchesEquivalent(parsed.receiverType, calleeClass))
         if (!matches) return false
@@ -223,7 +223,7 @@ fun CallSiteAst.matchesSigEquivalent(sig: String): Boolean {
     if (parsed.paramTypes != null) {
         if (parsed.paramTypes.size != argumentTypes.size) return false
         for ((expected, actual) in parsed.paramTypes.zip(argumentTypes)) {
-            if (!typeMatchesEquivalent(expected, actual)) return false
+            if (!typeMatchesEquivalent(expected, actual.toFqString())) return false
         }
     }
 
@@ -269,8 +269,8 @@ fun CallSiteAst.matchesSigPolymorphic(sig: String, isSubtype: java.util.function
         val calleeClass = if (dispatchReceiverType == null && extensionReceiverType == null && constructorClass == null)
             calleeFqName.substringBeforeLast('.') else null
         val recv = parsed.receiverType
-        val matches = (dispatchReceiverType != null   && isSubtype.test(recv, dispatchReceiverType))
-                   || (extensionReceiverType != null  && isSubtype.test(recv, extensionReceiverType))
+        val matches = (dispatchReceiverType != null   && isSubtype.test(recv, dispatchReceiverType.toFqString()))
+                   || (extensionReceiverType != null  && isSubtype.test(recv, extensionReceiverType.toFqString()))
                    || (constructorClass != null       && isSubtype.test(recv, constructorClass))
                    || (calleeClass != null            && isSubtype.test(recv, calleeClass))
         if (!matches) return false
@@ -280,7 +280,7 @@ fun CallSiteAst.matchesSigPolymorphic(sig: String, isSubtype: java.util.function
     if (parsed.paramTypes != null) {
         if (parsed.paramTypes.size != argumentTypes.size) return false
         for ((expected, actual) in parsed.paramTypes.zip(argumentTypes)) {
-            if (!typeMatchesEquivalent(expected, actual)) return false
+            if (!typeMatchesEquivalent(expected, actual.toFqString())) return false
         }
     }
 

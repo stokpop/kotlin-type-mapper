@@ -30,7 +30,9 @@ import nl.stokpop.typemapper.model.TypedAst
 import nl.stokpop.typemapper.model.TypedAstJson
 import nl.stokpop.typemapper.model.callsMatchingLocated
 import nl.stokpop.typemapper.model.callsMatchingPolymorphicLocated
+import nl.stokpop.typemapper.model.callsWithTypeArgument
 import nl.stokpop.typemapper.model.declarationsAnnotatedWith
+import nl.stokpop.typemapper.model.declarationsWithTypeArgument
 import nl.stokpop.typemapper.model.dispatchReceiverIsNullable
 import nl.stokpop.typemapper.model.expandAlias
 import nl.stokpop.typemapper.model.extensionReceiverIsNullable
@@ -179,5 +181,64 @@ class UnresolvedReferencesCommand : CliktCommand("unresolved-references") {
             }
         }
         if (count == 0) echo("No unresolved references found.")
+    }
+}
+
+class UnresolvedTypesCommand : CliktCommand("unresolved-types") {
+    override fun help(context: Context) =
+        "List declarations whose type, return type, or parameter types could not be resolved (missing jar)."
+
+    val ast by requireObject<TypedAst>()
+    val ctx by option("--context", "-C", help = "Source lines of context (default: 0, off)").int()
+
+    override fun run() {
+        var count = 0
+        for (file in ast.files) {
+            for (decl in file.declarations) {
+                val unresolvedTypes = buildList {
+                    decl.type?.takeIf { it.isUnresolved }?.let { add(it) }
+                    decl.returnType?.takeIf { it.isUnresolved }?.let { add(it) }
+                    decl.parameters.filter { it.type.isUnresolved }.forEach { add(it.type) }
+                }
+                if (unresolvedTypes.isNotEmpty()) {
+                    val loc = "${file.relativePath}:${decl.line}:${decl.column}"
+                    val types = unresolvedTypes.joinToString(", ") { "${it.simpleName} (fqName: ${it.fqName})" }
+                    echo("$loc  ${decl.kind}  ${decl.fqName}  [$types]")
+                    echoContext(ast.sourceRoot, file.relativePath, decl.line, ctx ?: 0)
+                    count++
+                }
+            }
+        }
+        if (count == 0) echo("No unresolved types found.")
+    }
+}
+
+class TypeArgUsesCommand : CliktCommand("type-arg-uses") {
+    override fun help(context: Context) =
+        "Find declarations and call sites where FQN appears as a type argument (e.g. List<FQN>, Map<_, FQN>)."
+
+    val ast by requireObject<TypedAst>()
+    val fqn by argument("FQN", help = "Fully-qualified type name to search for in type arguments")
+    val ctx by option("--context", "-C", help = "Source lines of context (default: 0, off)").int()
+
+    override fun run() {
+        val matchedDecls = ast.declarationsWithTypeArgument(fqn)
+        val matchedCalls = ast.callsWithTypeArgument(fqn)
+        var count = 0
+        for (file in ast.files) {
+            for (decl in matchedDecls.filter { d ->
+                file.declarations.any { it.fqName == d.fqName }
+            }) {
+                echo(decl.format(file.relativePath))
+                echoContext(ast.sourceRoot, file.relativePath, decl.line, ctx ?: 0)
+                count++
+            }
+            for (call in matchedCalls.filter { c -> c in file.calls }) {
+                echo(call.format(file.relativePath))
+                echoContext(ast.sourceRoot, file.relativePath, call.line, ctx ?: 0)
+                count++
+            }
+        }
+        if (count == 0) echo("No uses of '$fqn' as a type argument found.")
     }
 }

@@ -30,6 +30,8 @@ fun main(args: Array<String>) {
                 AnnotatedWithCommand(),
                 ResolveAliasCommand(),
                 UnresolvedReferencesCommand(),
+                UnresolvedTypesCommand(),
+                TypeArgUsesCommand(),
             )
         )
         .main(args)

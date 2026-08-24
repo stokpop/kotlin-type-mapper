@@ -47,7 +47,7 @@ private fun shouldSynthesizeJavaCallSite(
 }
 
 /** Extracts all resolved call sites from a single [KtFile] via [BindingContext]. */
-fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallSiteAst> {
+fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext, imports: List<String> = emptyList()): List<CallSiteAst> {
     val calls = mutableListOf<CallSiteAst>()
     val doc = ktFile.viewProvider.document
 
@@ -65,35 +65,31 @@ fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallS
             val resolvedCall = expression.getResolvedCall(bindingContext) ?: return
             val descriptor = resolvedCall.resultingDescriptor
             val offset = expression.textRange.startOffset
-            val extReceiverType = resolvedCall.extensionReceiver?.type?.toFqString()
-            val allArgTypes = descriptor.valueParameters.map { it.type.toFqString() }
+            val extReceiverType = resolvedCall.extensionReceiver?.type?.toTypeAst(imports)
+            val allArgTypes = descriptor.valueParameters.map { it.type.toTypeAst(imports) }
+            val unitType = TypeAst(fqName = "kotlin.Unit", simpleName = "Unit")
             val endOffset = expression.textRange.endOffset
             calls.add(
                 CallSiteAst(
                     calleeFqName = descriptor.fqNameSafe.asString(),
-                    dispatchReceiverType = resolvedCall.dispatchReceiver?.type?.toFqString(),
+                    dispatchReceiverType = resolvedCall.dispatchReceiver?.type?.toTypeAst(imports),
                     extensionReceiverType = extReceiverType,
-                    returnType = descriptor.returnType?.toFqString() ?: "kotlin.Unit",
+                    returnType = descriptor.returnType?.toTypeAst(imports) ?: unitType,
                     argumentTypes = allArgTypes,
                     line = lineOf(offset), column = colOf(offset),
                     endLine = endLineOf(endOffset), endColumn = endColOf(endOffset),
                 )
             )
-            // For Kotlin stdlib extension functions on Java-mapped types (e.g. kotlin.text.indexOf
-            // extending kotlin.String), also emit a synthetic call site that looks like a plain
-            // Java dispatch-receiver call using only the required (non-default) parameters.
-            // This lets matchesSig('java.lang.String#indexOf(java.lang.String)') work even though
-            // the Kotlin compiler resolves the call with extra default params.
-            if (shouldSynthesizeJavaCallSite(extReceiverType, descriptor.fqNameSafe.asString())) {
+            if (shouldSynthesizeJavaCallSite(extReceiverType?.fqName, descriptor.fqNameSafe.asString())) {
                 val requiredArgTypes = descriptor.valueParameters
                     .filter { !it.declaresDefaultValue() }
-                    .map { it.type.toFqString() }
+                    .map { it.type.toTypeAst(imports) }
                 calls.add(
                     CallSiteAst(
                         calleeFqName = descriptor.fqNameSafe.asString(),
                         dispatchReceiverType = extReceiverType,
                         extensionReceiverType = null,
-                        returnType = descriptor.returnType?.toFqString() ?: "kotlin.Unit",
+                        returnType = descriptor.returnType?.toTypeAst(imports) ?: unitType,
                         argumentTypes = requiredArgTypes,
                         line = lineOf(offset), column = colOf(offset),
                         endLine = endLineOf(expression.textRange.endOffset),
@@ -103,18 +99,13 @@ fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallS
             }
         }
 
-        // Property reads: list.size, map.keys, string.length, etc.
-        // Captured as call sites with empty argumentTypes so signatures like
-        // "kotlin.collections.Collection#size()" and "_#size()" match them.
         override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
             super.visitSimpleNameExpression(expression)
-            // Skip names that are the callee of a call expression (already captured above).
             if (expression.parent is KtCallExpression) return
             val resolvedCall = expression.getResolvedCall(bindingContext) ?: return
             val descriptor = resolvedCall.resultingDescriptor as? PropertyDescriptor ?: return
-            // Only record reads with a dispatch or extension receiver (i.e. qualified access).
-            val dispatch   = resolvedCall.dispatchReceiver?.type?.toFqString()
-            val extension  = resolvedCall.extensionReceiver?.type?.toFqString()
+            val dispatch   = resolvedCall.dispatchReceiver?.type?.toTypeAst(imports)
+            val extension  = resolvedCall.extensionReceiver?.type?.toTypeAst(imports)
             if (dispatch == null && extension == null) return
             val offset = expression.textRange.startOffset
             calls.add(
@@ -122,7 +113,7 @@ fun extractCallSites(ktFile: KtFile, bindingContext: BindingContext): List<CallS
                     calleeFqName = descriptor.fqNameSafe.asString(),
                     dispatchReceiverType = dispatch,
                     extensionReceiverType = extension,
-                    returnType = descriptor.type.toFqString(),
+                    returnType = descriptor.type.toTypeAst(imports),
                     argumentTypes = emptyList(),
                     line = lineOf(offset), column = colOf(offset),
                     endLine = endLineOf(expression.textRange.endOffset),
