@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.types.error.ErrorUtils
  * `java.io.Serializable`).  This also handles `TypeAliasDescriptor` entries that survive
  * without an `AbbreviatedType` wrapper.
  */
-fun KotlinType.toFqString(): String = toTypeAst().toFqString()
+fun KotlinType.toFqString(imports: List<String> = emptyList()): String = toTypeAst(imports).toFqString()
 
 /**
  * Converts a [KotlinType] to a structured [TypeAst] representation.
@@ -57,10 +57,12 @@ fun KotlinType.toTypeAst(imports: List<String> = emptyList()): TypeAst {
         val rawText = expanded.constructor.toString()
         val simpleName = extractErrorTypeName(rawText)
         if (simpleName == null) {
-            // Cannot extract a meaningful name — return a placeholder
+            // Cannot extract a meaningful name — use sanitized constructor text as placeholder
+            val placeholder = rawText.removeSurrounding("[", "]")
+                .removeSurrounding("<", ">").trim().ifEmpty { "UnknownType" }
             return TypeAst(
-                fqName = "",
-                simpleName = "",
+                fqName = placeholder,
+                simpleName = placeholder,
                 isNullable = isMarkedNullable,
                 isUnresolved = true,
             )

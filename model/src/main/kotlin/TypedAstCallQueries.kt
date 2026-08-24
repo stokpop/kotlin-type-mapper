@@ -192,8 +192,9 @@ fun TypedAst.constructorCallsOfSubtype(fqn: String): List<CallSiteAst> {
 // ── Type-argument queries ─────────────────────────────────────────────────────
 
 /**
- * Returns true if [typeAst] or any of its (nested) type arguments has an [TypeAst.fqName]
+ * Returns true if any (nested) type argument of [typeAst] has an [TypeAst.fqName]
  * that matches [fqn] (using Java↔Kotlin name equivalence).
+ * Does NOT check [typeAst] itself — only its type arguments recursively.
  */
 private fun typeContainsArgument(typeAst: TypeAst?, fqn: String): Boolean {
     if (typeAst == null) return false

@@ -222,16 +222,18 @@ class TypeArgUsesCommand : CliktCommand("type-arg-uses") {
     val ctx by option("--context", "-C", help = "Source lines of context (default: 0, off)").int()
 
     override fun run() {
+        val matchedDecls = ast.declarationsWithTypeArgument(fqn)
+        val matchedCalls = ast.callsWithTypeArgument(fqn)
         var count = 0
         for (file in ast.files) {
-            for (decl in ast.declarationsWithTypeArgument(fqn).filter { d ->
+            for (decl in matchedDecls.filter { d ->
                 file.declarations.any { it.fqName == d.fqName }
             }) {
                 echo(decl.format(file.relativePath))
                 echoContext(ast.sourceRoot, file.relativePath, decl.line, ctx ?: 0)
                 count++
             }
-            for (call in ast.callsWithTypeArgument(fqn).filter { c -> c in file.calls }) {
+            for (call in matchedCalls.filter { c -> c in file.calls }) {
                 echo(call.format(file.relativePath))
                 echoContext(ast.sourceRoot, file.relativePath, call.line, ctx ?: 0)
                 count++

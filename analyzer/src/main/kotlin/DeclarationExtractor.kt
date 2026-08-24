@@ -57,7 +57,7 @@ private fun KtDeclaration.startOffsetSkippingKdoc(): Int =
  * Returns a list: [aliasFqn, ..., concreteFqn].
  * Iterates one step at a time via underlyingType to capture intermediate aliases.
  */
-private fun buildAliasChain(descriptor: TypeAliasDescriptor): List<String> {
+private fun buildAliasChain(descriptor: TypeAliasDescriptor, imports: List<String> = emptyList()): List<String> {
     val chain = mutableListOf(descriptor.fqNameSafe.asString())
     var current: TypeAliasDescriptor = descriptor
     while (true) {
@@ -72,7 +72,7 @@ private fun buildAliasChain(descriptor: TypeAliasDescriptor): List<String> {
             chain.add(nextAlias.fqNameSafe.asString())
             current = nextAlias
         } else {
-            chain.add(underlying.toFqString())
+            chain.add(underlying.toFqString(imports))
             break
         }
     }
@@ -141,7 +141,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext, imports:
                 else                 -> DeclarationKind.CLASS
             }
             val superTypes = descriptor.typeConstructor.supertypes
-                .map { it.toFqString().substringBefore('?') }
+                .map { it.toFqString(imports).substringBefore('?') }
             val textualSuperTypes = klass.superTypeListEntries
                 .mapNotNull { it.typeReference?.text?.substringBefore('<')?.trim() }
             declarations.add(
@@ -165,7 +165,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext, imports:
             val descriptor = bindingContext[BindingContext.CLASS, declaration] ?: return
             val offset = declaration.startOffsetSkippingKdoc()
             val superTypes = descriptor.typeConstructor.supertypes
-                .map { it.toFqString().substringBefore('?') }
+                .map { it.toFqString(imports).substringBefore('?') }
             val textualSuperTypes = declaration.superTypeListEntries
                 .mapNotNull { it.typeReference?.text?.substringBefore('<')?.trim() }
             declarations.add(
@@ -295,7 +295,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext, imports:
                     fqName = descriptor.fqNameSafe.asString(),
                     containingDeclaration = descriptor.containingDeclaration.fqNameSafe.asString(),
                     type = descriptor.expandedType.toTypeAst(imports),
-                    typeAliasChain = buildAliasChain(descriptor),
+                    typeAliasChain = buildAliasChain(descriptor, imports),
                     line = lineOf(offset), column = colOf(offset),
                     endLine = endLineOf(typeAlias.textRange.endOffset),
                     endColumn = endColOf(typeAlias.textRange.endOffset),
