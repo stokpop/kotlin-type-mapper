@@ -133,6 +133,19 @@ class IsSubtypeOfTest {
         assertTrue(isTypeEquivalent("com.example.Foo", "com.example.Foo"))
     }
 
+    @Test
+    fun `isTypeEquivalent ignores nullable marker`() {
+        assertTrue(isTypeEquivalent("kotlin.String", "kotlin.String?"))
+        assertTrue(isTypeEquivalent("kotlin.String?", "kotlin.String"))
+        assertTrue(isTypeEquivalent("kotlin.String?", "kotlin.String?"))
+    }
+
+    @Test
+    fun `isTypeEquivalent ignores nullable marker across kotlin-java pairs`() {
+        assertTrue(isTypeEquivalent("java.lang.String", "kotlin.String?"))
+        assertTrue(isTypeEquivalent("kotlin.String?", "java.lang.String"))
+    }
+
     // --- isSubtypeOf Object/Any short-circuit ---
 
     @Test
