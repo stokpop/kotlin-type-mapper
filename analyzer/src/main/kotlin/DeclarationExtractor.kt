@@ -193,7 +193,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext, imports:
         }
 
         // Primary constructor val/var parameters become class properties;
-        // lambda { x: Foo -> ... } explicitly typed parameters also captured here.
+        // lambda parameters, explicitly typed { x: Foo -> ... } or inferred { x -> ... }, also captured here.
         override fun visitParameter(parameter: KtParameter) {
             super.visitParameter(parameter)
             val offset = parameter.textRange.startOffset
@@ -211,7 +211,10 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext, imports:
                         endColumn = endColOf(parameter.textRange.endOffset),
                     ))
                 }
-                parameter.typeReference != null && parameter.parent?.parent is KtFunctionLiteral -> {
+                // Skip an untyped destructuring parameter "{ (a, b) -> }": it has no name of its
+                // own and its components are emitted as DESTRUCTURED_VARIABLE entries.
+                parameter.parent?.parent is KtFunctionLiteral &&
+                    (parameter.typeReference != null || parameter.destructuringDeclaration == null) -> {
                     val descriptor = bindingContext[BindingContext.VALUE_PARAMETER, parameter] ?: return
                     declarations.add(DeclarationAst(
                         kind = DeclarationKind.LAMBDA_PARAMETER,

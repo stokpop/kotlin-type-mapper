@@ -20,6 +20,7 @@ import nl.stokpop.typemapper.model.calls
 import nl.stokpop.typemapper.model.callsOnReceiver
 import nl.stokpop.typemapper.model.callsMatching
 import nl.stokpop.typemapper.model.implementorsOf
+import nl.stokpop.typemapper.model.DeclarationKind
 import nl.stokpop.typemapper.model.TypeResolutionMode
 import nl.stokpop.typemapper.model.isTypeKnown
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -343,5 +344,48 @@ class AnalyzeKotlinSourcesTest {
             barkCall!!.dispatchReceiverType?.toFqString(),
             "dispatchReceiverType for implicit it must resolve to the lambda parameter type"
         )
+    }
+
+    @Test
+    fun `lambda parameters are emitted with explicit and inferred types`() {
+        val src = """
+            package com.example
+
+            fun test(items: List<String>, numbers: List<Int>) {
+                items.forEach { typed: String -> }
+                numbers.forEach { inferred -> }
+            }
+        """.trimIndent()
+
+        val ast = analyzeKotlinSources(mapOf("Lambdas.kt" to src))
+        val params = ast.files.flatMap { it.declarations }
+            .filter { it.kind == DeclarationKind.LAMBDA_PARAMETER }
+
+        val typed = params.firstOrNull { it.name == "typed" }
+        val inferred = params.firstOrNull { it.name == "inferred" }
+        assertNotNull(typed, "explicitly typed lambda parameter must be emitted")
+        assertNotNull(inferred, "lambda parameter with inferred type must be emitted")
+        assertEquals("kotlin.String", typed!!.type?.toFqString())
+        assertEquals("kotlin.Int", inferred!!.type?.toFqString())
+        assertEquals(5, inferred.line)
+    }
+
+    @Test
+    fun `destructured lambda parameter is not emitted as anonymous lambda parameter`() {
+        val src = """
+            package com.example
+
+            fun test(pairs: List<Pair<Int, String>>) {
+                pairs.forEach { (a, b) -> }
+            }
+        """.trimIndent()
+
+        val ast = analyzeKotlinSources(mapOf("Destructured.kt" to src))
+        val decls = ast.files.flatMap { it.declarations }
+
+        assertTrue(decls.none { it.kind == DeclarationKind.LAMBDA_PARAMETER },
+            "components are DESTRUCTURED_VARIABLE entries, the destructuring parameter has no name of its own")
+        assertEquals(listOf("a", "b"),
+            decls.filter { it.kind == DeclarationKind.DESTRUCTURED_VARIABLE }.map { it.name })
     }
 }
