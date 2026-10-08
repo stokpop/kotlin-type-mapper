@@ -17,6 +17,8 @@ package nl.stokpop.typemapper.analyzer
 
 import nl.stokpop.typemapper.model.*
 
+import org.jetbrains.kotlin.com.intellij.psi.PsiComment
+import org.jetbrains.kotlin.com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
@@ -36,19 +38,21 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 /**
  * Returns the start offset of a declaration, skipping any leading KDoc comment.
- * Uses [KtDeclaration.modifierList] when present, otherwise the first non-KDoc
- * non-blank child, then [KtNamedDeclaration.nameIdentifier] as a final fallback
- * (needed for KtEnumEntry: its identifier is not a direct PSI child, so only
- * KDoc appears in children, and textRange.startOffset would include the KDoc).
+ * Uses [KtDeclaration.modifierList] when present, otherwise the first child that
+ * is not KDoc, a comment or whitespace, then [KtNamedDeclaration.nameIdentifier]
+ * as a final fallback. All children are considered, including leaf tokens such as
+ * the `val` keyword: `PsiElement.children` skips leaves, which made a property
+ * start at its type reference or initializer.
  */
 private fun KtDeclaration.startOffsetSkippingKdoc(): Int =
     modifierList?.textRange?.startOffset
-        ?: children.firstOrNull { it !is KDoc && it.text.isNotBlank() }?.textRange?.startOffset
+        ?: allChildren.firstOrNull { it !is KDoc && it !is PsiComment && it !is PsiWhiteSpace }?.textRange?.startOffset
         ?: (this as? org.jetbrains.kotlin.psi.KtNamedDeclaration)?.nameIdentifier?.textRange?.startOffset
         ?: textRange.startOffset
 
@@ -189,7 +193,7 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext, imports:
         }
 
         // Primary constructor val/var parameters become class properties;
-        // lambda { x: Foo -> ... } explicitly typed parameters also captured here.
+        // lambda parameters, explicitly typed { x: Foo -> ... } or inferred { x -> ... }, also captured here.
         override fun visitParameter(parameter: KtParameter) {
             super.visitParameter(parameter)
             val offset = parameter.textRange.startOffset
@@ -207,7 +211,10 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext, imports:
                         endColumn = endColOf(parameter.textRange.endOffset),
                     ))
                 }
-                parameter.typeReference != null && parameter.parent?.parent is KtFunctionLiteral -> {
+                // Skip an untyped destructuring parameter "{ (a, b) -> }": it has no name of its
+                // own and its components are emitted as DESTRUCTURED_VARIABLE entries.
+                parameter.parent?.parent is KtFunctionLiteral &&
+                    (parameter.typeReference != null || parameter.destructuringDeclaration == null) -> {
                     val descriptor = bindingContext[BindingContext.VALUE_PARAMETER, parameter] ?: return
                     declarations.add(DeclarationAst(
                         kind = DeclarationKind.LAMBDA_PARAMETER,

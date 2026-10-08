@@ -85,6 +85,47 @@ class LineNumberSemanticsTest {
     }
 
     @Test
+    fun `property position starts at val keyword not at initializer`() {
+        val src = """
+            package com.example
+
+            fun test() {
+                val myVar = "hello"
+                val requestedData =
+                    "carrot"
+            }
+        """.trimIndent()
+
+        val ast = analyzeKotlinSources(mapOf("Props.kt" to src))
+        val decls = ast.files.flatMap { it.declarations }
+        val myVar = decls.first { it.name == "myVar" }
+        val requestedData = decls.first { it.name == "requestedData" }
+
+        assertEquals(4, myVar.line, "val keyword of myVar is on line 4")
+        assertEquals(5, myVar.column, "val keyword of myVar is at column 5, not at the initializer")
+        assertEquals(5, requestedData.line, "val keyword of requestedData is on line 5, not the initializer line")
+        assertEquals(5, requestedData.column, "val keyword of requestedData is at column 5")
+    }
+
+    @Test
+    fun `property position with modifiers and type starts at first modifier`() {
+        val src = """
+            package com.example
+
+            class Foo {
+                /** KDoc */
+                private val name: String = "x"
+            }
+        """.trimIndent()
+
+        val ast = analyzeKotlinSources(mapOf("Foo.kt" to src))
+        val name = ast.files.flatMap { it.declarations }.first { it.name == "name" }
+
+        assertEquals(5, name.line, "private modifier is on line 5; KDoc on line 4 is skipped")
+        assertEquals(5, name.column, "private modifier is at column 5")
+    }
+
+    @Test
     fun `call site line is at callee name not receiver when on separate lines`() {
         val src = """
             package com.example
