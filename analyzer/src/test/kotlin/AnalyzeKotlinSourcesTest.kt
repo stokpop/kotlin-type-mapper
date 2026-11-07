@@ -388,4 +388,126 @@ class AnalyzeKotlinSourcesTest {
         assertEquals(listOf("a", "b"),
             decls.filter { it.kind == DeclarationKind.DESTRUCTURED_VARIABLE }.map { it.name })
     }
+
+    private fun destructuringDeclarations(src: String) =
+        analyzeKotlinSources(mapOf("Destructuring.kt" to src))
+            .files.flatMap { it.declarations }
+            .filter { it.kind == DeclarationKind.DESTRUCTURING_DECLARATION }
+
+    @Test
+    fun `val destructuring declaration has the type of the initializer and the pattern range`() {
+        val src = """
+            package com.example
+
+            fun test() {
+                val (a, b) = Pair(1, "x")
+            }
+        """.trimIndent()
+
+        val decl = destructuringDeclarations(src).single()
+
+        assertEquals("kotlin.Pair<kotlin.Int, kotlin.String>", decl.type?.toFqString())
+        assertEquals("<destruct>", decl.name)
+        assertEquals("com.example.test.<destruct>", decl.fqName)
+        assertEquals("com.example.test", decl.containingDeclaration)
+        assertEquals(4, decl.line)
+        assertEquals(9, decl.column)
+        assertEquals(4, decl.endLine)
+        assertEquals(14, decl.endColumn)
+    }
+
+    @Test
+    fun `for loop destructuring declaration replaces the synthetic for loop variable`() {
+        val src = """
+            package com.example
+
+            fun test(pairs: List<Pair<Int, String>>, names: List<String>) {
+                for ((a, b) in pairs) {}
+                for (name in names) {}
+            }
+        """.trimIndent()
+
+        val ast = analyzeKotlinSources(mapOf("ForLoop.kt" to src))
+        val decls = ast.files.flatMap { it.declarations }
+        val destructuring = decls.single { it.kind == DeclarationKind.DESTRUCTURING_DECLARATION }
+
+        assertEquals("kotlin.Pair<kotlin.Int, kotlin.String>", destructuring.type?.toFqString())
+        assertEquals(4, destructuring.line)
+        assertEquals(10, destructuring.column)
+        assertEquals(15, destructuring.endColumn)
+        assertEquals(listOf("name"),
+            decls.filter { it.kind == DeclarationKind.FOR_LOOP_VARIABLE }.map { it.name })
+    }
+
+    @Test
+    fun `untyped lambda destructuring declaration has the type of the lambda parameter`() {
+        val src = """
+            package com.example
+
+            fun test(pairs: List<Pair<Int, String>>) {
+                pairs.forEach { (a, b) -> }
+            }
+        """.trimIndent()
+
+        val decl = destructuringDeclarations(src).single()
+
+        assertEquals("kotlin.Pair<kotlin.Int, kotlin.String>", decl.type?.toFqString())
+        assertEquals(4, decl.line)
+        assertEquals(21, decl.column)
+        assertEquals(26, decl.endColumn)
+    }
+
+    @Test
+    fun `destructuring declarations nested in each other's scope are all emitted`() {
+        val src = """
+            package com.example
+
+            fun test(pairs: List<Pair<Int, String>>, triples: List<Triple<Int, String, Long>>) {
+                for ((a, b) in pairs) {
+                    triples.forEach { (c, d, e) -> }
+                }
+            }
+        """.trimIndent()
+
+        val decls = destructuringDeclarations(src)
+
+        assertEquals(
+            listOf("kotlin.Pair<kotlin.Int, kotlin.String>", "kotlin.Triple<kotlin.Int, kotlin.String, kotlin.Long>"),
+            decls.map { it.type?.toFqString() })
+    }
+
+    @Test
+    fun `destructuring declaration with explicit component type`() {
+        val src = """
+            package com.example
+
+            fun test() {
+                val (a: Int, b) = Pair(1, "x")
+            }
+        """.trimIndent()
+
+        val decl = destructuringDeclarations(src).single()
+
+        assertEquals("kotlin.Pair<kotlin.Int, kotlin.String>", decl.type?.toFqString())
+        assertEquals(19, decl.endColumn)
+    }
+
+    @Test
+    fun `destructuring declaration with a single component or underscore`() {
+        val src = """
+            package com.example
+
+            data class Box(val value: String)
+
+            fun test(pair: Pair<Int, String>, box: Box) {
+                val (only) = box
+                val (_, b) = pair
+            }
+        """.trimIndent()
+
+        val decls = destructuringDeclarations(src)
+
+        assertEquals(listOf("com.example.Box", "kotlin.Pair<kotlin.Int, kotlin.String>"),
+            decls.map { it.type?.toFqString() })
+    }
 }

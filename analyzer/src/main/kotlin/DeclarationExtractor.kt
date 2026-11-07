@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.types.AbbreviatedType
 import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -41,6 +42,9 @@ import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+
+/** Name of the synthetic variable the compiler creates for a destructuring declaration. */
+private const val DESTRUCTURING_NAME = "<destruct>"
 
 /**
  * Returns the start offset of a declaration, skipping any leading KDoc comment.
@@ -235,6 +239,10 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext, imports:
         override fun visitForExpression(expression: KtForExpression) {
             super.visitForExpression(expression)
             val param = expression.loopParameter ?: return
+            // a destructuring loop is emitted as DESTRUCTURING_DECLARATION by visitDestructuringDeclaration
+            if (param.destructuringDeclaration != null) {
+                return
+            }
             val descriptor = bindingContext[BindingContext.VALUE_PARAMETER, param] ?: return
             val offset = param.textRange.startOffset
             declarations.add(
@@ -267,6 +275,36 @@ fun extractDeclarations(ktFile: KtFile, bindingContext: BindingContext, imports:
                     line = lineOf(offset), column = colOf(offset),
                     endLine = endLineOf(param.textRange.endOffset),
                     endColumn = endColOf(param.textRange.endOffset),
+                )
+            )
+        }
+
+        // val (a, b) = pair, for ((a, b) in pairs), { (a, b) -> } — the pattern as a whole
+        override fun visitDestructuringDeclaration(destructuringDeclaration: KtDestructuringDeclaration) {
+            super.visitDestructuringDeclaration(destructuringDeclaration)
+            val parameter = destructuringDeclaration.parent as? KtParameter
+            val type = if (parameter != null) {
+                bindingContext[BindingContext.VALUE_PARAMETER, parameter]?.type
+            } else {
+                destructuringDeclaration.initializer?.let { bindingContext.getType(it) }
+            } ?: return
+            val containing = destructuringDeclaration.entries
+                .firstNotNullOfOrNull { bindingContext[BindingContext.VARIABLE, it] }
+                ?.containingDeclaration?.fqNameSafe?.asString() ?: ""
+            val startOffset = destructuringDeclaration.lPar?.textRange?.startOffset
+                ?: destructuringDeclaration.textRange.startOffset
+            val endOffset = destructuringDeclaration.rPar?.textRange?.endOffset
+                ?: destructuringDeclaration.textRange.endOffset
+            declarations.add(
+                DeclarationAst(
+                    kind = DeclarationKind.DESTRUCTURING_DECLARATION,
+                    name = DESTRUCTURING_NAME,
+                    fqName = if (containing.isEmpty()) DESTRUCTURING_NAME else "$containing.$DESTRUCTURING_NAME",
+                    containingDeclaration = containing,
+                    type = type.toTypeAst(imports),
+                    line = lineOf(startOffset), column = colOf(startOffset),
+                    endLine = endLineOf(endOffset),
+                    endColumn = endColOf(endOffset),
                 )
             )
         }
