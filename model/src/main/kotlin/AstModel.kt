@@ -40,6 +40,13 @@ enum class DeclarationKind {
     @SerialName("catch_variable")        CATCH_VARIABLE,
     @SerialName("lambda_parameter")      LAMBDA_PARAMETER,
     @SerialName("destructured_variable") DESTRUCTURED_VARIABLE,
+    /**
+     * The pattern of `val (a, b) = x`, `for ((a, b) in xs)` or `{ (a, b) -> }` as a whole.
+     * [DeclarationAst.type] is the type of the destructured value (e.g. `kotlin.Pair<kotlin.Int, kotlin.String>`),
+     * and [DeclarationAst.name] is the compiler's synthetic name `<destruct>`.
+     * Unlike other kinds, the range covers only the parenthesised pattern `(a, b)`, not the `val`
+     * keyword, the initializer or the loop/lambda around it.
+     */
     @SerialName("destructuring_declaration") DESTRUCTURING_DECLARATION,
 }
 
@@ -173,12 +180,14 @@ data class DeclarationAst(
     val textualSuperTypes: List<String> = emptyList(),
     /** 1-based line of the first token of the declaration, skipping any leading KDoc comment.
      *  Points to the first modifier or keyword (e.g. `fun`, `class`, `val`, `@Annotation`).
-     *  For annotated declarations this is the annotation line, not the keyword line. */
+     *  For annotated declarations this is the annotation line, not the keyword line.
+     *  Exception: [DeclarationKind.DESTRUCTURING_DECLARATION] starts at its opening parenthesis. */
     val line: Int,
     val column: Int,
     /** 1-based line of the last token of the declaration (closing `}` for block declarations,
      *  end of expression for single-expression properties). Equal to [line] for one-liners.
-     *  Defaults to 0 for ASTs loaded from older JSON (schema < 1.5). */
+     *  Defaults to 0 for ASTs loaded from older JSON (schema < 1.5).
+     *  Exception: [DeclarationKind.DESTRUCTURING_DECLARATION] ends at its closing parenthesis. */
     val endLine: Int = 0,
     val endColumn: Int = 0,
     /** For TYPEALIAS declarations: ordered list starting with this alias FQN, followed by each
