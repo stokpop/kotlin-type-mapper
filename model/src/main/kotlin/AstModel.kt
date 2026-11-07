@@ -40,6 +40,7 @@ enum class DeclarationKind {
     @SerialName("catch_variable")        CATCH_VARIABLE,
     @SerialName("lambda_parameter")      LAMBDA_PARAMETER,
     @SerialName("destructured_variable") DESTRUCTURED_VARIABLE,
+    @SerialName("destructuring_declaration") DESTRUCTURING_DECLARATION,
 }
 
 internal val CLASS_KINDS = setOf(
