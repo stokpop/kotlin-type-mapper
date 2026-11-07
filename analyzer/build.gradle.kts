@@ -8,11 +8,11 @@ plugins {
 dependencies {
     implementation(kotlin("stdlib"))
     api(project(":model"))
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.0")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:2.4.0")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:2.4.0")
-    implementation("io.github.java-diff-utils:java-diff-utils:4.16")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.10")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:2.4.10")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:2.4.10")
+    implementation("io.github.java-diff-utils:java-diff-utils:4.18")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.14.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
