@@ -12,7 +12,7 @@ plugins {
 dependencies {
     implementation(kotlin("stdlib"))
     implementation(project(":analyzer"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
     implementation("com.github.ajalt.clikt:clikt:5.1.0")
 }
 
